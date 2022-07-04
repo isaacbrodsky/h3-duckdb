@@ -1,3 +1,5 @@
+[![tests](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/tests.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/tests.yml)
+
 To build, type 
 ```sh
 make duckdb_release release
@@ -17,6 +19,12 @@ Test running an H3 function:
 ```SQL
 SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 ```
+
+# Implemented functions
+
+- `h3_is_valid_cell`
+- `h3_cell_to_parent`
+- `h3_latlng_to_cell`
 
 # License
 

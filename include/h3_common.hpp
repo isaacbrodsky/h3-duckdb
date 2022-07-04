@@ -13,7 +13,7 @@
 #include "duckdb/common/operator/string_cast.hpp"
 #include "duckdb/execution/expression_executor.hpp"
 #include "duckdb/planner/expression/bound_function_expression.hpp"
-#include <h3/h3api.h>
+#include "h3api.h"
 
 namespace duckdb {
 

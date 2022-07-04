@@ -1,0 +1,12 @@
+statement ok
+LOAD 'build/release/h3.duckdb_extension';
+
+query I
+SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
+----
+581764796395814911
+
+query I
+SELECT h3_latlng_to_cell(0, 0, 1);
+----
+583031433791012863
