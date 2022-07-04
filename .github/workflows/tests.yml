@@ -14,18 +14,30 @@ jobs:
 
     steps:
     - name: Install
-      run: yum install -y gcc gcc-c++ cmake make python3
+      run: yum install -y gcc gcc-c++ make python3
 
-    - name: Install recent git yay
+    - name: Install recent git
       run: |
         yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
         yum install -y git
 
-    - name: Install AWS client
+    - name: Install CMake
       run: |
-        curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py
-        python3 get-pip.py --user
-        python3 -m pip install awscli --upgrade --user
+        pushd "cmake"
+        if ! [ -e cmake-3.23.2-linux-x86_64.sh ]; then
+            wget -nv https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2-linux-x86_64.sh
+        fi
+        echo "5cca63af386e5bd0bde67c87ffac915865abd7dcc48073528f58645abda8f695  cmake-3.23.2-linux-x86_64.sh" > cmake-3.23.2-SHA-256.txt
+        sha256sum -c cmake-3.23.2-SHA-256.txt
+        if ! [ -e ./bin/cmake ]; then
+            chmod a+x cmake-3.23.2-linux-x86_64.sh
+            ./cmake-3.23.2-linux-x86_64.sh --skip-license
+        fi
+        echo "$(pwd)/bin" >> $GITHUB_PATH
+        popd
+
+    - name: Check CMake
+      run: cmake --version
 
     - uses: actions/checkout@v2
       with:
