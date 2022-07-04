@@ -21,6 +21,16 @@ jobs:
         yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
         yum install -y git
 
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Update submodules
+      run: |
+        git config --global --add safe.directory '*'
+        git submodule init
+        git submodule update --remote --merge
+
     - name: Install CMake
       run: |
         mkdir -p cmake
@@ -39,16 +49,6 @@ jobs:
 
     - name: Check CMake
       run: cmake --version
-
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
-    - name: Update DuckDB submodule
-      run: |
-        git config --global --add safe.directory '*'
-        git submodule init
-        git submodule update --remote --merge
 
     - name: Build
       run: make release duckdb_release

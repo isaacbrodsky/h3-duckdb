@@ -45,6 +45,10 @@ if(OSX_BUILD_UNIVERSAL)
       CACHE STRING "Build architectures for Mac OS X" FORCE)
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_C_STANDARD_REQUIRED 1)
+set(CMAKE_C_STANDARD 11)
+
 # Avoid building tooling we won't need for release
 set(BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
 set(BUILD_FILTERS OFF CACHE BOOL "" FORCE)
@@ -54,7 +58,6 @@ set(BUILD_FUZZERS OFF CACHE BOOL "" FORCE)
 set(ENABLE_DOCS OFF CACHE BOOL "" FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Build the core library as static
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(h3)
