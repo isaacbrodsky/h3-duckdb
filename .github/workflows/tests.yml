@@ -23,6 +23,7 @@ jobs:
 
     - name: Install CMake
       run: |
+        mkdir -p cmake
         pushd "cmake"
         if ! [ -e cmake-3.23.2-linux-x86_64.sh ]; then
             wget -nv https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2-linux-x86_64.sh
@@ -54,6 +55,11 @@ jobs:
 
     - name: Test
       run: ./duckdb/build/release/test/unittest --test-dir . "[h3]"
+
+    - name: Check formatting
+      run: |
+        make format
+        git diff --exit-code
 
     - uses: actions/upload-artifact@v2
       with:
