@@ -42,7 +42,7 @@ test: release duckdb_release
 format:
 	cp duckdb/.clang-format .
 	clang-format --sort-includes=0 --style=file -i h3-extension.cpp h3_common.cpp h3_functions/h3_valid.cpp h3_functions/h3_cell_to_parent.cpp h3_functions/h3_latlng_to_cell.cpp
-	cmake-format -i CMakeLists.txt
+	# cmake-format -i CMakeLists.txt
 	rm .clang-format
 
 update:
