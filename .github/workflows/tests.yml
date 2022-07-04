@@ -1,0 +1,79 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  linux:
+    name: Linux (CentOS 7)
+    runs-on: ubuntu-latest
+    container: centos:7
+
+    steps:
+    - name: Install
+      run: yum install -y gcc gcc-c++ cmake make python3
+
+    - name: Install recent git yay
+      run: |
+        yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
+        yum install -y git
+
+    - name: Install AWS client
+      run: |
+        curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py
+        python3 get-pip.py --user
+        python3 -m pip install awscli --upgrade --user
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Update DuckDB submodule
+      run: |
+        git config --global --add safe.directory '*'
+        git submodule init
+        git submodule update --remote --merge
+
+    - name: Build
+      run: make release duckdb_release
+
+    - name: Test
+      run: ./duckdb/build/release/test/unittest --test-dir . "[h3]"
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: h3-linux
+        path: |
+          build/release/h3.duckdb_extension
+
+  windows:
+    name: Windows (64-bit)
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Update DuckDB submodule
+      run: |
+        git submodule init
+        git submodule update --remote --merge
+
+    - name: Build
+      run: |
+        make duckdb_release
+        (mkdir -p build/release && cd build/release && cmake -DCMAKE_BUILD_TYPE=Release -DDUCKDB_INCLUDE_FOLDER=duckdb/src/include -DDUCKDB_LIBRARY_FOLDER=duckdb/build/release/src/Release  ../.. && cmake --build .)
+
+    - name: Test
+      run: ./duckdb/build/release/test/Release/unittest.exe --test-dir . "[h3]"
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: h3-windows
+        path: |
+          build/release/h3.duckdb_extension
+          

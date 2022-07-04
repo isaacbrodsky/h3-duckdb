@@ -18,6 +18,12 @@ Test running an H3 function:
 SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 ```
 
+# Implemented functions
+
+- `h3_is_valid_cell`
+- `h3_cell_to_parent`
+- `h3_latlng_to_cell`
+
 # License
 
 h3-duckdb Copyright 2022 Isaac Brodsky. Licensed under the [Apache 2.0 License](./LICENSE).

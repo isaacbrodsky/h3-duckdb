@@ -71,7 +71,7 @@ endif()
 
 link_directories(${DUCKDB_LIBRARY_FOLDER})
 
-add_library(${TARGET_NAME} SHARED h3-extension.cpp h3_common.cpp h3_functions/h3_valid.cpp h3_functions/h3_cell_to_parent.cpp)
+add_library(${TARGET_NAME} SHARED h3-extension.cpp h3_common.cpp h3_functions/h3_valid.cpp h3_functions/h3_cell_to_parent.cpp h3_functions/h3_latlng_to_cell.cpp)
 set_target_properties(${TARGET_NAME} PROPERTIES PREFIX "")
 target_link_libraries(${TARGET_NAME} h3)
 
