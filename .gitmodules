@@ -1,0 +1,6 @@
+[submodule "duckdb"]
+	path = duckdb
+	url = https://github.com/duckdb/duckdb.git
+[submodule "h3"]
+	path = h3
+	url = https://github.com/uber/h3.git
