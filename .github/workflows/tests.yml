@@ -56,10 +56,10 @@ jobs:
     - name: Test
       run: ./duckdb/build/release/test/unittest --test-dir . "[h3]"
 
-    - name: Check formatting
-      run: |
-        make format
-        git diff --exit-code
+    # - name: Check formatting
+    #   run: |
+    #     make format
+    #     git diff --exit-code
 
     - uses: actions/upload-artifact@v2
       with:
