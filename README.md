@@ -1,3 +1,5 @@
+[![tests](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/tests.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/tests.yml)
+
 To build, type 
 ```sh
 make duckdb_release release
