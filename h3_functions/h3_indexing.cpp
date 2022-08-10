@@ -40,17 +40,17 @@ static void CellToLngFunction(DataChunk &args, ExpressionState &state, Vector &r
 CreateScalarFunctionInfo H3Functions::GetLatLngToCellFunction() {
 	return CreateScalarFunctionInfo(
 	    ScalarFunction("h3_latlng_to_cell", {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::INTEGER},
-	                   LogicalType::UBIGINT, LatLngToCellFunction, false, nullptr, nullptr, nullptr));
+	                   LogicalType::UBIGINT, LatLngToCellFunction));
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToLatFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_cell_to_lat", {LogicalType::UBIGINT}, LogicalType::DOUBLE,
-	                                               CellToLatFunction, false, nullptr, nullptr, nullptr));
+	                                               CellToLatFunction));
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToLngFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_cell_to_lng", {LogicalType::UBIGINT}, LogicalType::DOUBLE,
-	                                               CellToLngFunction, false, nullptr, nullptr, nullptr));
+	                                               CellToLngFunction));
 }
 
 } // namespace duckdb

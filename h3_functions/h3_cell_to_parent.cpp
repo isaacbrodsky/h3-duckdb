@@ -16,8 +16,7 @@ static void CellToParentFunction(DataChunk &args, ExpressionState &state, Vector
 
 CreateScalarFunctionInfo H3Functions::GetCellToParentFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_cell_to_parent", {LogicalType::UBIGINT, LogicalType::INTEGER},
-	                                               LogicalType::UBIGINT, CellToParentFunction, false, nullptr, nullptr,
-	                                               nullptr));
+	                                               LogicalType::UBIGINT, CellToParentFunction));
 }
 
 } // namespace duckdb
