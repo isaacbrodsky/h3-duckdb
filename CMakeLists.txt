@@ -96,7 +96,7 @@ if(ENABLE_FORMAT)
     # Format
     add_custom_target(format-ext
         COMMAND ${CLANG_FORMAT_PATH}
-        -style=file
+        -style=file:${CMAKE_CURRENT_SOURCE_DIR}/duckdb/.clang-format
         -i
         ${ALL_SOURCE_FILES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

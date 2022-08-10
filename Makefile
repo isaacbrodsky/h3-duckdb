@@ -1,4 +1,4 @@
-.PHONY: all clean format debug release duckdb_debug duckdb_release pull update
+.PHONY: all clean format debug release duckdb_debug duckdb_release pull update_deps
 
 all: release
 
@@ -12,7 +12,7 @@ pull:
 	git submodule update --recursive
 
 update_deps: pull
-	git submodule update --reucrsive --upstream
+	git submodule update --remote --checkout
 
 clean:
 	rm -rf build
@@ -41,12 +41,3 @@ release: pull
 
 test: release duckdb_release
 	../duckdb/build/release/test/unittest --test-dir . "[h3]"
-
-format:
-	cp duckdb/.clang-format .
-	clang-format --sort-includes=0 --style=file -i h3-extension.cpp h3_common.cpp h3_functions/h3_valid.cpp h3_functions/h3_cell_to_parent.cpp h3_functions/h3_latlng_to_cell.cpp
-	# cmake-format -i CMakeLists.txt
-	rm .clang-format
-
-update:
-	git submodule update --remote --merge
