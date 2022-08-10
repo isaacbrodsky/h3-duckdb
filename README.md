@@ -34,6 +34,14 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_is_pentagon`
 - `h3_cell_to_parent`
 
+# Development
+
+To update the submodules to latest upstream, run:
+
+```
+make update_deps
+```
+
 # License
 
 h3-duckdb Copyright 2022 Isaac Brodsky. Licensed under the [Apache 2.0 License](./LICENSE).

@@ -82,6 +82,10 @@ set(LIB_SOURCE_FILES h3-extension.cpp h3_common.cpp h3_functions/h3_indexing.cpp
 set(LIB_HEADER_FILES include/h3_common.hpp include/h3_functions.hpp include/h3-extension.hpp)
 set(ALL_SOURCE_FILES ${LIB_SOURCE_FILES})
 
+add_library(${TARGET_NAME} SHARED ${LIB_SOURCE_FILES})
+set_target_properties(${TARGET_NAME} PROPERTIES PREFIX "")
+target_link_libraries(${TARGET_NAME} h3)
+
 # Automatic code formatting
 # Give preference to clang-format-9
 find_program(CLANG_FORMAT_PATH NAMES clang-format-9 clang-format)
@@ -90,7 +94,7 @@ cmake_dependent_option(
     "CLANG_FORMAT_PATH" OFF)
 if(ENABLE_FORMAT)
     # Format
-    add_custom_target(format
+    add_custom_target(format-ext
         COMMAND ${CLANG_FORMAT_PATH}
         -style=file
         -i
@@ -99,15 +103,11 @@ if(ENABLE_FORMAT)
         COMMENT "Formatting sources"
         )
     # Always do formatting
-    add_dependencies(h3ext format)
+    add_dependencies(${TARGET_NAME} format-ext)
 elseif(NOT CLANG_FORMAT_PATH)
     message(WARNING "clang-format was not detected, "
                     "so automatic source code reformatting is disabled")
 endif()
-
-add_library(${TARGET_NAME} SHARED ${LIB_SOURCE_FILES})
-set_target_properties(${TARGET_NAME} PROPERTIES PREFIX "")
-target_link_libraries(${TARGET_NAME} h3)
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   target_link_libraries(${TARGET_NAME} -fsanitize=address)
