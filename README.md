@@ -36,9 +36,15 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 
 # Development
 
+For a greatly sped up build (enables parallelism), run:
+
+```sh
+CMAKE_BUILD_PARALLEL_LEVEL=4 make duckdb_release release
+```
+
 To update the submodules to latest upstream, run:
 
-```
+```sh
 make update_deps
 ```
 

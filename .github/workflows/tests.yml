@@ -51,7 +51,7 @@ jobs:
       run: cmake --version
 
     - name: Build
-      run: make release duckdb_release
+      run: CMAKE_BUILD_PARALLEL_LEVEL=4 make release duckdb_release
 
     - name: Test
       run: ./duckdb/build/release/test/unittest --test-dir . "[h3]"
