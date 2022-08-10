@@ -9,7 +9,10 @@ endif
 
 pull:
 	git submodule init
-	git submodule update --recursive --remote
+	git submodule update --recursive
+
+update_deps: pull
+	git submodule update --reucrsive --upstream
 
 clean:
 	rm -rf build
