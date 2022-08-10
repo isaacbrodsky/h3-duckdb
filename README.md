@@ -22,9 +22,17 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 
 # Implemented functions
 
-- `h3_is_valid_cell`
-- `h3_cell_to_parent`
 - `h3_latlng_to_cell`
+- `h3_cell_to_lat`
+- `h3_cell_to_lng`
+- `h3_get_resolution`
+- `h3_get_base_cell_number`
+- `h3_string_to_h3`
+- `h3_h3_to_string`
+- `h3_is_valid_cell`
+- `h3_is_res_class_iii`
+- `h3_is_pentagon`
+- `h3_cell_to_parent`
 
 # License
 

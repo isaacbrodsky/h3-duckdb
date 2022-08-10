@@ -78,7 +78,34 @@ endif()
 
 link_directories(${DUCKDB_LIBRARY_FOLDER})
 
-add_library(${TARGET_NAME} SHARED h3-extension.cpp h3_common.cpp h3_functions/h3_valid.cpp h3_functions/h3_cell_to_parent.cpp h3_functions/h3_latlng_to_cell.cpp)
+set(LIB_SOURCE_FILES h3-extension.cpp h3_common.cpp h3_functions/h3_indexing.cpp h3_functions/h3_inspection.cpp h3_functions/h3_cell_to_parent.cpp)
+set(LIB_HEADER_FILES include/h3_common.hpp include/h3_functions.hpp include/h3-extension.hpp)
+set(ALL_SOURCE_FILES ${LIB_SOURCE_FILES})
+
+# Automatic code formatting
+# Give preference to clang-format-9
+find_program(CLANG_FORMAT_PATH NAMES clang-format-9 clang-format)
+cmake_dependent_option(
+    ENABLE_FORMAT "Enable running clang-format before compiling" ON
+    "CLANG_FORMAT_PATH" OFF)
+if(ENABLE_FORMAT)
+    # Format
+    add_custom_target(format
+        COMMAND ${CLANG_FORMAT_PATH}
+        -style=file
+        -i
+        ${ALL_SOURCE_FILES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Formatting sources"
+        )
+    # Always do formatting
+    add_dependencies(h3ext format)
+elseif(NOT CLANG_FORMAT_PATH)
+    message(WARNING "clang-format was not detected, "
+                    "so automatic source code reformatting is disabled")
+endif()
+
+add_library(${TARGET_NAME} SHARED ${LIB_SOURCE_FILES})
 set_target_properties(${TARGET_NAME} PROPERTIES PREFIX "")
 target_link_libraries(${TARGET_NAME} h3)
 
