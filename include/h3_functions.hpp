@@ -32,6 +32,7 @@ public:
 		functions.push_back(GetIsPentagonFunction());
 
 		functions.push_back(GetCellToParentFunction());
+		functions.push_back(GetCellToCenterChildFunction());
 
 		return functions;
 	}
@@ -52,6 +53,7 @@ private:
 	static CreateScalarFunctionInfo GetIsPentagonFunction();
 
 	static CreateScalarFunctionInfo GetCellToParentFunction();
+	static CreateScalarFunctionInfo GetCellToCenterChildFunction();
 
 	static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
 	                       vector<CreateScalarFunctionInfo> &functions) {

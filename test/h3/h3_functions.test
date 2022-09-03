@@ -10,3 +10,18 @@ query I
 SELECT h3_latlng_to_cell(0, 0, 1);
 ----
 583031433791012863
+
+query I
+SELECT h3_get_resolution(cast(586265647244115967 as ubigint));
+----
+2
+
+query I
+SELECT h3_cell_to_center_child(cast(586265647244115967 as ubigint), 4);
+----
+595272305332977663
+
+query II
+SELECT h3_h3_to_string(cast(10000000000000000 as ubigint)), h3_h3_to_string(cast(1 as ubigint))
+----
+2386f26fc10000	1

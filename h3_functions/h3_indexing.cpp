@@ -37,20 +37,23 @@ static void CellToLngFunction(DataChunk &args, ExpressionState &state, Vector &r
 	});
 }
 
+// TODO: cellToLatLng (combined)
+// TODO: cellToBoundary
+
 CreateScalarFunctionInfo H3Functions::GetLatLngToCellFunction() {
-	return CreateScalarFunctionInfo(
-	    ScalarFunction("h3_latlng_to_cell", {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::INTEGER},
-	                   LogicalType::UBIGINT, LatLngToCellFunction));
+	return CreateScalarFunctionInfo(ScalarFunction("h3_latlng_to_cell",
+	                                               {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::INTEGER},
+	                                               LogicalType::UBIGINT, LatLngToCellFunction));
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToLatFunction() {
-	return CreateScalarFunctionInfo(ScalarFunction("h3_cell_to_lat", {LogicalType::UBIGINT}, LogicalType::DOUBLE,
-	                                               CellToLatFunction));
+	return CreateScalarFunctionInfo(
+	    ScalarFunction("h3_cell_to_lat", {LogicalType::UBIGINT}, LogicalType::DOUBLE, CellToLatFunction));
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToLngFunction() {
-	return CreateScalarFunctionInfo(ScalarFunction("h3_cell_to_lng", {LogicalType::UBIGINT}, LogicalType::DOUBLE,
-	                                               CellToLngFunction));
+	return CreateScalarFunctionInfo(
+	    ScalarFunction("h3_cell_to_lng", {LogicalType::UBIGINT}, LogicalType::DOUBLE, CellToLngFunction));
 }
 
 } // namespace duckdb

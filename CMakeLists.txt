@@ -20,6 +20,10 @@ if(POLICY CMP0054)
   cmake_policy(SET CMP0054 NEW)
 endif()
 
+if(POLICY CMP0048)
+  cmake_policy(SET CMP0048 NEW)
+endif()
+
 if(CMAKE_VERSION VERSION_LESS "3.1")
   add_compile_options(-std=c++11)
 else()
@@ -78,7 +82,7 @@ endif()
 
 link_directories(${DUCKDB_LIBRARY_FOLDER})
 
-set(LIB_SOURCE_FILES h3-extension.cpp h3_common.cpp h3_functions/h3_indexing.cpp h3_functions/h3_inspection.cpp h3_functions/h3_cell_to_parent.cpp)
+set(LIB_SOURCE_FILES h3-extension.cpp h3_common.cpp h3_functions/h3_indexing.cpp h3_functions/h3_inspection.cpp h3_functions/h3_hierarchy.cpp)
 set(LIB_HEADER_FILES include/h3_common.hpp include/h3_functions.hpp include/h3-extension.hpp)
 set(ALL_SOURCE_FILES ${LIB_SOURCE_FILES})
 
