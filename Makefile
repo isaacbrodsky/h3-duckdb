@@ -40,4 +40,4 @@ release: pull
 	cmake --build .
 
 test: release duckdb_release
-	../duckdb/build/release/test/unittest --test-dir . "[h3]"
+	./duckdb/build/release/test/unittest --test-dir . "[h3]"
