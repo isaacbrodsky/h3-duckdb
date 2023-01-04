@@ -1,10 +1,11 @@
 [![tests](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/tests.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/tests.yml)
-[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v0.5.1&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v0.5.1)
+[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v0.6.1&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v0.6.1)
 [![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.0.1&color=blue)](https://github.com/uber/h3/releases/tag/v4.0.1)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 To build, type 
 ```sh
+git submodule update --init
 make duckdb_release release
 ```
 
