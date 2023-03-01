@@ -7,14 +7,14 @@ static void LatLngToCellFunction(DataChunk &args, ExpressionState &state, Vector
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
 	auto &inputs3 = args.data[2];
-	TernaryExecutor::Execute<double, double, int, H3Index>(inputs, inputs2, inputs3, result, args.size(),
-	                                                       [&](double lat, double lng, int res) {
-		                                                       H3Index cell;
-		                                                       LatLng latLng = {.lat = lat, .lng = lng};
-		                                                       H3Error err = latLngToCell(&latLng, res, &cell);
-		                                                       ThrowH3Error(err);
-		                                                       return cell;
-	                                                       });
+	TernaryExecutor::Execute<double, double, int, H3Index>(
+	    inputs, inputs2, inputs3, result, args.size(), [&](double lat, double lng, int res) {
+		    H3Index cell;
+		    LatLng latLng = {.lat = degsToRads(lat), .lng = degsToRads(lng)};
+		    H3Error err = latLngToCell(&latLng, res, &cell);
+		    ThrowH3Error(err);
+		    return cell;
+	    });
 }
 
 static void CellToLatFunction(DataChunk &args, ExpressionState &state, Vector &result) {
