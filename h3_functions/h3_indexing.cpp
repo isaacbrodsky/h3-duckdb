@@ -23,7 +23,7 @@ static void CellToLatFunction(DataChunk &args, ExpressionState &state, Vector &r
 		LatLng latLng = {.lat = 0, .lng = 0};
 		H3Error err = cellToLatLng(cell, &latLng);
 		ThrowH3Error(err);
-		return latLng.lat;
+		return radsToDegs(latLng.lat);
 	});
 }
 
@@ -33,7 +33,7 @@ static void CellToLngFunction(DataChunk &args, ExpressionState &state, Vector &r
 		LatLng latLng = {.lat = 0, .lng = 0};
 		H3Error err = cellToLatLng(cell, &latLng);
 		ThrowH3Error(err);
-		return latLng.lng;
+		return radsToDegs(latLng.lng);
 	});
 }
 
