@@ -25,3 +25,8 @@ query II
 SELECT h3_h3_to_string(cast(10000000000000000 as ubigint)), h3_h3_to_string(cast(1 as ubigint))
 ----
 2386f26fc10000	1
+
+query I
+SELECT printf('%x', h3_latlng_to_cell(37.7752702151959, -122.418307270836, 9)::bigint);
+----
+8928308280fffff
