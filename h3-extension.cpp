@@ -18,7 +18,7 @@ void H3Extension::Load(DuckDB &db) {
 
 	auto &catalog = Catalog::GetSystemCatalog(*con.context);
 	for (auto &fun : H3Functions::GetFunctions()) {
-		catalog.CreateFunction(*con.context, &fun);
+		catalog.CreateFunction(*con.context, fun);
 	}
 
 	con.Commit();
