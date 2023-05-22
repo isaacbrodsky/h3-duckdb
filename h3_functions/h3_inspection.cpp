@@ -29,6 +29,7 @@ static void H3ToStringFunction(DataChunk &args, ExpressionState &state, Vector &
 	auto &inputs = args.data[0];
 	UnaryExecutor::Execute<uint64_t, string_t>(args.data[0], result, args.size(), [&](uint64_t h3) {
 		auto str = StringUtil::Format("%llx", h3);
+		// TODO: Confirm this does not have any multithreading issues
 		return StringVector::AddString(result, str);
 	});
 }
