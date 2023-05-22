@@ -11,7 +11,7 @@ make duckdb_release release
 
 To run, run the bundled `duckdb` shell:
 ```sh
-./duckdb/build/release/duckdb 
+./duckdb/build/release/duckdb -unsigned
 ```
 
 Then, load the H3 extension like so:
@@ -38,6 +38,7 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_is_pentagon`
 - `h3_cell_to_parent`
 - `h3_cell_to_center_child`
+- `h3_grid_disk`
 
 # Development
 

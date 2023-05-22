@@ -31,8 +31,12 @@ public:
 		functions.push_back(GetIsResClassIIIFunction());
 		functions.push_back(GetIsPentagonFunction());
 
+		// Hierarchy
 		functions.push_back(GetCellToParentFunction());
 		functions.push_back(GetCellToCenterChildFunction());
+
+		// Traversal
+		functions.push_back(GetGridDiskFunction());
 
 		return functions;
 	}
@@ -52,8 +56,12 @@ private:
 	static CreateScalarFunctionInfo GetIsResClassIIIFunction();
 	static CreateScalarFunctionInfo GetIsPentagonFunction();
 
+	// Hierarchy
 	static CreateScalarFunctionInfo GetCellToParentFunction();
 	static CreateScalarFunctionInfo GetCellToCenterChildFunction();
+
+	// Traversal
+	static CreateScalarFunctionInfo GetGridDiskFunction();
 
 	static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
 	                       vector<CreateScalarFunctionInfo> &functions) {
