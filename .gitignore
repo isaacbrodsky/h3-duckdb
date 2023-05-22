@@ -13,3 +13,4 @@ build/
 .vscode/
 
 .*.swp
+data/
