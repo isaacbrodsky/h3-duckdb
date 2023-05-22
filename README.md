@@ -38,6 +38,8 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_is_pentagon`
 - `h3_cell_to_parent`
 - `h3_cell_to_center_child`
+- `h3_cell_to_child_pos`
+- `h3_child_pos_to_cell`
 - `h3_grid_disk`
 
 # Development
