@@ -17,11 +17,10 @@ static void GridDiskFunction(DataChunk &args, ExpressionState &state, Vector &re
 		int64_t actual = 0;
 		H3Error err1 = maxGridDiskSize(k, &sz);
 		ThrowH3Error(err1);
-		H3Index *out = new H3Index[sz];
-		H3Error err2 = gridDisk(origin, k, out);
+		std::vector<H3Index> out(sz);
+		H3Error err2 = gridDisk(origin, k, out.data());
 		ThrowH3Error(err2);
-		for (int64_t j = 0; j < sz; j++) {
-			auto val = out[j];
+		for (auto val : out) {
 			if (val != H3_NULL) {
 				ListVector::PushBack(result, Value::UBIGINT(val));
 				actual++;

@@ -33,6 +33,7 @@ public:
 
 		// Hierarchy
 		functions.push_back(GetCellToParentFunction());
+		functions.push_back(GetCellToChildrenFunction());
 		functions.push_back(GetCellToCenterChildFunction());
 
 		// Traversal
@@ -58,6 +59,7 @@ private:
 
 	// Hierarchy
 	static CreateScalarFunctionInfo GetCellToParentFunction();
+	static CreateScalarFunctionInfo GetCellToChildrenFunction();
 	static CreateScalarFunctionInfo GetCellToCenterChildFunction();
 
 	// Traversal
