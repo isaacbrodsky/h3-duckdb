@@ -33,7 +33,10 @@ public:
 
 		// Hierarchy
 		functions.push_back(GetCellToParentFunction());
+		functions.push_back(GetCellToChildrenFunction());
 		functions.push_back(GetCellToCenterChildFunction());
+		functions.push_back(GetCellToChildPosFunction());
+		functions.push_back(GetChildPosToCellFunction());
 
 		// Traversal
 		functions.push_back(GetGridDiskFunction());
@@ -58,7 +61,10 @@ private:
 
 	// Hierarchy
 	static CreateScalarFunctionInfo GetCellToParentFunction();
+	static CreateScalarFunctionInfo GetCellToChildrenFunction();
 	static CreateScalarFunctionInfo GetCellToCenterChildFunction();
+	static CreateScalarFunctionInfo GetCellToChildPosFunction();
+	static CreateScalarFunctionInfo GetChildPosToCellFunction();
 
 	// Traversal
 	static CreateScalarFunctionInfo GetGridDiskFunction();

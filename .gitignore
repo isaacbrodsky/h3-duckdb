@@ -14,3 +14,4 @@ build/
 
 .*.swp
 .DS_Store
+data/
