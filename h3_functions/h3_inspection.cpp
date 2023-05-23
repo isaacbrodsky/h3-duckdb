@@ -25,13 +25,17 @@ static void StringToH3Function(DataChunk &args, ExpressionState &state, Vector &
 	});
 }
 
+struct H3ToStringOperator {
+	template <class INPUT_TYPE, class RESULT_TYPE>
+	static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+		auto str = StringUtil::Format("%llx", input);
+		return StringVector::AddString(result, str);
+	}
+};
+
 static void H3ToStringFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
-	UnaryExecutor::Execute<uint64_t, string_t>(args.data[0], result, args.size(), [&](uint64_t h3) {
-		auto str = StringUtil::Format("%llx", h3);
-		// TODO: Confirm this does not have any multithreading issues
-		return StringVector::AddString(result, str);
-	});
+	UnaryExecutor::ExecuteString<uint64_t, string_t, H3ToStringOperator>(args.data[0], result, args.size());
 }
 
 static void IsValidCellFunction(DataChunk &args, ExpressionState &state, Vector &result) {
