@@ -15,9 +15,6 @@ static void CellToParentFunction(DataChunk &args, ExpressionState &state, Vector
 }
 
 static void CellToChildrenFunction(DataChunk &args, ExpressionState &state, Vector &result) {
-	auto &inputs = args.data[0];
-	auto &inputs2 = args.data[1];
-
 	auto result_data = FlatVector::GetData<list_entry_t>(result);
 	for (idx_t i = 0; i < args.size(); i++) {
 		result_data[i].offset = ListVector::GetListSize(result);
@@ -78,8 +75,77 @@ static void ChildPosToCellFunction(DataChunk &args, ExpressionState &state, Vect
 	                                                         });
 }
 
-// TODO: compact
-// TODO: uncompact
+static void CompactCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	D_ASSERT(args.ColumnCount() == 1);
+	auto count = args.size();
+
+	Vector &lhs = args.data[0];
+	if (lhs.GetType().id() == LogicalTypeId::SQLNULL) {
+		result.Reference(lhs);
+		return;
+	}
+
+	UnifiedVectorFormat lhs_data;
+	lhs.ToUnifiedFormat(count, lhs_data);
+
+	auto list_entries = (list_entry_t *)lhs_data.data;
+
+	result.SetVectorType(VectorType::FLAT_VECTOR);
+	auto result_entries = FlatVector::GetData<list_entry_t>(result);
+	auto &result_validity = FlatVector::Validity(result);
+
+	idx_t offset = 0;
+	for (idx_t i = 0; i < count; i++) {
+		printf("i=%llx\n", i);
+		result_entries[i].offset = offset;
+		result_entries[i].length = 0;
+		auto list_index = lhs_data.sel->get_index(i);
+
+		if (!lhs_data.validity.RowIsValid(list_index)) {
+			printf("invalid\n");
+			result_validity.SetInvalid(i);
+			continue;
+		}
+
+		const auto &list_entry = list_entries[list_index];
+
+		int64_t actual = 0;
+		for (idx_t child_idx = 0; child_idx < list_entry.length; child_idx++) {
+			// FIXME: using Value is less efficient than modifying the vector comparison code
+			// to more efficiently compare nested types
+
+			// Note: When using GetValue we don't first apply the selection vector
+			// because it is already done inside GetValue
+			// auto lvalue = lhs_child.GetValue(list_entry.offset + child_idx);
+
+			printf("child_idx=%llx\n", child_idx);
+			ListVector::PushBack(result, Value::UBIGINT(child_idx));
+			actual++;
+		}
+
+		// const auto &lhs_entry = lhs_entries[lhs_list_index];
+		// result_entries[i].length += lhs_entry.length;
+		// //Vector &target, const Vector &source, const SelectionVector &sel, idx_t source_size, idx_t source_offset
+		// ListVector::Append(result, lhs_child, *lhs_child_data.sel, lhs_entry.offset + lhs_entry.length,
+		//                    lhs_entry.offset);
+
+		printf("list_entry.length=%llx\n", list_entry.length);
+		result_entries[i].length = actual;
+		offset += list_entry.length; // result_entries[i].length;
+	}
+	// D_ASSERT(ListVector::GetListSize(result) == offset);
+
+	result.Verify(args.size());
+
+	printf("out\n");
+	if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
+		result.SetVectorType(VectorType::CONSTANT_VECTOR);
+	}
+}
+
+static void UncompactCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	// TODO
+}
 
 CreateScalarFunctionInfo H3Functions::GetCellToParentFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_cell_to_parent", {LogicalType::UBIGINT, LogicalType::INTEGER},
@@ -106,6 +172,17 @@ CreateScalarFunctionInfo H3Functions::GetChildPosToCellFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_child_pos_to_cell",
 	                                               {LogicalType::BIGINT, LogicalType::UBIGINT, LogicalType::INTEGER},
 	                                               LogicalType::UBIGINT, ChildPosToCellFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetCompactCellsFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_compact_cells", {LogicalType::LIST(LogicalType::UBIGINT)},
+	                                               LogicalType::LIST(LogicalType::UBIGINT), CompactCellsFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetUncompactCellsFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_uncompact_cells",
+	                                               {LogicalType::LIST(LogicalType::UBIGINT), LogicalType::INTEGER},
+	                                               LogicalType::LIST(LogicalType::UBIGINT), UncompactCellsFunction));
 }
 
 } // namespace duckdb

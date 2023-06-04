@@ -37,6 +37,8 @@ public:
 		functions.push_back(GetCellToCenterChildFunction());
 		functions.push_back(GetCellToChildPosFunction());
 		functions.push_back(GetChildPosToCellFunction());
+		functions.push_back(GetCompactCellsFunction());
+		functions.push_back(GetUncompactCellsFunction());
 
 		// Traversal
 		functions.push_back(GetGridDiskFunction());
@@ -65,6 +67,8 @@ private:
 	static CreateScalarFunctionInfo GetCellToCenterChildFunction();
 	static CreateScalarFunctionInfo GetCellToChildPosFunction();
 	static CreateScalarFunctionInfo GetChildPosToCellFunction();
+	static CreateScalarFunctionInfo GetCompactCellsFunction();
+	static CreateScalarFunctionInfo GetUncompactCellsFunction();
 
 	// Traversal
 	static CreateScalarFunctionInfo GetGridDiskFunction();
