@@ -50,6 +50,13 @@ jobs:
     - name: Check CMake
       run: cmake --version
 
+    - name: Cache DuckDB build
+      id: cache-duckdb-build
+      uses: actions/cache@v3
+      with:
+        path: duckdb/build
+        key: ${{ runner.os }}-duckdb
+
     - name: Build
       run: CMAKE_BUILD_PARALLEL_LEVEL=4 make release duckdb_release
 
@@ -81,6 +88,13 @@ jobs:
       run: |
         git submodule init
         git submodule update
+
+    - name: Cache DuckDB build
+      id: cache-duckdb-build
+      uses: actions/cache@v3
+      with:
+        path: duckdb/build
+        key: ${{ runner.os }}-duckdb
 
     - name: Build
       run: |
