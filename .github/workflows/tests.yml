@@ -50,15 +50,15 @@ jobs:
     - name: Check CMake
       run: cmake --version
 
-    - name: Cache DuckDB build
-      id: cache-duckdb-build
-      uses: actions/cache@v3
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
       with:
-        path: ./duckdb/build
-        key: ${{ runner.os }}-duckdb
+        key: ${{ github.job }}-${{ runner.os }}
 
     - name: Build
-      run: CMAKE_BUILD_PARALLEL_LEVEL=4 make release duckdb_release
+      run: |
+        export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+        CMAKE_BUILD_PARALLEL_LEVEL=4 make release duckdb_release
 
     - name: Test
       run: ./duckdb/build/release/test/unittest --test-dir . "[h3]"
@@ -88,13 +88,6 @@ jobs:
       run: |
         git submodule init
         git submodule update
-
-    - name: Cache DuckDB build
-      id: cache-duckdb-build
-      uses: actions/cache@v3
-      with:
-        path: ./duckdb/build
-        key: ${{ runner.os }}-duckdb
 
     - name: Build
       run: |
