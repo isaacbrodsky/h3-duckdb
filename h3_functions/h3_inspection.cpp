@@ -25,11 +25,18 @@ static void StringToH3Function(DataChunk &args, ExpressionState &state, Vector &
 	});
 }
 
+struct H3ToStringOperator {
+	template <class INPUT_TYPE, class RESULT_TYPE>
+	static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+		auto str = StringUtil::Format("%llx", input);
+		string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+		return StringVector::AddString(result, strAsStr);
+	}
+};
+
 static void H3ToStringFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
-	// TODO: Unlikely to be the best option here, look at scalarfunction "format" in printf.cpp
-	UnaryExecutor::Execute<uint64_t, string_t>(inputs, result, args.size(),
-	                                           [&](uint64_t h3) { return StringUtil::Format("%llx", h3); });
+	UnaryExecutor::ExecuteString<uint64_t, string_t, H3ToStringOperator>(args.data[0], result, args.size());
 }
 
 static void IsValidCellFunction(DataChunk &args, ExpressionState &state, Vector &result) {
