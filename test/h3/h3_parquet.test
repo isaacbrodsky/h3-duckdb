@@ -1,11 +1,7 @@
+require parquet
+
 statement ok
 LOAD 'build/release/h3.duckdb_extension';
-
-statement ok
-INSTALL './duckdb/build/release/extension/parquet/parquet.duckdb_extension';
-
-statement ok
-LOAD parquet;
 
 query I
 SELECT * from read_parquet('test/data/simple.parquet');
