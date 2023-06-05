@@ -109,17 +109,15 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state, Vector
 
 		const auto &list_entry = list_entries[list_index];
 
+		const auto lvalue = lhs.GetValue(list_entry.offset).DefaultCastAs(LogicalType::LIST(LogicalType::UBIGINT));
+		;
+
+		auto &list_children = ListValue::GetChildren(lvalue);
+
 		int64_t actual = 0;
-		for (idx_t child_idx = 0; child_idx < list_entry.length; child_idx++) {
-			// FIXME: using Value is less efficient than modifying the vector comparison code
-			// to more efficiently compare nested types
-
-			// Note: When using GetValue we don't first apply the selection vector
-			// because it is already done inside GetValue
-			// auto lvalue = lhs_child.GetValue(list_entry.offset + child_idx);
-
-			printf("child_idx=%llx\n", child_idx);
-			ListVector::PushBack(result, Value::UBIGINT(child_idx));
+		for (const auto &child_val : list_children) {
+			printf("child_val=%llx\n", child_val.GetValue<uint64_t>());
+			ListVector::PushBack(result, child_val);
 			actual++;
 		}
 
