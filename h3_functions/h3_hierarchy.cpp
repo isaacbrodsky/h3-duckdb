@@ -96,13 +96,11 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state, Vector
 
 	idx_t offset = 0;
 	for (idx_t i = 0; i < count; i++) {
-		printf("i=%llx\n", i);
 		result_entries[i].offset = offset;
 		result_entries[i].length = 0;
 		auto list_index = lhs_data.sel->get_index(i);
 
 		if (!lhs_data.validity.RowIsValid(list_index)) {
-			printf("invalid\n");
 			result_validity.SetInvalid(i);
 			continue;
 		}
@@ -114,28 +112,29 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state, Vector
 
 		auto &list_children = ListValue::GetChildren(lvalue);
 
+		auto input_set = new H3Index[list_children.size()];
+		for (size_t i = 0; i < list_children.size(); i++) {
+			input_set[i] = list_children[i].GetValue<uint64_t>();
+		}
+		auto compacted = new H3Index[list_children.size()]();
+		H3Error err = compactCells(input_set, compacted, list_children.size());
+		ThrowH3Error(err);
+
 		int64_t actual = 0;
-		for (const auto &child_val : list_children) {
-			printf("child_val=%llx\n", child_val.GetValue<uint64_t>());
-			ListVector::PushBack(result, child_val);
-			actual++;
+		for (size_t i = 0; i < list_children.size(); i++) {
+			auto child_val = compacted[i];
+			if (child_val != H3_NULL) {
+				ListVector::PushBack(result, Value::UBIGINT(child_val));
+				actual++;
+			}
 		}
 
-		// const auto &lhs_entry = lhs_entries[lhs_list_index];
-		// result_entries[i].length += lhs_entry.length;
-		// //Vector &target, const Vector &source, const SelectionVector &sel, idx_t source_size, idx_t source_offset
-		// ListVector::Append(result, lhs_child, *lhs_child_data.sel, lhs_entry.offset + lhs_entry.length,
-		//                    lhs_entry.offset);
-
-		printf("list_entry.length=%llx\n", list_entry.length);
 		result_entries[i].length = actual;
-		offset += list_entry.length; // result_entries[i].length;
+		offset += actual;
 	}
-	// D_ASSERT(ListVector::GetListSize(result) == offset);
 
 	result.Verify(args.size());
 
-	printf("out\n");
 	if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
 		result.SetVectorType(VectorType::CONSTANT_VECTOR);
 	}
