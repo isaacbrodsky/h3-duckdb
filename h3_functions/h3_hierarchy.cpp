@@ -108,7 +108,6 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state, Vector
 		const auto &list_entry = list_entries[list_index];
 
 		const auto lvalue = lhs.GetValue(list_entry.offset).DefaultCastAs(LogicalType::LIST(LogicalType::UBIGINT));
-		;
 
 		auto &list_children = ListValue::GetChildren(lvalue);
 
@@ -141,7 +140,77 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state, Vector
 }
 
 static void UncompactCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
-	// TODO
+	D_ASSERT(args.ColumnCount() == 2);
+	auto count = args.size();
+
+	Vector &lhs = args.data[0];
+	if (lhs.GetType().id() == LogicalTypeId::SQLNULL) {
+		result.Reference(lhs);
+		return;
+	}
+	Vector res_vec = args.data[1];
+	if (res_vec.GetType().id() == LogicalTypeId::SQLNULL) {
+		result.Reference(res_vec);
+		return;
+	}
+
+	UnifiedVectorFormat lhs_data;
+	lhs.ToUnifiedFormat(count, lhs_data);
+	UnifiedVectorFormat res_data;
+	res_vec.ToUnifiedFormat(count, res_data);
+
+	auto list_entries = (list_entry_t *)lhs_data.data;
+
+	result.SetVectorType(VectorType::FLAT_VECTOR);
+	auto result_entries = FlatVector::GetData<list_entry_t>(result);
+	auto &result_validity = FlatVector::Validity(result);
+
+	idx_t offset = 0;
+	for (idx_t i = 0; i < count; i++) {
+		result_entries[i].offset = offset;
+		result_entries[i].length = 0;
+		auto list_index = lhs_data.sel->get_index(i);
+
+		if (!lhs_data.validity.RowIsValid(list_index) || !res_data.validity.RowIsValid(list_index)) {
+			result_validity.SetInvalid(i);
+			continue;
+		}
+
+		const auto &list_entry = list_entries[list_index];
+
+		const auto lvalue = lhs.GetValue(list_entry.offset).DefaultCastAs(LogicalType::LIST(LogicalType::UBIGINT));
+		const auto res = res_vec.GetValue(i).DefaultCastAs(LogicalType::INTEGER).GetValue<int32_t>();
+
+		auto &list_children = ListValue::GetChildren(lvalue);
+
+		auto input_set = new H3Index[list_children.size()];
+		for (size_t i = 0; i < list_children.size(); i++) {
+			input_set[i] = list_children[i].GetValue<uint64_t>();
+		}
+		int64_t uncompacted_sz;
+		H3Error sz_err = uncompactCellsSize(input_set, list_children.size(), res, &uncompacted_sz);
+		auto uncompacted = new H3Index[uncompacted_sz]();
+		H3Error err = uncompactCells(input_set, list_children.size(), uncompacted, uncompacted_sz, res);
+		ThrowH3Error(err);
+
+		int64_t actual = 0;
+		for (size_t i = 0; i < uncompacted_sz; i++) {
+			auto child_val = uncompacted[i];
+			if (child_val != H3_NULL) {
+				ListVector::PushBack(result, Value::UBIGINT(child_val));
+				actual++;
+			}
+		}
+
+		result_entries[i].length = actual;
+		offset += actual;
+	}
+
+	result.Verify(args.size());
+
+	if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
+		result.SetVectorType(VectorType::CONSTANT_VECTOR);
+	}
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToParentFunction() {
