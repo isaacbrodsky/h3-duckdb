@@ -22,3 +22,13 @@ SELECT h3_h3_to_string(a) from read_parquet('test/data/simple.parquet');
 3
 4
 8f754e64992d6d8
+
+query I
+select h3_compact_cells([a]) from read_parquet('test/data/simple.parquet');
+----
+[]
+[1]
+[2]
+[3]
+[4]
+[646078419604526808]

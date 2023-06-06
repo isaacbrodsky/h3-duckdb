@@ -4,9 +4,6 @@
 namespace duckdb {
 
 static void GridDiskFunction(DataChunk &args, ExpressionState &state, Vector &result) {
-	auto &inputs = args.data[0];
-	auto &inputs2 = args.data[1];
-
 	auto result_data = FlatVector::GetData<list_entry_t>(result);
 	for (idx_t i = 0; i < args.size(); i++) {
 		result_data[i].offset = ListVector::GetListSize(result);
