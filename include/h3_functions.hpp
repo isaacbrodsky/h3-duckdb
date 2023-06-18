@@ -30,6 +30,7 @@ public:
 		functions.push_back(GetIsValidCellFunction());
 		functions.push_back(GetIsResClassIIIFunction());
 		functions.push_back(GetIsPentagonFunction());
+		functions.push_back(GetGetIcosahedronFacesFunction());
 
 		// Hierarchy
 		functions.push_back(GetCellToParentFunction());
@@ -60,6 +61,7 @@ private:
 	static CreateScalarFunctionInfo GetIsValidCellFunction();
 	static CreateScalarFunctionInfo GetIsResClassIIIFunction();
 	static CreateScalarFunctionInfo GetIsPentagonFunction();
+	static CreateScalarFunctionInfo GetGetIcosahedronFacesFunction();
 
 	// Hierarchy
 	static CreateScalarFunctionInfo GetCellToParentFunction();

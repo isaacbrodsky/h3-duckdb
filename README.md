@@ -36,6 +36,7 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_is_valid_cell`
 - `h3_is_res_class_iii`
 - `h3_is_pentagon`
+- `h3_get_icosahedron_faces`
 - `h3_cell_to_parent`
 - `h3_cell_to_children`
 - `h3_cell_to_center_child`
