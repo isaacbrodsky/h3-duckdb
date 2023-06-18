@@ -63,6 +63,31 @@ static void IsPentagonFunction(DataChunk &args, ExpressionState &state, Vector &
 	                                       [&](uint64_t cell) { return bool(isPentagon(cell)); });
 }
 
+static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto result_data = FlatVector::GetData<list_entry_t>(result);
+	for (idx_t i = 0; i < args.size(); i++) {
+		result_data[i].offset = ListVector::GetListSize(result);
+
+		uint64_t cell = args.GetValue(0, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
+		int faceCount;
+		int64_t actual = 0;
+		H3Error err1 = maxFaceCount(cell, &faceCount);
+		ThrowH3Error(err1);
+		std::vector<int> out(faceCount);
+		H3Error err2 = getIcosahedronFaces(cell, out.data());
+		ThrowH3Error(err2);
+		for (auto val : out) {
+			if (val != -1) {
+				ListVector::PushBack(result, Value::INTEGER(val));
+				actual++;
+			}
+		}
+
+		result_data[i].length = actual;
+	}
+	result.Verify(args.size());
+}
+
 CreateScalarFunctionInfo H3Functions::GetGetResolutionFunction() {
 	return CreateScalarFunctionInfo(
 	    ScalarFunction("h3_get_resolution", {LogicalType::UBIGINT}, LogicalType::INTEGER, GetResolutionFunction));
@@ -96,6 +121,12 @@ CreateScalarFunctionInfo H3Functions::GetIsResClassIIIFunction() {
 CreateScalarFunctionInfo H3Functions::GetIsPentagonFunction() {
 	return CreateScalarFunctionInfo(
 	    ScalarFunction("h3_is_pentagon", {LogicalType::UBIGINT}, LogicalType::BOOLEAN, IsPentagonFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetGetIcosahedronFacesFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_get_icosahedron_faces", {LogicalType::UBIGINT},
+	                                               LogicalType::LIST(LogicalType::INTEGER),
+	                                               GetIcosahedronFacesFunction));
 }
 
 } // namespace duckdb
