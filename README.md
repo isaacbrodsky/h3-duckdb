@@ -29,6 +29,7 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_latlng_to_cell`
 - `h3_cell_to_lat`
 - `h3_cell_to_lng`
+- `h3_cell_to_latlng`
 - `h3_get_resolution`
 - `h3_get_base_cell_number`
 - `h3_string_to_h3`
@@ -45,6 +46,12 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_compact_cells`
 - `h3_uncompact_cells`
 - `h3_grid_disk`
+- `h3_cell_to_vertex`
+- `h3_cell_to_vertexes`
+- `h3_vertex_to_lat`
+- `h3_vertex_to_lng`
+- `h3_vertex_to_latlng`
+- `h3_is_valid_vertex`
 
 # Development
 

@@ -39,7 +39,7 @@ static void H3ToStringFunction(DataChunk &args, ExpressionState &state, Vector &
 	UnaryExecutor::ExecuteString<uint64_t, string_t, H3ToStringOperator>(args.data[0], result, args.size());
 }
 
-static void IsValidCellFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+static void IsValidCellVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	UnaryExecutor::Execute<string_t, bool>(inputs, result, args.size(), [&](string_t input) {
 		H3Index h;
@@ -49,6 +49,12 @@ static void IsValidCellFunction(DataChunk &args, ExpressionState &state, Vector 
 		}
 		return bool(isValidCell(h));
 	});
+}
+
+static void IsValidCellFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto &inputs = args.data[0];
+	UnaryExecutor::Execute<H3Index, bool>(inputs, result, args.size(),
+	                                      [&](H3Index input) { return bool(isValidCell(input)); });
 }
 
 static void IsResClassIIIFunction(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -108,9 +114,11 @@ CreateScalarFunctionInfo H3Functions::GetH3ToStringFunction() {
 	    ScalarFunction("h3_h3_to_string", {LogicalType::UBIGINT}, LogicalType::VARCHAR, H3ToStringFunction));
 }
 
-CreateScalarFunctionInfo H3Functions::GetIsValidCellFunction() {
-	return CreateScalarFunctionInfo(
-	    ScalarFunction("h3_is_valid_cell", {LogicalType::VARCHAR}, LogicalType::BOOLEAN, IsValidCellFunction));
+CreateScalarFunctionInfo H3Functions::GetIsValidCellFunctions() {
+	ScalarFunctionSet funcs("h3_is_valid_cell");
+	funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN, IsValidCellVarcharFunction));
+	funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN, IsValidCellFunction));
+	return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetIsResClassIIIFunction() {

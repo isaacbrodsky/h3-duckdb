@@ -75,7 +75,7 @@ static void VertexToLatLngFunction(DataChunk &args, ExpressionState &state, Vect
 	result.Verify(args.size());
 }
 
-static void IsValidVertexFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+static void IsValidVertexVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	UnaryExecutor::Execute<string_t, bool>(inputs, result, args.size(), [&](string_t input) {
 		H3Index h;
@@ -85,6 +85,12 @@ static void IsValidVertexFunction(DataChunk &args, ExpressionState &state, Vecto
 		}
 		return bool(isValidVertex(h));
 	});
+}
+
+static void IsValidVertexFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto &inputs = args.data[0];
+	UnaryExecutor::Execute<H3Index, bool>(inputs, result, args.size(),
+	                                      [&](H3Index input) { return bool(isValidVertex(input)); });
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToVertexFunction() {
@@ -112,9 +118,11 @@ CreateScalarFunctionInfo H3Functions::GetVertexToLatLngFunction() {
 	                                               LogicalType::LIST(LogicalType::DOUBLE), VertexToLatLngFunction));
 }
 
-CreateScalarFunctionInfo H3Functions::GetIsValidVertexFunction() {
-	return CreateScalarFunctionInfo(
-	    ScalarFunction("h3_is_valid_vertex", {LogicalType::VARCHAR}, LogicalType::BOOLEAN, IsValidVertexFunction));
+CreateScalarFunctionInfo H3Functions::GetIsValidVertexFunctions() {
+	ScalarFunctionSet funcs("h3_is_valid_vertex");
+	funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN, IsValidVertexVarcharFunction));
+	funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN, IsValidVertexFunction));
+	return CreateScalarFunctionInfo(funcs);
 }
 
 } // namespace duckdb
