@@ -17,6 +17,26 @@ SELECT h3_get_resolution(cast(586265647244115967 as ubigint));
 2
 
 query I
+SELECT h3_is_valid_cell(cast(586265647244115967 as ubigint));
+----
+true
+
+query I
+SELECT h3_is_valid_cell('85283473fffffff');
+----
+true
+
+query I
+SELECT h3_is_valid_cell(cast(1234 as ubigint));
+----
+false
+
+query I
+SELECT h3_is_valid_cell('1234');
+----
+false
+
+query I
 SELECT h3_cell_to_center_child(cast(586265647244115967 as ubigint), 4);
 ----
 595272305332977663

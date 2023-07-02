@@ -28,7 +28,7 @@ public:
 		functions.push_back(GetGetBaseCellNumberFunction());
 		functions.push_back(GetStringToH3Function());
 		functions.push_back(GetH3ToStringFunction());
-		functions.push_back(GetIsValidCellFunction());
+		functions.push_back(GetIsValidCellFunctions());
 		functions.push_back(GetIsResClassIIIFunction());
 		functions.push_back(GetIsPentagonFunction());
 		functions.push_back(GetGetIcosahedronFacesFunction());
@@ -51,7 +51,7 @@ public:
 		functions.push_back(GetVertexToLatFunction());
 		functions.push_back(GetVertexToLngFunction());
 		functions.push_back(GetVertexToLatLngFunction());
-		functions.push_back(GetIsValidVertexFunction());
+		functions.push_back(GetIsValidVertexFunctions());
 
 		return functions;
 	}
@@ -68,7 +68,7 @@ private:
 	static CreateScalarFunctionInfo GetGetBaseCellNumberFunction();
 	static CreateScalarFunctionInfo GetStringToH3Function();
 	static CreateScalarFunctionInfo GetH3ToStringFunction();
-	static CreateScalarFunctionInfo GetIsValidCellFunction();
+	static CreateScalarFunctionInfo GetIsValidCellFunctions();
 	static CreateScalarFunctionInfo GetIsResClassIIIFunction();
 	static CreateScalarFunctionInfo GetIsPentagonFunction();
 	static CreateScalarFunctionInfo GetGetIcosahedronFacesFunction();
@@ -91,7 +91,7 @@ private:
 	static CreateScalarFunctionInfo GetVertexToLatFunction();
 	static CreateScalarFunctionInfo GetVertexToLngFunction();
 	static CreateScalarFunctionInfo GetVertexToLatLngFunction();
-	static CreateScalarFunctionInfo GetIsValidVertexFunction();
+	static CreateScalarFunctionInfo GetIsValidVertexFunctions();
 
 	static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
 	                       vector<CreateScalarFunctionInfo> &functions) {
