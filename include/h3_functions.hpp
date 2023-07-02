@@ -21,6 +21,7 @@ public:
 		functions.push_back(GetLatLngToCellFunction());
 		functions.push_back(GetCellToLatFunction());
 		functions.push_back(GetCellToLngFunction());
+		functions.push_back(GetCellToLatLngFunction());
 
 		// Inspection
 		functions.push_back(GetGetResolutionFunction());
@@ -44,6 +45,14 @@ public:
 		// Traversal
 		functions.push_back(GetGridDiskFunction());
 
+		// Vertex
+		functions.push_back(GetCellToVertexFunction());
+		functions.push_back(GetCellToVertexesFunction());
+		functions.push_back(GetVertexToLatFunction());
+		functions.push_back(GetVertexToLngFunction());
+		functions.push_back(GetVertexToLatLngFunction());
+		functions.push_back(GetIsValidVertexFunction());
+
 		return functions;
 	}
 
@@ -52,6 +61,7 @@ private:
 	static CreateScalarFunctionInfo GetLatLngToCellFunction();
 	static CreateScalarFunctionInfo GetCellToLatFunction();
 	static CreateScalarFunctionInfo GetCellToLngFunction();
+	static CreateScalarFunctionInfo GetCellToLatLngFunction();
 
 	// Inspection
 	static CreateScalarFunctionInfo GetGetResolutionFunction();
@@ -74,6 +84,14 @@ private:
 
 	// Traversal
 	static CreateScalarFunctionInfo GetGridDiskFunction();
+
+	// Vertex
+	static CreateScalarFunctionInfo GetCellToVertexFunction();
+	static CreateScalarFunctionInfo GetCellToVertexesFunction();
+	static CreateScalarFunctionInfo GetVertexToLatFunction();
+	static CreateScalarFunctionInfo GetVertexToLngFunction();
+	static CreateScalarFunctionInfo GetVertexToLatLngFunction();
+	static CreateScalarFunctionInfo GetIsValidVertexFunction();
 
 	static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
 	                       vector<CreateScalarFunctionInfo> &functions) {

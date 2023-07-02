@@ -89,6 +89,7 @@ set(LIB_SOURCE_FILES
   h3_functions/h3_inspection.cpp
   h3_functions/h3_hierarchy.cpp
   h3_functions/h3_traversal.cpp
+  h3_functions/h3_vertex.cpp
 )
 set(LIB_HEADER_FILES
   include/h3_common.hpp
