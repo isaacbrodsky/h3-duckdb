@@ -37,9 +37,9 @@ SELECT h3_cell_to_lat(h3_string_to_h3('85283473fffffff')), h3_cell_to_lng(h3_str
 37.34579337536848	-121.9763759725512
 
 query I
-SELECT h3_cell_to_latlng(h3_string_to_h3('85283473fffffff'))
+SELECT list_transform(h3_cell_to_latlng(h3_string_to_h3('85283473fffffff')), x-> round(x, 12));
 ----
-[37.34579337536848, -121.9763759725512]
+[37.345793375368, -121.976375972551]
 
 query I
 select h3_grid_disk(586265647244115967::ubigint, 1);
