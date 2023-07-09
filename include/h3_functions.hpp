@@ -45,6 +45,16 @@ public:
 		// Traversal
 		functions.push_back(GetGridDiskFunction());
 
+		// Directed edge
+		functions.push_back(GetAreNeighborCellsFunction());
+		functions.push_back(GetCellsToDirectedEdgeFunction());
+		functions.push_back(GetIsValidDirectedEdgeFunctions());
+		functions.push_back(GetGetDirectedEdgeOriginFunction());
+		functions.push_back(GetGetDirectedEdgeDestinationFunction());
+		functions.push_back(GetDirectedEdgeToCellsFunction());
+		functions.push_back(GetOriginToDirectedEdgesFunction());
+		// functions.push_back(GetDirectedEdgeToBoundaryFunction());
+
 		// Vertex
 		functions.push_back(GetCellToVertexFunction());
 		functions.push_back(GetCellToVertexesFunction());
@@ -84,6 +94,16 @@ private:
 
 	// Traversal
 	static CreateScalarFunctionInfo GetGridDiskFunction();
+
+	// Directed edge
+	static CreateScalarFunctionInfo GetAreNeighborCellsFunction();
+	static CreateScalarFunctionInfo GetCellsToDirectedEdgeFunction();
+	static CreateScalarFunctionInfo GetIsValidDirectedEdgeFunctions();
+	static CreateScalarFunctionInfo GetGetDirectedEdgeOriginFunction();
+	static CreateScalarFunctionInfo GetGetDirectedEdgeDestinationFunction();
+	static CreateScalarFunctionInfo GetDirectedEdgeToCellsFunction();
+	static CreateScalarFunctionInfo GetOriginToDirectedEdgesFunction();
+	// static CreateScalarFunctionInfo GetDirectedEdgeToBoundaryFunction();
 
 	// Vertex
 	static CreateScalarFunctionInfo GetCellToVertexFunction();
