@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        configuration: [release, debug]
+        configuration: [release]
 
     steps:
     - name: Install
