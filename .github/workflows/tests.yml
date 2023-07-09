@@ -8,9 +8,13 @@ on:
 
 jobs:
   linux:
-    name: Linux (CentOS 7)
+    name: Linux (CentOS 7) ${{matrix.configuration}}
     runs-on: ubuntu-latest
     container: centos:7
+
+    strategy:
+      matrix:
+        configuration: [release]
 
     steps:
     - name: Install
@@ -51,10 +55,10 @@ jobs:
       run: cmake --version
 
     - name: Build
-      run: CMAKE_BUILD_PARALLEL_LEVEL=4 make release duckdb_release
+      run: CMAKE_BUILD_PARALLEL_LEVEL=4 make ${{matrix.configuration}} duckdb_${{matrix.configuration}}
 
     - name: Test
-      run: ./duckdb/build/release/test/unittest --test-dir . "[h3]"
+      run: ./duckdb/build/${{matrix.configuration}}/test/unittest --test-dir . "[h3]"
 
     # TODO: clang-format not installed
     # - name: Check formatting
@@ -63,6 +67,7 @@ jobs:
     #     git diff --exit-code
 
     - uses: actions/upload-artifact@v2
+      if: matrix.configuration == 'release'
       with:
         name: h3-linux
         path: |

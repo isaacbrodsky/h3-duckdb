@@ -189,6 +189,7 @@ static void UncompactCellsFunction(DataChunk &args, ExpressionState &state, Vect
 		}
 		int64_t uncompacted_sz;
 		H3Error sz_err = uncompactCellsSize(input_set, list_children.size(), res, &uncompacted_sz);
+		ThrowH3Error(sz_err);
 		auto uncompacted = new H3Index[uncompacted_sz]();
 		H3Error err = uncompactCells(input_set, list_children.size(), uncompacted, uncompacted_sz, res);
 		ThrowH3Error(err);
