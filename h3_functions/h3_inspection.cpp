@@ -35,7 +35,6 @@ struct H3ToStringOperator {
 };
 
 static void H3ToStringFunction(DataChunk &args, ExpressionState &state, Vector &result) {
-	auto &inputs = args.data[0];
 	UnaryExecutor::ExecuteString<uint64_t, string_t, H3ToStringOperator>(args.data[0], result, args.size());
 }
 
