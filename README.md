@@ -60,6 +60,13 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_vertex_to_lng`
 - `h3_vertex_to_latlng`
 - `h3_is_valid_vertex`
+- `h3_is_valid_directed_edge`
+- `h3_origin_to_directed_edges`
+- `h3_directed_edge_to_cells`
+- `h3_get_directed_edge_origin`
+- `h3_get_directed_edge_destination`
+- `h3_cells_to_directed_edge`
+- `h3_are_neighbor_cells`
 
 # Development
 
