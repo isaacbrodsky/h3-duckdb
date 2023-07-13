@@ -100,6 +100,7 @@ static void GridDiskDistancesTmplFunction(DataChunk &args, ExpressionState &stat
 	}
 	result.Verify(args.size());
 }
+
 static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto result_data = FlatVector::GetData<list_entry_t>(result);
 	for (idx_t i = 0; i < args.size(); i++) {
@@ -125,6 +126,81 @@ static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state, Vect
 		}
 	}
 	result.Verify(args.size());
+}
+
+static void GridPathCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto result_data = FlatVector::GetData<list_entry_t>(result);
+	for (idx_t i = 0; i < args.size(); i++) {
+		result_data[i].offset = ListVector::GetListSize(result);
+
+		uint64_t origin = args.GetValue(0, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
+		uint64_t destination = args.GetValue(1, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
+
+		int64_t sz;
+		H3Error err1 = gridPathCellsSize(origin, destination, &sz);
+		ThrowH3Error(err1);
+
+		std::vector<H3Index> out(sz);
+		H3Error err2 = gridPathCells(origin, destination, out.data());
+		int64_t actual = 0;
+		for (auto val : out) {
+			if (val != H3_NULL) {
+				ListVector::PushBack(result, Value::UBIGINT(val));
+				actual++;
+			}
+		}
+
+		result_data[i].length = actual;
+	}
+	result.Verify(args.size());
+}
+
+static void GridDistanceFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto &inputs = args.data[0];
+	auto &inputs2 = args.data[1];
+	BinaryExecutor::Execute<uint64_t, uint64_t, int64_t>(inputs, inputs2, result, args.size(),
+	                                                     [&](uint64_t origin, uint64_t destination) {
+		                                                     int64_t distance;
+		                                                     H3Error err = gridDistance(origin, destination, &distance);
+		                                                     ThrowH3Error(err);
+		                                                     return distance;
+	                                                     });
+}
+
+static void CellToLocalIjFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto result_data = FlatVector::GetData<list_entry_t>(result);
+	for (idx_t i = 0; i < args.size(); i++) {
+		result_data[i].offset = ListVector::GetListSize(result);
+
+		uint64_t origin = args.GetValue(0, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
+		uint64_t cell = args.GetValue(1, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
+		uint32_t mode = 0; // TODO: Expose mode to the user when applicable
+
+		CoordIJ out;
+		H3Error err = cellToLocalIj(origin, cell, mode, &out);
+		ThrowH3Error(err);
+
+		ListVector::PushBack(result, Value::INTEGER(out.i));
+		ListVector::PushBack(result, Value::INTEGER(out.j));
+		result_data[i].length = 2;
+	}
+	result.Verify(args.size());
+}
+
+static void LocalIjToCellFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto &inputs = args.data[0];
+	auto &inputs2 = args.data[1];
+	auto &inputs3 = args.data[2];
+	TernaryExecutor::Execute<H3Index, int32_t, int32_t, H3Index>(
+	    inputs, inputs2, inputs3, result, args.size(), [&](H3Index origin, int32_t i, int32_t j) {
+		    uint32_t mode = 0; // TODO: Expose mode to the user when applicable
+
+		    CoordIJ coordIJ {.i = i, .j = j};
+		    H3Index out;
+		    H3Error err = localIjToCell(origin, &coordIJ, mode, &out);
+		    ThrowH3Error(err);
+		    return out;
+	    });
 }
 
 // TODO: gridDisksUnsafe?
@@ -165,6 +241,27 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesSafeFunction() {
 CreateScalarFunctionInfo H3Functions::GetGridRingUnsafeFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_grid_ring_unsafe", {LogicalType::UBIGINT, LogicalType::INTEGER},
 	                                               LogicalType::LIST(LogicalType::UBIGINT), GridRingUnsafeFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetGridPathCellsFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_grid_path_cells", {LogicalType::UBIGINT, LogicalType::UBIGINT},
+	                                               LogicalType::LIST(LogicalType::UBIGINT), GridPathCellsFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetGridDistanceFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_grid_distance", {LogicalType::UBIGINT, LogicalType::UBIGINT},
+	                                               LogicalType::BIGINT, GridDistanceFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetCellToLocalIjFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_cell_to_local_ij", {LogicalType::UBIGINT, LogicalType::UBIGINT},
+	                                               LogicalType::LIST(LogicalType::INTEGER), CellToLocalIjFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetLocalIjToCellFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_local_ij_to_cell",
+	                                               {LogicalType::UBIGINT, LogicalType::INTEGER, LogicalType::INTEGER},
+	                                               LogicalType::UBIGINT, LocalIjToCellFunction));
 }
 
 } // namespace duckdb

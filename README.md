@@ -50,6 +50,10 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_grid_disk_unsafe`
 - `h3_grid_disk_distances_unsafe`
 - `h3_grid_ring_unsafe`
+- `h3_grid_path_cells`
+- `h3_grid_distance`
+- `h3_cell_to_local_ij`
+- `h3_local_ij_to_cell`
 - `h3_cell_to_vertex`
 - `h3_cell_to_vertexes`
 - `h3_vertex_to_lat`
