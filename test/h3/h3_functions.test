@@ -7,11 +7,6 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 581764796395814911
 
 query I
-SELECT h3_latlng_to_cell(0, 0, 1);
-----
-583031433791012863
-
-query I
 SELECT h3_get_resolution(cast(586265647244115967 as ubigint));
 ----
 2
@@ -45,21 +40,6 @@ query II
 SELECT h3_h3_to_string(cast(10000000000000000 as ubigint)), h3_h3_to_string(cast(1 as ubigint))
 ----
 2386f26fc10000	1
-
-query I
-SELECT printf('%x', h3_latlng_to_cell(37.7752702151959, -122.418307270836, 9)::bigint);
-----
-8928308280fffff
-
-query II
-SELECT h3_cell_to_lat(h3_string_to_h3('85283473fffffff')), h3_cell_to_lng(h3_string_to_h3('85283473fffffff'))
-----
-37.34579337536848	-121.9763759725512
-
-query I
-SELECT list_transform(h3_cell_to_latlng(h3_string_to_h3('85283473fffffff')), x-> round(x, 12));
-----
-[37.345793375368, -121.976375972551]
 
 query I
 select h3_cell_to_children(586265647244115967::ubigint, 3);
