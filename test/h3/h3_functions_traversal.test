@@ -17,6 +17,11 @@ select h3_grid_disk(594615896891195391::ubigint, 1);
 [594615939840868351, 594615948430802943, 594615896891195391, 594615914071064575, 594615922660999167, 594615931250933759]
 
 query I
+select h3_grid_disk(594615896891195391::ubigint, -1);
+----
+NULL
+
+query I
 select h3_grid_disk_distances(594615896891195391::ubigint, 1);
 ----
 [[594615896891195391], [594615939840868351, 594615948430802943, 594615914071064575, 594615922660999167, 594615931250933759]]
@@ -34,12 +39,12 @@ select h3_grid_disk_distances_unsafe(586265647244115967::ubigint, 1);
 query I
 select h3_grid_disk_unsafe(594615896891195391::ubigint, 1);
 ----
-[]
+NULL
 
 query I
 select h3_grid_disk_distances_unsafe(594615896891195391::ubigint, 2);
 ----
-[]
+NULL
 
 query I
 select h3_grid_disk_distances_safe(594615896891195391::ubigint, 2);
@@ -49,7 +54,7 @@ select h3_grid_disk_distances_safe(594615896891195391::ubigint, 2);
 query I
 select h3_grid_ring_unsafe(594615896891195391::ubigint, 1);
 ----
-[]
+NULL
 
 query I
 select h3_grid_ring_unsafe(586265647244115967::ubigint, 1);
@@ -62,9 +67,19 @@ select h3_grid_path_cells(605035864166236159::ubigint, 605034941150920703::ubigi
 [605035864166236159, 605035861750317055, 605035861347663871, 605035862018752511, 605034941419356159, 605034941150920703]
 
 query I
+select h3_grid_path_cells(605035864166236159::ubigint, 0::ubigint);
+----
+NULL
+
+query I
 select h3_grid_distance(605035864166236159::ubigint, 605034941150920703::ubigint);
 ----
 5
+
+query I
+select h3_grid_distance(605035864166236159::ubigint, 0::ubigint);
+----
+NULL
 
 query I
 select h3_cell_to_local_ij(605034941285138431::ubigint, 605034941285138431::ubigint);
@@ -72,6 +87,16 @@ select h3_cell_to_local_ij(605034941285138431::ubigint, 605034941285138431::ubig
 [-123, -177]
 
 query I
+select h3_cell_to_local_ij(605034941285138431::ubigint, 0::ubigint);
+----
+NULL
+
+query I
 select h3_local_ij_to_cell(605034941285138431::ubigint, -123, -177);
 ----
 605034941285138431
+
+query I
+select h3_local_ij_to_cell(605034941285138431::ubigint, -1230000, -177);
+----
+NULL

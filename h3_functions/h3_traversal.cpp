@@ -25,21 +25,24 @@ static void GridDiskTmplFunction(DataChunk &args, ExpressionState &state, Vector
 		int32_t k = args.GetValue(1, i).DefaultCastAs(LogicalType::INTEGER).GetValue<int32_t>();
 		int64_t sz;
 		H3Error err1 = maxGridDiskSize(k, &sz);
-		ThrowH3Error(err1);
-		std::vector<H3Index> out(sz);
-		H3Error err2 = Fn::fn(origin, k, out.data());
-		if (err2) {
-			result_data[i].length = 0;
+		if (err1) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
 		} else {
-			int64_t actual = 0;
-			for (auto val : out) {
-				if (val != H3_NULL) {
-					ListVector::PushBack(result, Value::UBIGINT(val));
-					actual++;
+			std::vector<H3Index> out(sz);
+			H3Error err2 = Fn::fn(origin, k, out.data());
+			if (err2) {
+				result.SetValue(i, Value(LogicalType::SQLNULL));
+			} else {
+				int64_t actual = 0;
+				for (auto val : out) {
+					if (val != H3_NULL) {
+						ListVector::PushBack(result, Value::UBIGINT(val));
+						actual++;
+					}
 				}
-			}
 
-			result_data[i].length = actual;
+				result_data[i].length = actual;
+			}
 		}
 	}
 	result.Verify(args.size());
@@ -73,29 +76,32 @@ static void GridDiskDistancesTmplFunction(DataChunk &args, ExpressionState &stat
 		int32_t k = args.GetValue(1, i).DefaultCastAs(LogicalType::INTEGER).GetValue<int32_t>();
 		int64_t sz;
 		H3Error err1 = maxGridDiskSize(k, &sz);
-		ThrowH3Error(err1);
-		std::vector<H3Index> out(sz);
-		std::vector<int32_t> distancesOut(sz);
-		H3Error err2 = Fn::fn(origin, k, out.data(), distancesOut.data());
-		if (err2) {
-			result_data[i].length = 0;
+		if (err1) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
 		} else {
-			// Reorganize the results similar to H3-Java sorted list of list of indexes
-			// std vector of duckdb vector
-			std::vector<vector<Value>> results(k + 1);
-			for (idx_t j = 0; j < out.size(); j++) {
-				if (out[j] != H3_NULL) {
-					results[distancesOut[j]].push_back(Value::UBIGINT(out[j]));
+			std::vector<H3Index> out(sz);
+			std::vector<int32_t> distancesOut(sz);
+			H3Error err2 = Fn::fn(origin, k, out.data(), distancesOut.data());
+			if (err2) {
+				result.SetValue(i, Value(LogicalType::SQLNULL));
+			} else {
+				// Reorganize the results similar to H3-Java sorted list of list of indexes
+				// std vector of duckdb vector
+				std::vector<vector<Value>> results(k + 1);
+				for (idx_t j = 0; j < out.size(); j++) {
+					if (out[j] != H3_NULL) {
+						results[distancesOut[j]].push_back(Value::UBIGINT(out[j]));
+					}
 				}
-			}
 
-			int64_t actual = 0;
-			for (auto val : results) {
-				ListVector::PushBack(result, Value::LIST(LogicalType::UBIGINT, val));
-				actual++;
-			}
+				int64_t actual = 0;
+				for (auto val : results) {
+					ListVector::PushBack(result, Value::LIST(LogicalType::UBIGINT, val));
+					actual++;
+				}
 
-			result_data[i].length = actual;
+				result_data[i].length = actual;
+			}
 		}
 	}
 	result.Verify(args.size());
@@ -110,9 +116,9 @@ static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state, Vect
 		int32_t k = args.GetValue(1, i).DefaultCastAs(LogicalType::INTEGER).GetValue<int32_t>();
 		int64_t sz = k == 0 ? 1 : 6 * k;
 		std::vector<H3Index> out(sz);
-		H3Error err2 = gridRingUnsafe(origin, k, out.data());
-		if (err2) {
-			result_data[i].length = 0;
+		H3Error err = gridRingUnsafe(origin, k, out.data());
+		if (err) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
 		} else {
 			int64_t actual = 0;
 			for (auto val : out) {
@@ -138,19 +144,25 @@ static void GridPathCellsFunction(DataChunk &args, ExpressionState &state, Vecto
 
 		int64_t sz;
 		H3Error err1 = gridPathCellsSize(origin, destination, &sz);
-		ThrowH3Error(err1);
+		if (err1) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+			std::vector<H3Index> out(sz);
+			H3Error err2 = gridPathCells(origin, destination, out.data());
+			if (err2) {
+				result.SetValue(i, Value(LogicalType::SQLNULL));
+			} else {
+				int64_t actual = 0;
+				for (auto val : out) {
+					if (val != H3_NULL) {
+						ListVector::PushBack(result, Value::UBIGINT(val));
+						actual++;
+					}
+				}
 
-		std::vector<H3Index> out(sz);
-		H3Error err2 = gridPathCells(origin, destination, out.data());
-		int64_t actual = 0;
-		for (auto val : out) {
-			if (val != H3_NULL) {
-				ListVector::PushBack(result, Value::UBIGINT(val));
-				actual++;
+				result_data[i].length = actual;
 			}
 		}
-
-		result_data[i].length = actual;
 	}
 	result.Verify(args.size());
 }
@@ -158,13 +170,18 @@ static void GridPathCellsFunction(DataChunk &args, ExpressionState &state, Vecto
 static void GridDistanceFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
-	BinaryExecutor::Execute<uint64_t, uint64_t, int64_t>(inputs, inputs2, result, args.size(),
-	                                                     [&](uint64_t origin, uint64_t destination) {
-		                                                     int64_t distance;
-		                                                     H3Error err = gridDistance(origin, destination, &distance);
-		                                                     ThrowH3Error(err);
-		                                                     return distance;
-	                                                     });
+	BinaryExecutor::ExecuteWithNulls<uint64_t, uint64_t, int64_t>(
+	    inputs, inputs2, result, args.size(),
+	    [&](uint64_t origin, uint64_t destination, ValidityMask &mask, idx_t idx) {
+		    int64_t distance;
+		    H3Error err = gridDistance(origin, destination, &distance);
+		    if (err) {
+			    mask.SetInvalid(idx);
+			    return int64_t(0);
+		    } else {
+			    return distance;
+		    }
+	    });
 }
 
 static void CellToLocalIjFunction(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -178,11 +195,13 @@ static void CellToLocalIjFunction(DataChunk &args, ExpressionState &state, Vecto
 
 		CoordIJ out;
 		H3Error err = cellToLocalIj(origin, cell, mode, &out);
-		ThrowH3Error(err);
-
-		ListVector::PushBack(result, Value::INTEGER(out.i));
-		ListVector::PushBack(result, Value::INTEGER(out.j));
-		result_data[i].length = 2;
+		if (err) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+			ListVector::PushBack(result, Value::INTEGER(out.i));
+			ListVector::PushBack(result, Value::INTEGER(out.j));
+			result_data[i].length = 2;
+		}
 	}
 	result.Verify(args.size());
 }
@@ -191,15 +210,20 @@ static void LocalIjToCellFunction(DataChunk &args, ExpressionState &state, Vecto
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
 	auto &inputs3 = args.data[2];
-	TernaryExecutor::Execute<H3Index, int32_t, int32_t, H3Index>(
-	    inputs, inputs2, inputs3, result, args.size(), [&](H3Index origin, int32_t i, int32_t j) {
+	TernaryExecutor::ExecuteWithNulls<H3Index, int32_t, int32_t, H3Index>(
+	    inputs, inputs2, inputs3, result, args.size(),
+	    [&](H3Index origin, int32_t i, int32_t j, ValidityMask &mask, idx_t idx) {
 		    uint32_t mode = 0; // TODO: Expose mode to the user when applicable
 
 		    CoordIJ coordIJ {.i = i, .j = j};
 		    H3Index out;
 		    H3Error err = localIjToCell(origin, &coordIJ, mode, &out);
-		    ThrowH3Error(err);
-		    return out;
+		    if (err) {
+			    mask.SetInvalid(idx);
+			    return H3Index(H3_NULL);
+		    } else {
+			    return out;
+		    }
 	    });
 }
 
