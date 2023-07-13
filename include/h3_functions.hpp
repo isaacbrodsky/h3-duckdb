@@ -44,6 +44,15 @@ public:
 
 		// Traversal
 		functions.push_back(GetGridDiskFunction());
+		functions.push_back(GetGridDiskDistancesFunction());
+		functions.push_back(GetGridDiskUnsafeFunction());
+		functions.push_back(GetGridDiskDistancesUnsafeFunction());
+		functions.push_back(GetGridDiskDistancesSafeFunction());
+		functions.push_back(GetGridRingUnsafeFunction());
+		functions.push_back(GetGridPathCellsFunction());
+		functions.push_back(GetGridDistanceFunction());
+		functions.push_back(GetCellToLocalIjFunction());
+		functions.push_back(GetLocalIjToCellFunction());
 
 		// Directed edge
 		functions.push_back(GetAreNeighborCellsFunction());
@@ -94,6 +103,15 @@ private:
 
 	// Traversal
 	static CreateScalarFunctionInfo GetGridDiskFunction();
+	static CreateScalarFunctionInfo GetGridDiskDistancesFunction();
+	static CreateScalarFunctionInfo GetGridDiskUnsafeFunction();
+	static CreateScalarFunctionInfo GetGridDiskDistancesUnsafeFunction();
+	static CreateScalarFunctionInfo GetGridDiskDistancesSafeFunction();
+	static CreateScalarFunctionInfo GetGridRingUnsafeFunction();
+	static CreateScalarFunctionInfo GetGridPathCellsFunction();
+	static CreateScalarFunctionInfo GetGridDistanceFunction();
+	static CreateScalarFunctionInfo GetCellToLocalIjFunction();
+	static CreateScalarFunctionInfo GetLocalIjToCellFunction();
 
 	// Directed edge
 	static CreateScalarFunctionInfo GetAreNeighborCellsFunction();
