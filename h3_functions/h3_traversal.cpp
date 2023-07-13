@@ -100,6 +100,34 @@ static void GridDiskDistancesTmplFunction(DataChunk &args, ExpressionState &stat
 	}
 	result.Verify(args.size());
 }
+static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto result_data = FlatVector::GetData<list_entry_t>(result);
+	for (idx_t i = 0; i < args.size(); i++) {
+		result_data[i].offset = ListVector::GetListSize(result);
+
+		uint64_t origin = args.GetValue(0, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
+		int32_t k = args.GetValue(1, i).DefaultCastAs(LogicalType::INTEGER).GetValue<int32_t>();
+		int64_t sz = k == 0 ? 1 : 6 * k;
+		std::vector<H3Index> out(sz);
+		H3Error err2 = gridRingUnsafe(origin, k, out.data());
+		if (err2) {
+			result_data[i].length = 0;
+		} else {
+			int64_t actual = 0;
+			for (auto val : out) {
+				if (val != H3_NULL) {
+					ListVector::PushBack(result, Value::UBIGINT(val));
+					actual++;
+				}
+			}
+
+			result_data[i].length = actual;
+		}
+	}
+	result.Verify(args.size());
+}
+
+// TODO: gridDisksUnsafe?
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_grid_disk", {LogicalType::UBIGINT, LogicalType::INTEGER},
@@ -132,6 +160,11 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesSafeFunction() {
 	                                               {LogicalType::UBIGINT, LogicalType::INTEGER},
 	                                               LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
 	                                               GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
+}
+
+CreateScalarFunctionInfo H3Functions::GetGridRingUnsafeFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_grid_ring_unsafe", {LogicalType::UBIGINT, LogicalType::INTEGER},
+	                                               LogicalType::LIST(LogicalType::UBIGINT), GridRingUnsafeFunction));
 }
 
 } // namespace duckdb
