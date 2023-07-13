@@ -44,6 +44,7 @@ public:
 
 		// Traversal
 		functions.push_back(GetGridDiskFunction());
+		functions.push_back(GetGridDiskDistancesFunction());
 
 		// Directed edge
 		functions.push_back(GetAreNeighborCellsFunction());
@@ -94,6 +95,7 @@ private:
 
 	// Traversal
 	static CreateScalarFunctionInfo GetGridDiskFunction();
+	static CreateScalarFunctionInfo GetGridDiskDistancesFunction();
 
 	// Directed edge
 	static CreateScalarFunctionInfo GetAreNeighborCellsFunction();
