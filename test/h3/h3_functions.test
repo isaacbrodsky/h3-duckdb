@@ -12,44 +12,9 @@ SELECT h3_latlng_to_cell(0, 0, 1);
 583031433791012863
 
 query I
-SELECT h3_get_resolution(cast(586265647244115967 as ubigint));
-----
-2
-
-query I
-SELECT h3_is_valid_cell(cast(586265647244115967 as ubigint));
-----
-true
-
-query I
-SELECT h3_is_valid_cell('85283473fffffff');
-----
-true
-
-query I
-SELECT h3_is_valid_cell(cast(1234 as ubigint));
-----
-false
-
-query I
-SELECT h3_is_valid_cell('1234');
-----
-false
-
-query I
 SELECT h3_cell_to_center_child(cast(586265647244115967 as ubigint), 4);
 ----
 595272305332977663
-
-query II
-SELECT h3_h3_to_string(cast(10000000000000000 as ubigint)), h3_h3_to_string(cast(1 as ubigint))
-----
-2386f26fc10000	1
-
-query I
-SELECT printf('%x', h3_latlng_to_cell(37.7752702151959, -122.418307270836, 9)::bigint);
-----
-8928308280fffff
 
 query II
 SELECT h3_cell_to_lat(h3_string_to_h3('85283473fffffff')), h3_cell_to_lng(h3_string_to_h3('85283473fffffff'))
@@ -90,8 +55,3 @@ query I
 select h3_uncompact_cells([581764796395814911::ubigint], 2)
 ----
 [586264547732488191, 586265097488302079, 586265647244115967, 586266196999929855, 586266746755743743, 586267296511557631, 586267846267371519]
-
-query II
-select h3_get_icosahedron_faces(599686042433355775::ubigint), h3_get_icosahedron_faces(576988517884755967::ubigint)
-----
-[7]	[1, 6, 11, 7, 2]

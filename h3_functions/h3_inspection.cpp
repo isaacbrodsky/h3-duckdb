@@ -17,12 +17,17 @@ static void GetBaseCellNumberFunction(DataChunk &args, ExpressionState &state, V
 
 static void StringToH3Function(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
-	UnaryExecutor::Execute<string_t, uint64_t>(inputs, result, args.size(), [&](string_t input) {
-		H3Index h;
-		H3Error err = stringToH3(input.GetString().c_str(), &h);
-		ThrowH3Error(err);
-		return h;
-	});
+	UnaryExecutor::ExecuteWithNulls<string_t, uint64_t>(inputs, result, args.size(),
+	                                                    [&](string_t input, ValidityMask &mask, idx_t idx) {
+		                                                    H3Index h;
+		                                                    H3Error err = stringToH3(input.GetString().c_str(), &h);
+		                                                    if (err) {
+			                                                    mask.SetInvalid(idx);
+			                                                    return H3Index(H3_NULL);
+		                                                    } else {
+			                                                    return h;
+		                                                    }
+	                                                    });
 }
 
 struct H3ToStringOperator {
@@ -77,14 +82,20 @@ static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState &state,
 		int faceCount;
 		int64_t actual = 0;
 		H3Error err1 = maxFaceCount(cell, &faceCount);
-		ThrowH3Error(err1);
-		std::vector<int> out(faceCount);
-		H3Error err2 = getIcosahedronFaces(cell, out.data());
-		ThrowH3Error(err2);
-		for (auto val : out) {
-			if (val != -1) {
-				ListVector::PushBack(result, Value::INTEGER(val));
-				actual++;
+		if (err1) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+			std::vector<int> out(faceCount);
+			H3Error err2 = getIcosahedronFaces(cell, out.data());
+			if (err2) {
+				result.SetValue(i, Value(LogicalType::SQLNULL));
+			} else {
+				for (auto val : out) {
+					if (val != -1) {
+						ListVector::PushBack(result, Value::INTEGER(val));
+						actual++;
+					}
+				}
 			}
 		}
 
