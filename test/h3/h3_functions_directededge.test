@@ -32,6 +32,11 @@ SELECT h3_directed_edge_to_cells(1608492358964346879::ubigint)
 [599686042433355775, 599686030622195711]
 
 query I
+SELECT h3_directed_edge_to_cells(0::ubigint)
+----
+NULL
+
+query I
 SELECT h3_get_directed_edge_origin(1608492358964346879::ubigint)
 ----
 599686042433355775

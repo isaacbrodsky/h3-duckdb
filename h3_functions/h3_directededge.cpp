@@ -11,12 +11,14 @@ static void DirectedEdgeToCellsFunction(DataChunk &args, ExpressionState &state,
 		uint64_t edge = args.GetValue(0, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
 		std::vector<H3Index> out(2);
 		H3Error err = directedEdgeToCells(edge, out.data());
-		ThrowH3Error(err);
+		if (err) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+			ListVector::PushBack(result, Value::UBIGINT(out[0]));
+			ListVector::PushBack(result, Value::UBIGINT(out[1]));
 
-		ListVector::PushBack(result, Value::UBIGINT(out[0]));
-		ListVector::PushBack(result, Value::UBIGINT(out[1]));
-
-		result_data[i].length = 2;
+			result_data[i].length = 2;
+		}
 	}
 	result.Verify(args.size());
 }
@@ -29,62 +31,83 @@ static void OriginToDirectedEdgesFunction(DataChunk &args, ExpressionState &stat
 		uint64_t origin = args.GetValue(0, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
 		int64_t actual = 0;
 		std::vector<H3Index> out(6);
-		H3Error err2 = originToDirectedEdges(origin, out.data());
-		ThrowH3Error(err2);
-		for (auto val : out) {
-			if (val != H3_NULL) {
-				ListVector::PushBack(result, Value::UBIGINT(val));
-				actual++;
+		H3Error err = originToDirectedEdges(origin, out.data());
+		if (err) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+			for (auto val : out) {
+				if (val != H3_NULL) {
+					ListVector::PushBack(result, Value::UBIGINT(val));
+					actual++;
+				}
 			}
-		}
 
-		result_data[i].length = actual;
+			result_data[i].length = actual;
+		}
 	}
 	result.Verify(args.size());
 }
 
 static void GetDirectedEdgeOriginFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
-	UnaryExecutor::Execute<uint64_t, uint64_t>(inputs, result, args.size(), [&](uint64_t input) {
-		H3Index out;
-		H3Error err = getDirectedEdgeOrigin(input, &out);
-		ThrowH3Error(err);
-		return out;
-	});
+	UnaryExecutor::ExecuteWithNulls<uint64_t, uint64_t>(inputs, result, args.size(),
+	                                                    [&](uint64_t input, ValidityMask &mask, idx_t idx) {
+		                                                    H3Index out;
+		                                                    H3Error err = getDirectedEdgeOrigin(input, &out);
+		                                                    if (err) {
+			                                                    mask.SetInvalid(idx);
+			                                                    return H3Index(H3_NULL);
+		                                                    } else {
+			                                                    return out;
+		                                                    }
+	                                                    });
 }
 
 static void GetDirectedEdgeDestinationFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
-	UnaryExecutor::Execute<uint64_t, uint64_t>(inputs, result, args.size(), [&](uint64_t input) {
-		H3Index out;
-		H3Error err = getDirectedEdgeDestination(input, &out);
-		ThrowH3Error(err);
-		return out;
-	});
+	UnaryExecutor::ExecuteWithNulls<uint64_t, uint64_t>(inputs, result, args.size(),
+	                                                    [&](uint64_t input, ValidityMask &mask, idx_t idx) {
+		                                                    H3Index out;
+		                                                    H3Error err = getDirectedEdgeDestination(input, &out);
+		                                                    if (err) {
+			                                                    mask.SetInvalid(idx);
+			                                                    return H3Index(H3_NULL);
+		                                                    } else {
+			                                                    return out;
+		                                                    }
+	                                                    });
 }
 
 static void CellsToDirectedEdgeFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
-	BinaryExecutor::Execute<uint64_t, uint64_t, uint64_t>(inputs, inputs2, result, args.size(),
-	                                                      [&](uint64_t input, uint64_t input2) {
-		                                                      H3Index out;
-		                                                      H3Error err = cellsToDirectedEdge(input, input2, &out);
-		                                                      ThrowH3Error(err);
-		                                                      return out;
-	                                                      });
+	BinaryExecutor::ExecuteWithNulls<uint64_t, uint64_t, uint64_t>(
+	    inputs, inputs2, result, args.size(), [&](uint64_t input, uint64_t input2, ValidityMask &mask, idx_t idx) {
+		    H3Index out;
+		    H3Error err = cellsToDirectedEdge(input, input2, &out);
+		    if (err) {
+			    mask.SetInvalid(idx);
+			    return H3Index(H3_NULL);
+		    } else {
+			    return out;
+		    }
+	    });
 }
 
 static void AreNeighborCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
-	BinaryExecutor::Execute<uint64_t, uint64_t, bool>(inputs, inputs2, result, args.size(),
-	                                                  [&](uint64_t input, uint64_t input2) {
-		                                                  int out;
-		                                                  H3Error err = areNeighborCells(input, input2, &out);
-		                                                  ThrowH3Error(err);
-		                                                  return bool(out);
-	                                                  });
+	BinaryExecutor::ExecuteWithNulls<uint64_t, uint64_t, bool>(
+	    inputs, inputs2, result, args.size(), [&](uint64_t input, uint64_t input2, ValidityMask &mask, idx_t idx) {
+		    int out;
+		    H3Error err = areNeighborCells(input, input2, &out);
+		    if (err) {
+			    mask.SetInvalid(idx);
+			    return bool(false);
+		    } else {
+			    return bool(out);
+		    }
+	    });
 }
 
 static void IsValidDirectedEdgeVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
