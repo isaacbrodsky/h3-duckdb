@@ -27,9 +27,19 @@ SELECT h3_cell_to_vertexes(h3_string_to_h3('823d6ffffffffff'));
 [2459626752788398079, 2676216249809108991, 2604158655771181055, 2387553765587681279, 2315496171549753343, 2531684346826326015]
 
 query I
+SELECT h3_cell_to_vertexes(h3_string_to_h3('fffffffffffffff'));
+----
+NULL
+
+query I
 SELECT h3_cell_to_vertex(h3_string_to_h3('823d6ffffffffff'), 0);
 ----
 2459626752788398079
+
+query I
+SELECT h3_cell_to_vertex(h3_string_to_h3('823d6ffffffffff'), -1);
+----
+NULL
 
 query I
 SELECT h3_vertex_to_latlng(h3_string_to_h3('2222597fffffffff'));

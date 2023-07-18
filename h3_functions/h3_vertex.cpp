@@ -6,13 +6,17 @@ namespace duckdb {
 static void CellToVertexFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
-	BinaryExecutor::Execute<H3Index, int32_t, H3Index>(inputs, inputs2, result, args.size(),
-	                                                   [&](H3Index cell, int32_t vertexNum) {
-		                                                   H3Index vertex;
-		                                                   H3Error err = cellToVertex(cell, vertexNum, &vertex);
-		                                                   ThrowH3Error(err);
-		                                                   return vertex;
-	                                                   });
+	BinaryExecutor::ExecuteWithNulls<H3Index, int32_t, H3Index>(
+	    inputs, inputs2, result, args.size(), [&](H3Index cell, int32_t vertexNum, ValidityMask &mask, idx_t idx) {
+		    H3Index vertex;
+		    H3Error err = cellToVertex(cell, vertexNum, &vertex);
+		    if (err) {
+			    mask.SetInvalid(idx);
+			    return H3Index(H3_NULL);
+		    } else {
+			    return vertex;
+		    }
+	    });
 }
 
 static void CellToVertexesFunction(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -25,37 +29,50 @@ static void CellToVertexesFunction(DataChunk &args, ExpressionState &state, Vect
 		int64_t actual = 0;
 		std::vector<H3Index> out(6);
 		H3Error err = cellToVertexes(cell, out.data());
-		ThrowH3Error(err);
-		for (auto val : out) {
-			if (val != H3_NULL) {
-				ListVector::PushBack(result, Value::UBIGINT(val));
-				actual++;
+		if (err) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+			for (auto val : out) {
+				if (val != H3_NULL) {
+					ListVector::PushBack(result, Value::UBIGINT(val));
+					actual++;
+				}
 			}
-		}
 
-		result_data[i].length = actual;
+			result_data[i].length = actual;
+		}
 	}
 	result.Verify(args.size());
 }
 
 static void VertexToLatFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
-	UnaryExecutor::Execute<H3Index, double>(inputs, result, args.size(), [&](H3Index vertex) {
-		LatLng latLng = {.lat = 0, .lng = 0};
-		H3Error err = vertexToLatLng(vertex, &latLng);
-		ThrowH3Error(err);
-		return radsToDegs(latLng.lat);
-	});
+	UnaryExecutor::ExecuteWithNulls<H3Index, double>(inputs, result, args.size(),
+	                                                 [&](H3Index vertex, ValidityMask &mask, idx_t idx) {
+		                                                 LatLng latLng = {.lat = 0, .lng = 0};
+		                                                 H3Error err = vertexToLatLng(vertex, &latLng);
+		                                                 if (err) {
+			                                                 mask.SetInvalid(idx);
+			                                                 return .0;
+		                                                 } else {
+			                                                 return radsToDegs(latLng.lat);
+		                                                 }
+	                                                 });
 }
 
 static void VertexToLngFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
-	UnaryExecutor::Execute<H3Index, double>(inputs, result, args.size(), [&](H3Index vertex) {
-		LatLng latLng = {.lat = 0, .lng = 0};
-		H3Error err = vertexToLatLng(vertex, &latLng);
-		ThrowH3Error(err);
-		return radsToDegs(latLng.lng);
-	});
+	UnaryExecutor::ExecuteWithNulls<H3Index, double>(inputs, result, args.size(),
+	                                                 [&](H3Index vertex, ValidityMask &mask, idx_t idx) {
+		                                                 LatLng latLng = {.lat = 0, .lng = 0};
+		                                                 H3Error err = vertexToLatLng(vertex, &latLng);
+		                                                 if (err) {
+			                                                 mask.SetInvalid(idx);
+			                                                 return .0;
+		                                                 } else {
+			                                                 return radsToDegs(latLng.lng);
+		                                                 }
+	                                                 });
 }
 
 static void VertexToLatLngFunction(DataChunk &args, ExpressionState &state, Vector &result) {
