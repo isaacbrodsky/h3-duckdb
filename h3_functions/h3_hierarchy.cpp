@@ -6,12 +6,17 @@ namespace duckdb {
 static void CellToParentFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
-	BinaryExecutor::Execute<uint64_t, int, H3Index>(inputs, inputs2, result, args.size(), [&](uint64_t input, int res) {
-		H3Index parent;
-		H3Error err = cellToParent(input, res, &parent);
-		ThrowH3Error(err);
-		return parent;
-	});
+	BinaryExecutor::ExecuteWithNulls<uint64_t, int, H3Index>(
+	    inputs, inputs2, result, args.size(), [&](uint64_t input, int res, ValidityMask &mask, idx_t idx) {
+		    H3Index parent;
+		    H3Error err = cellToParent(input, res, &parent);
+		    if (err) {
+			    mask.SetInvalid(idx);
+			    return H3Index(H3_NULL);
+		    } else {
+			    return parent;
+		    }
+	    });
 }
 
 static void CellToChildrenFunction(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -22,20 +27,27 @@ static void CellToChildrenFunction(DataChunk &args, ExpressionState &state, Vect
 		uint64_t parent = args.GetValue(0, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
 		int32_t res = args.GetValue(1, i).DefaultCastAs(LogicalType::INTEGER).GetValue<int32_t>();
 		int64_t sz;
-		int64_t actual = 0;
 		H3Error err1 = cellToChildrenSize(parent, res, &sz);
-		ThrowH3Error(err1);
-		std::vector<H3Index> out(sz);
-		H3Error err2 = cellToChildren(parent, res, out.data());
-		ThrowH3Error(err2);
-		for (auto val : out) {
-			if (val != H3_NULL) {
-				ListVector::PushBack(result, Value::UBIGINT(val));
-				actual++;
+		if (err1) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+
+			std::vector<H3Index> out(sz);
+			H3Error err2 = cellToChildren(parent, res, out.data());
+			if (err2) {
+				result.SetValue(i, Value(LogicalType::SQLNULL));
+			} else {
+				int64_t actual = 0;
+				for (auto val : out) {
+					if (val != H3_NULL) {
+						ListVector::PushBack(result, Value::UBIGINT(val));
+						actual++;
+					}
+				}
+
+				result_data[i].length = actual;
 			}
 		}
-
-		result_data[i].length = actual;
 	}
 	result.Verify(args.size());
 }
@@ -43,36 +55,51 @@ static void CellToChildrenFunction(DataChunk &args, ExpressionState &state, Vect
 static void CellToCenterChildFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
-	BinaryExecutor::Execute<uint64_t, int, H3Index>(inputs, inputs2, result, args.size(), [&](uint64_t input, int res) {
-		H3Index child;
-		H3Error err = cellToCenterChild(input, res, &child);
-		ThrowH3Error(err);
-		return child;
-	});
+	BinaryExecutor::ExecuteWithNulls<uint64_t, int, H3Index>(
+	    inputs, inputs2, result, args.size(), [&](uint64_t input, int res, ValidityMask &mask, idx_t idx) {
+		    H3Index child;
+		    H3Error err = cellToCenterChild(input, res, &child);
+		    if (err) {
+			    mask.SetInvalid(idx);
+			    return H3Index(H3_NULL);
+		    } else {
+			    return child;
+		    }
+	    });
 }
 
 static void CellToChildPosFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
-	BinaryExecutor::Execute<H3Index, int, int64_t>(inputs, inputs2, result, args.size(), [&](H3Index input, int res) {
-		int64_t child;
-		H3Error err = cellToChildPos(input, res, &child);
-		ThrowH3Error(err);
-		return child;
-	});
+	BinaryExecutor::ExecuteWithNulls<H3Index, int, int64_t>(inputs, inputs2, result, args.size(),
+	                                                        [&](H3Index input, int res, ValidityMask &mask, idx_t idx) {
+		                                                        int64_t child;
+		                                                        H3Error err = cellToChildPos(input, res, &child);
+		                                                        if (err) {
+			                                                        mask.SetInvalid(idx);
+			                                                        return int64_t(0);
+		                                                        } else {
+			                                                        return child;
+		                                                        }
+	                                                        });
 }
 
 static void ChildPosToCellFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
 	auto &inputs3 = args.data[2];
-	TernaryExecutor::Execute<int64_t, H3Index, int, H3Index>(inputs, inputs2, inputs3, result, args.size(),
-	                                                         [&](int64_t pos, H3Index input, int res) {
-		                                                         H3Index child;
-		                                                         H3Error err = childPosToCell(pos, input, res, &child);
-		                                                         ThrowH3Error(err);
-		                                                         return child;
-	                                                         });
+	TernaryExecutor::ExecuteWithNulls<int64_t, H3Index, int, H3Index>(
+	    inputs, inputs2, inputs3, result, args.size(),
+	    [&](int64_t pos, H3Index input, int res, ValidityMask &mask, idx_t idx) {
+		    H3Index child;
+		    H3Error err = childPosToCell(pos, input, res, &child);
+		    if (err) {
+			    mask.SetInvalid(idx);
+			    return H3Index(H3_NULL);
+		    } else {
+			    return child;
+		    }
+	    });
 }
 
 static void CompactCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -117,19 +144,22 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state, Vector
 		}
 		auto compacted = new H3Index[list_children.size()]();
 		H3Error err = compactCells(input_set, compacted, list_children.size());
-		ThrowH3Error(err);
 
-		int64_t actual = 0;
-		for (size_t i = 0; i < list_children.size(); i++) {
-			auto child_val = compacted[i];
-			if (child_val != H3_NULL) {
-				ListVector::PushBack(result, Value::UBIGINT(child_val));
-				actual++;
+		if (err) {
+			result_validity.SetInvalid(i);
+		} else {
+			int64_t actual = 0;
+			for (size_t i = 0; i < list_children.size(); i++) {
+				auto child_val = compacted[i];
+				if (child_val != H3_NULL) {
+					ListVector::PushBack(result, Value::UBIGINT(child_val));
+					actual++;
+				}
 			}
-		}
 
-		result_entries[i].length = actual;
-		offset += actual;
+			result_entries[i].length = actual;
+			offset += actual;
+		}
 	}
 
 	result.Verify(args.size());
@@ -189,22 +219,28 @@ static void UncompactCellsFunction(DataChunk &args, ExpressionState &state, Vect
 		}
 		int64_t uncompacted_sz;
 		H3Error sz_err = uncompactCellsSize(input_set, list_children.size(), res, &uncompacted_sz);
-		ThrowH3Error(sz_err);
+		if (sz_err) {
+			result_validity.SetInvalid(i);
+			continue;
+		}
 		auto uncompacted = new H3Index[uncompacted_sz]();
 		H3Error err = uncompactCells(input_set, list_children.size(), uncompacted, uncompacted_sz, res);
-		ThrowH3Error(err);
 
-		int64_t actual = 0;
-		for (size_t i = 0; i < uncompacted_sz; i++) {
-			auto child_val = uncompacted[i];
-			if (child_val != H3_NULL) {
-				ListVector::PushBack(result, Value::UBIGINT(child_val));
-				actual++;
+		if (err) {
+			result_validity.SetInvalid(i);
+		} else {
+			int64_t actual = 0;
+			for (size_t i = 0; i < uncompacted_sz; i++) {
+				auto child_val = uncompacted[i];
+				if (child_val != H3_NULL) {
+					ListVector::PushBack(result, Value::UBIGINT(child_val));
+					actual++;
+				}
 			}
-		}
 
-		result_entries[i].length = actual;
-		offset += actual;
+			result_entries[i].length = actual;
+			offset += actual;
+		}
 	}
 
 	result.Verify(args.size());
