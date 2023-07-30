@@ -40,3 +40,23 @@ query I
 SELECT h3_cell_to_latlng(h3_string_to_h3('ffffffffffffffff'));
 ----
 NULL
+
+query I
+SELECT h3_cell_to_boundary_wkt(h3_string_to_h3('822d57fffffffff'));
+----
+POLYGON ((38.777546 44.198571, 39.938746 42.736298, 42.150674 42.631271, 43.258395 44.047542, 42.146575 45.539505, 39.897167 45.559577, 38.777546 44.198571))
+
+query I
+SELECT strlen(h3_cell_to_boundary_wkt(h3_string_to_h3('fffffffffffffff')));
+----
+0
+
+query I
+SELECT h3_cell_to_boundary_wkt('822d57fffffffff');
+----
+POLYGON ((38.777546 44.198571, 39.938746 42.736298, 42.150674 42.631271, 43.258395 44.047542, 42.146575 45.539505, 39.897167 45.559577, 38.777546 44.198571))
+
+query I
+SELECT strlen(h3_cell_to_boundary_wkt('zzz'));
+----
+0

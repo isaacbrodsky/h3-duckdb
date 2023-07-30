@@ -22,6 +22,7 @@ public:
 		functions.push_back(GetCellToLatFunction());
 		functions.push_back(GetCellToLngFunction());
 		functions.push_back(GetCellToLatLngFunction());
+		functions.push_back(GetCellToBoundaryWktFunction());
 
 		// Inspection
 		functions.push_back(GetGetResolutionFunction());
@@ -81,6 +82,7 @@ private:
 	static CreateScalarFunctionInfo GetCellToLatFunction();
 	static CreateScalarFunctionInfo GetCellToLngFunction();
 	static CreateScalarFunctionInfo GetCellToLatLngFunction();
+	static CreateScalarFunctionInfo GetCellToBoundaryWktFunction();
 
 	// Inspection
 	static CreateScalarFunctionInfo GetGetResolutionFunction();

@@ -71,7 +71,51 @@ static void CellToLatLngFunction(DataChunk &args, ExpressionState &state, Vector
 	result.Verify(args.size());
 }
 
-// TODO: cellToBoundary
+struct CellToBoundaryOperator {
+	template <class INPUT_TYPE, class RESULT_TYPE>
+	static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+		CellBoundary boundary;
+		H3Error err = cellToBoundary(input, &boundary);
+
+		if (err) {
+			// TODO: Is it possible to return null here instead?
+			return StringVector::EmptyString(result, 0);
+		} else {
+			std::string str = "POLYGON ((";
+			for (int i = 0; i <= boundary.numVerts; i++) {
+				std::string sep = (i == 0) ? "" : ", ";
+				int vertIndex = (i == boundary.numVerts) ? 0 : i;
+				str += StringUtil::Format("%s%f %f", sep, radsToDegs(boundary.verts[vertIndex].lng),
+				                          radsToDegs(boundary.verts[vertIndex].lat));
+			}
+			str += "))";
+
+			string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+			return StringVector::AddString(result, strAsStr);
+		}
+	}
+};
+
+static void CellToBoundaryWktFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	UnaryExecutor::ExecuteString<uint64_t, string_t, CellToBoundaryOperator>(args.data[0], result, args.size());
+}
+
+struct CellToBoundaryVarcharOperator {
+	template <class INPUT_TYPE, class RESULT_TYPE>
+	static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+		H3Index h;
+		H3Error err = stringToH3(input.GetString().c_str(), &h);
+		if (err) {
+			return StringVector::EmptyString(result, 0);
+		} else {
+			return CellToBoundaryOperator().Operation<H3Index, RESULT_TYPE>(h, result);
+		}
+	}
+};
+
+static void CellToBoundaryWktVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	UnaryExecutor::ExecuteString<string_t, string_t, CellToBoundaryVarcharOperator>(args.data[0], result, args.size());
+}
 
 CreateScalarFunctionInfo H3Functions::GetLatLngToCellFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_latlng_to_cell",
@@ -92,6 +136,13 @@ CreateScalarFunctionInfo H3Functions::GetCellToLngFunction() {
 CreateScalarFunctionInfo H3Functions::GetCellToLatLngFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_cell_to_latlng", {LogicalType::UBIGINT},
 	                                               LogicalType::LIST(LogicalType::DOUBLE), CellToLatLngFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetCellToBoundaryWktFunction() {
+	ScalarFunctionSet funcs("h3_cell_to_boundary_wkt");
+	funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR, CellToBoundaryWktVarcharFunction));
+	funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR, CellToBoundaryWktFunction));
+	return CreateScalarFunctionInfo(funcs);
 }
 
 } // namespace duckdb

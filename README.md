@@ -30,6 +30,7 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_cell_to_lat`
 - `h3_cell_to_lng`
 - `h3_cell_to_latlng`
+- `h3_cell_to_boundary_wkt`
 - `h3_get_resolution`
 - `h3_get_base_cell_number`
 - `h3_string_to_h3`
