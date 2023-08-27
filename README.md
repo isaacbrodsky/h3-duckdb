@@ -69,6 +69,10 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_get_directed_edge_destination`
 - `h3_cells_to_directed_edge`
 - `h3_are_neighbor_cells`
+- `h3_get_hexagon_area_avg`
+- `h3_cell_area`
+- `h3_edge_length`
+- `h3_get_num_cells`
 
 # Development
 

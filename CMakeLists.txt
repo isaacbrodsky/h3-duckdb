@@ -91,6 +91,7 @@ set(LIB_SOURCE_FILES
   h3_functions/h3_traversal.cpp
   h3_functions/h3_vertex.cpp
   h3_functions/h3_directededge.cpp
+  h3_functions/h3_misc.cpp
 )
 set(LIB_HEADER_FILES
   include/h3_common.hpp
