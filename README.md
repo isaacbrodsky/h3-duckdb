@@ -8,7 +8,7 @@ To build, type:
 git submodule update --init
 GEN=ninja make duckdb_release release
 ```
-(You do not strictly need Ninja. [See below for other options.](#development))
+(You will need Git, CMake, and a C compiler. You do not strictly need Ninja. [See below for other options.](#development))
 
 To run, run the bundled `duckdb` shell:
 ```sh
