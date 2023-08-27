@@ -128,7 +128,52 @@ static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
 	                                      [&](H3Index input) { return bool(isValidDirectedEdge(input)); });
 }
 
-// TODO: GetDirectedEdgeToBoundary
+struct DirectedEdgeToBoundaryOperator {
+	template <class INPUT_TYPE, class RESULT_TYPE>
+	static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+		CellBoundary boundary;
+		H3Error err = directedEdgeToBoundary(input, &boundary);
+
+		if (err) {
+			// TODO: Is it possible to return null here instead?
+			return StringVector::EmptyString(result, 0);
+		} else {
+			std::string str = "POLYGON ((";
+			for (int i = 0; i <= boundary.numVerts; i++) {
+				std::string sep = (i == 0) ? "" : ", ";
+				int vertIndex = (i == boundary.numVerts) ? 0 : i;
+				str += StringUtil::Format("%s%f %f", sep, radsToDegs(boundary.verts[vertIndex].lng),
+				                          radsToDegs(boundary.verts[vertIndex].lat));
+			}
+			str += "))";
+
+			string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+			return StringVector::AddString(result, strAsStr);
+		}
+	}
+};
+
+static void DirectedEdgeToBoundaryWktFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	UnaryExecutor::ExecuteString<uint64_t, string_t, DirectedEdgeToBoundaryOperator>(args.data[0], result, args.size());
+}
+
+struct DirectedEdgeToBoundaryVarcharOperator {
+	template <class INPUT_TYPE, class RESULT_TYPE>
+	static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+		H3Index h;
+		H3Error err = stringToH3(input.GetString().c_str(), &h);
+		if (err) {
+			return StringVector::EmptyString(result, 0);
+		} else {
+			return DirectedEdgeToBoundaryOperator().Operation<H3Index, RESULT_TYPE>(h, result);
+		}
+	}
+};
+
+static void DirectedEdgeToBoundaryWktVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	UnaryExecutor::ExecuteString<string_t, string_t, DirectedEdgeToBoundaryVarcharOperator>(args.data[0], result,
+	                                                                                        args.size());
+}
 
 CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToCellsFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_directed_edge_to_cells", {LogicalType::UBIGINT},
@@ -168,6 +213,14 @@ CreateScalarFunctionInfo H3Functions::GetIsValidDirectedEdgeFunctions() {
 	ScalarFunctionSet funcs("h3_is_valid_directed_edge");
 	funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN, IsValidDirectedEdgeVarcharFunction));
 	funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN, IsValidDirectedEdgeFunction));
+	return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToBoundaryWktFunction() {
+	ScalarFunctionSet funcs("h3_directed_edge_to_boundary_wkt");
+	funcs.AddFunction(
+	    ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR, DirectedEdgeToBoundaryWktVarcharFunction));
+	funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR, DirectedEdgeToBoundaryWktFunction));
 	return CreateScalarFunctionInfo(funcs);
 }
 
