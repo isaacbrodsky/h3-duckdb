@@ -3,11 +3,12 @@
 [![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.1.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-To build, type 
+To build, type:
 ```sh
 git submodule update --init
-make duckdb_release release
+GEN=ninja make duckdb_release release
 ```
+(You do not strictly need Ninja. [See below for other options.](#development))
 
 To run, run the bundled `duckdb` shell:
 ```sh
@@ -71,22 +72,25 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 
 # Development
 
-For a greatly sped up build (enables parallelism), run:
+The build instructions suggest using `ninja` because it enables parallelism by default.
+Using `make` instead is fine, but you will want to enable the following parallelism option,
+because building DuckDB can take a very long time (>=1 hour is not unusual). Run the below
+replacing `4` with the number of CPU cores on your machine.
 
 ```sh
 CMAKE_BUILD_PARALLEL_LEVEL=4 make duckdb_release release
-```
-
-To update the submodules to latest upstream, run:
-
-```sh
-make update_deps
 ```
 
 To run tests:
 
 ```sh
 make test
+```
+
+To update the submodules to latest upstream, run:
+
+```sh
+make update_deps
 ```
 
 # License
