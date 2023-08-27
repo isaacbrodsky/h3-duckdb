@@ -1,0 +1,97 @@
+statement ok
+LOAD 'build/release/h3.duckdb_extension';
+
+query I
+SELECT h3_get_hexagon_area_avg(0, 'km^2');
+----
+4357449.416078383
+
+query I
+SELECT h3_get_hexagon_area_avg(1, 'km^2');
+----
+609788.4417941332
+
+query I
+SELECT h3_get_hexagon_area_avg(-1, 'km^2');
+----
+NULL
+
+query I
+SELECT h3_get_hexagon_area_avg(0, 'm^2');
+----
+4357449416078.39
+
+query I
+SELECT h3_get_hexagon_area_avg(1, 'm^2');
+----
+609788441794.1339
+
+query I
+SELECT h3_get_hexagon_area_avg(-1, 'm^2');
+----
+NULL
+
+query I
+SELECT h3_cell_area('8928308280fffff', 'km^2')
+----
+0.1093981886464832
+
+query I
+SELECT h3_cell_area('8928308280fffff', 'm^2')
+----
+109398.18864648319
+
+query I
+SELECT h3_cell_area(cast(586265647244115967 as ubigint), 'km^2')
+----
+85321.69572540345
+
+query I
+SELECT h3_cell_area('fffffffffffffff', 'km^2')
+----
+NULL
+
+query I
+SELECT h3_cell_area('8928308280fffff', 'km')
+----
+NULL
+
+query I
+SELECT h3_edge_length('115283473fffffff', 'km')
+----
+10.294736086198531
+
+query I
+SELECT h3_edge_length('115283473fffffff', 'm')
+----
+10294.73608619853
+
+query I
+SELECT h3_edge_length(cast(1608492358964346879 as ubigint), 'km')
+----
+10.302930275179133
+
+query I
+SELECT h3_edge_length('fffffffffffffff', 'km')
+----
+NULL
+
+query I
+SELECT h3_edge_length('115283473fffffff', 'km^2')
+----
+NULL
+
+query I
+SELECT h3_get_num_cells(0)
+----
+122
+
+query I
+SELECT h3_get_num_cells(5)
+----
+2016842
+
+query I
+SELECT h3_get_num_cells(-1)
+----
+NULL

@@ -73,6 +73,14 @@ public:
 		functions.push_back(GetVertexToLatLngFunction());
 		functions.push_back(GetIsValidVertexFunctions());
 
+		// Misc
+		functions.push_back(GetGetHexagonAreaAvgFunction());
+		functions.push_back(GetCellAreaFunction());
+		functions.push_back(GetGetHexagonEdgeLengthAvgFunction());
+		functions.push_back(GetEdgeLengthFunction());
+		functions.push_back(GetGetNumCellsFunction());
+		// TODO: getRes0Cells, getPentagons, greatCircleDistance
+
 		return functions;
 	}
 
@@ -132,6 +140,14 @@ private:
 	static CreateScalarFunctionInfo GetVertexToLngFunction();
 	static CreateScalarFunctionInfo GetVertexToLatLngFunction();
 	static CreateScalarFunctionInfo GetIsValidVertexFunctions();
+
+	// Misc
+	static CreateScalarFunctionInfo GetGetHexagonAreaAvgFunction();
+	static CreateScalarFunctionInfo GetCellAreaFunction();
+	static CreateScalarFunctionInfo GetGetHexagonEdgeLengthAvgFunction();
+	static CreateScalarFunctionInfo GetEdgeLengthFunction();
+	static CreateScalarFunctionInfo GetGetNumCellsFunction();
+	// TODO: getRes0Cells, getPentagons, greatCircleDistance
 
 	static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
 	                       vector<CreateScalarFunctionInfo> &functions) {
