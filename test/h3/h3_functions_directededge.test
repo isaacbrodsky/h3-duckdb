@@ -60,3 +60,23 @@ query I
 SELECT h3_are_neighbor_cells(599686042433355775::ubigint, 599686029548453887::ubigint)
 ----
 false
+
+query I
+SELECT strlen(h3_directed_edge_to_boundary_wkt(0))
+----
+0
+
+query I
+SELECT strlen(h3_directed_edge_to_boundary_wkt('0'))
+----
+0
+
+query I
+SELECT h3_directed_edge_to_boundary_wkt(1608492358964346879::ubigint)
+----
+POLYGON ((-121.915080 37.271356, -121.862223 37.353926, -121.915080 37.271356))
+
+query I
+SELECT h3_directed_edge_to_boundary_wkt('115283473fffffff')
+----
+POLYGON ((-122.037735 37.420129, -122.090429 37.337556, -122.037735 37.420129))
