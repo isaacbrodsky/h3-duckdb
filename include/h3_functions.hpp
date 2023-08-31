@@ -79,7 +79,9 @@ public:
 		functions.push_back(GetGetHexagonEdgeLengthAvgFunction());
 		functions.push_back(GetEdgeLengthFunction());
 		functions.push_back(GetGetNumCellsFunction());
-		// TODO: getRes0Cells, getPentagons, greatCircleDistance
+		functions.push_back(GetGetRes0CellsFunction());
+		functions.push_back(GetGetPentagonsFunction());
+		functions.push_back(GetGreatCircleDistanceFunction());
 
 		return functions;
 	}
@@ -147,7 +149,9 @@ private:
 	static CreateScalarFunctionInfo GetGetHexagonEdgeLengthAvgFunction();
 	static CreateScalarFunctionInfo GetEdgeLengthFunction();
 	static CreateScalarFunctionInfo GetGetNumCellsFunction();
-	// TODO: getRes0Cells, getPentagons, greatCircleDistance
+	static CreateScalarFunctionInfo GetGetRes0CellsFunction();
+	static CreateScalarFunctionInfo GetGetPentagonsFunction();
+	static CreateScalarFunctionInfo GetGreatCircleDistanceFunction();
 
 	static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
 	                       vector<CreateScalarFunctionInfo> &functions) {

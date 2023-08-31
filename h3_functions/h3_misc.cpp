@@ -3,6 +3,8 @@
 
 namespace duckdb {
 
+// TODO: Consider using enums for (km, m, rads) here, instead of VARCHAR (string)
+
 static void GetHexagonAreaAvgFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	auto &inputs2 = args.data[1];
@@ -139,6 +141,111 @@ static void GetNumCellsFunction(DataChunk &args, ExpressionState &state, Vector 
 	                                              });
 }
 
+static void GetRes0CellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto result_data = FlatVector::GetData<list_entry_t>(result);
+
+	int sz = res0CellCount();
+
+	for (idx_t i = 0; i < args.size(); i++) {
+		result_data[i].offset = ListVector::GetListSize(result);
+
+		std::vector<H3Index> out(sz);
+		H3Error err1 = getRes0Cells(out.data());
+		if (err1) {
+			// This should be unreachable
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+			int64_t actual = 0;
+			for (auto val : out) {
+				if (val != H3_NULL) {
+					ListVector::PushBack(result, Value::UBIGINT(val));
+					actual++;
+				}
+			}
+			// actual should always be 122
+
+			result_data[i].length = actual;
+		}
+	}
+	result.Verify(args.size());
+	result.SetVectorType(VectorType::CONSTANT_VECTOR);
+}
+
+static void GetPentagonsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto result_data = FlatVector::GetData<list_entry_t>(result);
+
+	int sz = pentagonCount();
+
+	for (idx_t i = 0; i < args.size(); i++) {
+		result_data[i].offset = ListVector::GetListSize(result);
+
+		int32_t res = args.GetValue(0, i).DefaultCastAs(LogicalType::INTEGER).GetValue<int32_t>();
+
+		std::vector<H3Index> out(sz);
+		H3Error err1 = getPentagons(res, out.data());
+		if (err1) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+			int64_t actual = 0;
+			for (auto val : out) {
+				if (val != H3_NULL) {
+					ListVector::PushBack(result, Value::UBIGINT(val));
+					actual++;
+				}
+			}
+			// actual should always be 12
+
+			result_data[i].length = actual;
+		}
+	}
+	result.Verify(args.size());
+}
+
+static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto result_data = FlatVector::GetData<list_entry_t>(result);
+
+	UnifiedVectorFormat unitData;
+
+	args.data[4].ToUnifiedFormat(args.size(), unitData);
+
+	int sz = pentagonCount();
+
+	for (idx_t i = 0; i < args.size(); i++) {
+		double dist = 0.0;
+		bool isValid = true;
+
+		if (unitData.validity.RowIsValid(i)) {
+			double lat0 = args.GetValue(0, i).DefaultCastAs(LogicalType::DOUBLE).GetValue<double>();
+			double lng0 = args.GetValue(1, i).DefaultCastAs(LogicalType::DOUBLE).GetValue<double>();
+			double lat1 = args.GetValue(2, i).DefaultCastAs(LogicalType::DOUBLE).GetValue<double>();
+			double lng1 = args.GetValue(3, i).DefaultCastAs(LogicalType::DOUBLE).GetValue<double>();
+			// TODO: This looks unsafe
+			string_t unit = ((string_t *)unitData.data)[i];
+
+			LatLng latLng0 = {.lat = lat0, .lng = lng0};
+			LatLng latLng1 = {.lat = lat1, .lng = lng1};
+
+			if (unit == "rads") {
+				dist = greatCircleDistanceRads(&latLng0, &latLng1);
+			} else if (unit == "km") {
+				dist = greatCircleDistanceKm(&latLng0, &latLng1);
+			} else if (unit == "m") {
+				dist = greatCircleDistanceM(&latLng0, &latLng1);
+			} else {
+				isValid = false;
+			}
+		} else {
+			isValid = false;
+		}
+
+		if (isValid) {
+			result.SetValue(i, Value(dist));
+		} else {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		}
+	}
+}
+
 CreateScalarFunctionInfo H3Functions::GetGetHexagonAreaAvgFunction() {
 	return CreateScalarFunctionInfo(ScalarFunction("h3_get_hexagon_area_avg",
 	                                               {LogicalType::INTEGER, LogicalType::VARCHAR}, LogicalType::DOUBLE,
@@ -172,6 +279,23 @@ CreateScalarFunctionInfo H3Functions::GetEdgeLengthFunction() {
 CreateScalarFunctionInfo H3Functions::GetGetNumCellsFunction() {
 	return CreateScalarFunctionInfo(
 	    ScalarFunction("h3_get_num_cells", {LogicalType::INTEGER}, LogicalType::BIGINT, GetNumCellsFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetGetRes0CellsFunction() {
+	return CreateScalarFunctionInfo(
+	    ScalarFunction("h3_get_res0_cells", {}, LogicalType::LIST(LogicalType::UBIGINT), GetRes0CellsFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetGetPentagonsFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_get_pentagons", {LogicalType::INTEGER},
+	                                               LogicalType::LIST(LogicalType::UBIGINT), GetPentagonsFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetGreatCircleDistanceFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction(
+	    "h3_great_circle_distance",
+	    {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::VARCHAR},
+	    LogicalType::DOUBLE, GreatCircleDistanceFunction));
 }
 
 } // namespace duckdb

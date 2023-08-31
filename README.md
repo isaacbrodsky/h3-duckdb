@@ -74,6 +74,9 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_cell_area`
 - `h3_edge_length`
 - `h3_get_num_cells`
+- `h3_get_res0_cells`
+- `h3_get_pentagons`
+- `h3_great_circle_distance`
 
 # Development
 
