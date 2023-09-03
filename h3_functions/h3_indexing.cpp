@@ -39,24 +39,24 @@ static void CellToLatFunction(DataChunk &args, ExpressionState &state, Vector &r
 
 static void CellToLatVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
-	UnaryExecutor::ExecuteWithNulls<string_t, double>(inputs, result, args.size(),
-	                                                  [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
-		                                                  H3Index cell;
-		                                                  H3Error err0 = stringToH3(cellAddress.GetData(), &cell);
-		                                                  if (err0) {
-			                                                  mask.SetInvalid(idx);
-			                                                  return .0;
-		                                                  } else {
-			                                                  LatLng latLng = {.lat = 0, .lng = 0};
-			                                                  H3Error err = cellToLatLng(cell, &latLng);
-			                                                  if (err) {
-				                                                  mask.SetInvalid(idx);
-				                                                  return .0;
-			                                                  } else {
-				                                                  return radsToDegs(latLng.lat);
-			                                                  }
-		                                                  }
-	                                                  });
+	UnaryExecutor::ExecuteWithNulls<string_t, double>(
+	    inputs, result, args.size(), [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+		    H3Index cell;
+		    H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+		    if (err0) {
+			    mask.SetInvalid(idx);
+			    return .0;
+		    } else {
+			    LatLng latLng = {.lat = 0, .lng = 0};
+			    H3Error err = cellToLatLng(cell, &latLng);
+			    if (err) {
+				    mask.SetInvalid(idx);
+				    return .0;
+			    } else {
+				    return radsToDegs(latLng.lat);
+			    }
+		    }
+	    });
 }
 
 static void CellToLngFunction(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -76,24 +76,24 @@ static void CellToLngFunction(DataChunk &args, ExpressionState &state, Vector &r
 
 static void CellToLngVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
-	UnaryExecutor::ExecuteWithNulls<string_t, double>(inputs, result, args.size(),
-	                                                  [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
-		                                                  H3Index cell;
-		                                                  H3Error err0 = stringToH3(cellAddress.GetData(), &cell);
-		                                                  if (err0) {
-			                                                  mask.SetInvalid(idx);
-			                                                  return .0;
-		                                                  } else {
-			                                                  LatLng latLng = {.lat = 0, .lng = 0};
-			                                                  H3Error err = cellToLatLng(cell, &latLng);
-			                                                  if (err) {
-				                                                  mask.SetInvalid(idx);
-				                                                  return .0;
-			                                                  } else {
-				                                                  return radsToDegs(latLng.lng);
-			                                                  }
-		                                                  }
-	                                                  });
+	UnaryExecutor::ExecuteWithNulls<string_t, double>(
+	    inputs, result, args.size(), [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+		    H3Index cell;
+		    H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+		    if (err0) {
+			    mask.SetInvalid(idx);
+			    return .0;
+		    } else {
+			    LatLng latLng = {.lat = 0, .lng = 0};
+			    H3Error err = cellToLatLng(cell, &latLng);
+			    if (err) {
+				    mask.SetInvalid(idx);
+				    return .0;
+			    } else {
+				    return radsToDegs(latLng.lng);
+			    }
+		    }
+	    });
 }
 
 static void CellToLatLngFunction(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -122,7 +122,7 @@ static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state,
 
 		string_t cellAddress = args.GetValue(0, i).ToString();
 		H3Index cell;
-		H3Error err0 = stringToH3(cellAddress.GetData(), &cell);
+		H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
 		if (err0) {
 			result.SetValue(i, Value(LogicalType::SQLNULL));
 		} else {
