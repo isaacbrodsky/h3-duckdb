@@ -77,6 +77,7 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
 - `h3_get_res0_cells`
 - `h3_get_pentagons`
 - `h3_great_circle_distance`
+- `h3_cells_to_multi_polygon_wkt`
 
 # Development
 
