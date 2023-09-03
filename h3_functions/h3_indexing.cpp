@@ -37,6 +37,28 @@ static void CellToLatFunction(DataChunk &args, ExpressionState &state, Vector &r
 	                                                 });
 }
 
+static void CellToLatVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto &inputs = args.data[0];
+	UnaryExecutor::ExecuteWithNulls<string_t, double>(
+	    inputs, result, args.size(), [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+		    H3Index cell;
+		    H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+		    if (err0) {
+			    mask.SetInvalid(idx);
+			    return .0;
+		    } else {
+			    LatLng latLng = {.lat = 0, .lng = 0};
+			    H3Error err = cellToLatLng(cell, &latLng);
+			    if (err) {
+				    mask.SetInvalid(idx);
+				    return .0;
+			    } else {
+				    return radsToDegs(latLng.lat);
+			    }
+		    }
+	    });
+}
+
 static void CellToLngFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &inputs = args.data[0];
 	UnaryExecutor::ExecuteWithNulls<H3Index, double>(inputs, result, args.size(),
@@ -50,6 +72,28 @@ static void CellToLngFunction(DataChunk &args, ExpressionState &state, Vector &r
 			                                                 return radsToDegs(latLng.lng);
 		                                                 }
 	                                                 });
+}
+
+static void CellToLngVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto &inputs = args.data[0];
+	UnaryExecutor::ExecuteWithNulls<string_t, double>(
+	    inputs, result, args.size(), [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+		    H3Index cell;
+		    H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+		    if (err0) {
+			    mask.SetInvalid(idx);
+			    return .0;
+		    } else {
+			    LatLng latLng = {.lat = 0, .lng = 0};
+			    H3Error err = cellToLatLng(cell, &latLng);
+			    if (err) {
+				    mask.SetInvalid(idx);
+				    return .0;
+			    } else {
+				    return radsToDegs(latLng.lng);
+			    }
+		    }
+	    });
 }
 
 static void CellToLatLngFunction(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -66,6 +110,31 @@ static void CellToLatLngFunction(DataChunk &args, ExpressionState &state, Vector
 			ListVector::PushBack(result, radsToDegs(latLng.lat));
 			ListVector::PushBack(result, radsToDegs(latLng.lng));
 			result_data[i].length = 2;
+		}
+	}
+	result.Verify(args.size());
+}
+
+static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto result_data = FlatVector::GetData<list_entry_t>(result);
+	for (idx_t i = 0; i < args.size(); i++) {
+		result_data[i].offset = ListVector::GetListSize(result);
+
+		string_t cellAddress = args.GetValue(0, i).ToString();
+		H3Index cell;
+		H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+		if (err0) {
+			result.SetValue(i, Value(LogicalType::SQLNULL));
+		} else {
+			LatLng latLng;
+			H3Error err = cellToLatLng(cell, &latLng);
+			if (err) {
+				result.SetValue(i, Value(LogicalType::SQLNULL));
+			} else {
+				ListVector::PushBack(result, radsToDegs(latLng.lat));
+				ListVector::PushBack(result, radsToDegs(latLng.lng));
+				result_data[i].length = 2;
+			}
 		}
 	}
 	result.Verify(args.size());
@@ -124,18 +193,26 @@ CreateScalarFunctionInfo H3Functions::GetLatLngToCellFunction() {
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToLatFunction() {
-	return CreateScalarFunctionInfo(
-	    ScalarFunction("h3_cell_to_lat", {LogicalType::UBIGINT}, LogicalType::DOUBLE, CellToLatFunction));
+	ScalarFunctionSet funcs("h3_cell_to_lat");
+	funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::DOUBLE, CellToLatVarcharFunction));
+	funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE, CellToLatFunction));
+	return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToLngFunction() {
-	return CreateScalarFunctionInfo(
-	    ScalarFunction("h3_cell_to_lng", {LogicalType::UBIGINT}, LogicalType::DOUBLE, CellToLngFunction));
+	ScalarFunctionSet funcs("h3_cell_to_lng");
+	funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::DOUBLE, CellToLngVarcharFunction));
+	funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE, CellToLngFunction));
+	return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToLatLngFunction() {
-	return CreateScalarFunctionInfo(ScalarFunction("h3_cell_to_latlng", {LogicalType::UBIGINT},
-	                                               LogicalType::LIST(LogicalType::DOUBLE), CellToLatLngFunction));
+	ScalarFunctionSet funcs("h3_cell_to_latlng");
+	funcs.AddFunction(
+	    ScalarFunction({LogicalType::VARCHAR}, LogicalType::LIST(LogicalType::DOUBLE), CellToLatLngVarcharFunction));
+	funcs.AddFunction(
+	    ScalarFunction({LogicalType::UBIGINT}, LogicalType::LIST(LogicalType::DOUBLE), CellToLatLngFunction));
+	return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToBoundaryWktFunction() {

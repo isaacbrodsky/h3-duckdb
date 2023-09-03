@@ -219,8 +219,7 @@ static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
 			double lng0 = args.GetValue(1, i).DefaultCastAs(LogicalType::DOUBLE).GetValue<double>();
 			double lat1 = args.GetValue(2, i).DefaultCastAs(LogicalType::DOUBLE).GetValue<double>();
 			double lng1 = args.GetValue(3, i).DefaultCastAs(LogicalType::DOUBLE).GetValue<double>();
-			// TODO: This looks unsafe
-			string_t unit = ((string_t *)unitData.data)[i];
+			string_t unit = args.GetValue(4, i).ToString();
 
 			LatLng latLng0 = {.lat = lat0, .lng = lng0};
 			LatLng latLng1 = {.lat = lat1, .lng = lng1};
