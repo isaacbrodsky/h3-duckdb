@@ -21,6 +21,7 @@ set(ENABLE_DOCS OFF CACHE BOOL "" FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
 
 # Build the core library as static
+# TODO: Is this needed? Consider restoring correctly
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(h3)
 
@@ -50,7 +51,15 @@ set(ALL_SOURCE_FILES ${LIB_SOURCE_FILES} ${LIB_HEADER_FILES})
 set(EXTENSION_OBJECT_FILES ${LIB_SOURCE_FILES})
 add_library(${EXTENSION_NAME} STATIC ${EXTENSION_OBJECT_FILES})
 
-target_link_libraries(${TARGET_NAME} h3)
+# Note this must be the INSTALL target name.
+# See https://stackoverflow.com/a/71080574
+target_link_libraries(${EXTENSION_NAME} h3Targets)
+# TODO: target_link_libraries(${EXTENSION_NAME} h3)
+
+include_directories(include)
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/h3/src/h3lib/include")
+#target_include_directories(${EXTENSION_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/include")
+#target_include_directories(${EXTENSION_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/h3/src/h3lib/include")
 
 set(PARAMETERS "-warnings")
 build_loadable_extension(${TARGET_NAME} ${PARAMETERS} ${EXTENSION_OBJECT_FILES})
