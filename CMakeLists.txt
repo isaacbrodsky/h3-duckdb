@@ -53,16 +53,15 @@ add_library(${EXTENSION_NAME} STATIC ${EXTENSION_OBJECT_FILES})
 
 # Note this must be the INSTALL target name.
 # See https://stackoverflow.com/a/71080574
-target_link_libraries(${EXTENSION_NAME} h3Targets)
-# TODO: target_link_libraries(${EXTENSION_NAME} h3)
+target_link_libraries(${EXTENSION_NAME} h3Targets::libh3)
 
 include_directories(include)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/h3/src/h3lib/include")
-#target_include_directories(${EXTENSION_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/include")
-#target_include_directories(${EXTENSION_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/h3/src/h3lib/include")
 
 set(PARAMETERS "-warnings")
 build_loadable_extension(${TARGET_NAME} ${PARAMETERS} ${EXTENSION_OBJECT_FILES})
+
+target_link_libraries(h3ext_loadable_extension h3)
 
 install(
         TARGETS ${EXTENSION_NAME}
