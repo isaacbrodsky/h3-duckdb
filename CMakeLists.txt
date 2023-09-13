@@ -87,7 +87,7 @@ if(ENABLE_FORMAT)
         COMMENT "Formatting sources"
         )
     # Always do formatting
-    add_dependencies(${TARGET_NAME} format-ext)
+    add_dependencies(${EXTENSION_NAME} format-ext)
 elseif(NOT CLANG_FORMAT_PATH)
     message(WARNING "clang-format was not detected, "
                     "so automatic source code reformatting is disabled")
