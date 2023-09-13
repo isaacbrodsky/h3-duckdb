@@ -54,7 +54,17 @@ test_release: release
 	./build/release/test/unittest "$(PROJ_DIR)test/*"
 
 test_debug: debug
-	./build/release/test/unittest "$(PROJ_DIR)test/*"
+	./build/debug/test/unittest "$(PROJ_DIR)test/*"
+
+test_windows: test_release_windows
+
+EXT_PATH=$(PROJ_DIR)test/h3/
+
+test_release_windows: # release
+	./build/release/test/Release/unittest "$(EXT_PATH)*"
+
+test_debug_windows: debug
+	./build/debug/test/Release/unittest "$(EXT_PATH)*"
 
 update_deps: pull
 	git submodule update --remote --checkout
