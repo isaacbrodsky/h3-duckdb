@@ -1,5 +1,4 @@
-statement ok
-LOAD 'build/release/h3.duckdb_extension';
+require h3ext
 
 query I
 SELECT h3_is_valid_directed_edge('2222597fffffffff');

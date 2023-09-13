@@ -1,5 +1,4 @@
-statement ok
-LOAD 'build/release/h3.duckdb_extension';
+require h3ext
 
 query I
 select h3_cells_to_multi_polygon_wkt([586265647244115967::ubigint, 586260699441790975::ubigint, 586244756523188223::ubigint, 586245306279002111::ubigint, 586266196999929855::ubigint, 586264547732488191::ubigint, 586267846267371519::ubigint])
