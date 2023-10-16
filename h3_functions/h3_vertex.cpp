@@ -20,9 +20,12 @@ static void CellToVertexFunction(DataChunk &args, ExpressionState &state, Vector
 }
 
 static void CellToVertexesFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	result.SetVectorType(VectorType::FLAT_VECTOR);
+	auto &result_validity = FlatVector::Validity(result);
 	auto result_data = FlatVector::GetData<list_entry_t>(result);
+	idx_t offset = 0;
 	for (idx_t i = 0; i < args.size(); i++) {
-		result_data[i].offset = ListVector::GetListSize(result);
+		result_data[i].offset = offset;
 
 		uint64_t cell = args.GetValue(0, i).DefaultCastAs(LogicalType::UBIGINT).GetValue<uint64_t>();
 
@@ -30,19 +33,26 @@ static void CellToVertexesFunction(DataChunk &args, ExpressionState &state, Vect
 		std::vector<H3Index> out(6);
 		H3Error err = cellToVertexes(cell, out.data());
 		if (err) {
-			result.SetValue(i, Value(LogicalType::SQLNULL));
+			result_validity.SetInvalid(i);
+			result_data[i].length = 0;
 		} else {
 			for (auto val : out) {
 				if (val != H3_NULL) {
-					ListVector::PushBack(result, Value::UBIGINT(val));
+					auto result_val = Value::UBIGINT(val);
+					ListVector::PushBack(result, result_val);
 					actual++;
 				}
 			}
 
 			result_data[i].length = actual;
 		}
+		offset += actual;
 	}
 	result.Verify(args.size());
+
+	if (args.AllConstant()) {
+		result.SetVectorType(VectorType::CONSTANT_VECTOR);
+	}
 }
 
 static void VertexToLatFunction(DataChunk &args, ExpressionState &state, Vector &result) {
