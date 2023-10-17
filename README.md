@@ -8,23 +8,28 @@
 To build, type:
 ```sh
 git submodule update --init
-GEN=ninja make duckdb_release release
+GEN=ninja make release
 ```
 (You will need Git, CMake, and a C compiler. You do not strictly need Ninja. [See below for other options.](#development))
 
 To run, run the bundled `duckdb` shell:
 ```sh
-./duckdb/build/release/duckdb -unsigned
+./build/release/duckdb -unsigned
 ```
 
-Then, load the H3 extension like so:
+Load the extension:
 ```SQL
-LOAD 'build/release/h3.duckdb_extension';
+load 'build/release/extension/h3ext/h3ext.duckdb_extension';
 ```
 
 Test running an H3 function:
 ```SQL
-SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
+SELECT h3_cell_to_latlng('822d57fffffffff');
+```
+
+Or, using the integer API, which generally has better performance:
+```SQL
+SELECT h3_cell_to_latlng(cast(586265647244115967 as ubigint));
 ```
 
 # Implemented functions

@@ -1,5 +1,4 @@
 #define DUCKDB_EXTENSION_MAIN
-#define DUCKDB_BUILD_LOADABLE_EXTENSION
 #include "h3-extension.hpp"
 
 #include "duckdb/catalog/catalog_entry/macro_catalog_entry.hpp"
