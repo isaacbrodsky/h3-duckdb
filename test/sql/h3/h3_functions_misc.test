@@ -1,5 +1,4 @@
-statement ok
-LOAD 'build/release/h3.duckdb_extension';
+require h3ext
 
 query I
 SELECT h3_get_hexagon_area_avg(0, 'km^2');

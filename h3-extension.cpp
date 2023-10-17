@@ -25,19 +25,19 @@ void H3Extension::Load(DuckDB &db) {
 }
 
 std::string H3Extension::Name() {
-	return "h3";
+	return "h3ext";
 }
 
 } // namespace duckdb
 
 extern "C" {
 
-DUCKDB_EXTENSION_API void h3_init(duckdb::DatabaseInstance &db) {
+DUCKDB_EXTENSION_API void h3ext_init(duckdb::DatabaseInstance &db) {
 	duckdb::DuckDB db_wrapper(db);
 	db_wrapper.LoadExtension<duckdb::H3Extension>();
 }
 
-DUCKDB_EXTENSION_API const char *h3_version() {
+DUCKDB_EXTENSION_API const char *h3ext_version() {
 	return duckdb::DuckDB::LibraryVersion();
 }
 }

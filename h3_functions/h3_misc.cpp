@@ -208,8 +208,6 @@ static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
 
 	args.data[4].ToUnifiedFormat(args.size(), unitData);
 
-	int sz = pentagonCount();
-
 	for (idx_t i = 0; i < args.size(); i++) {
 		double dist = 0.0;
 		bool isValid = true;
