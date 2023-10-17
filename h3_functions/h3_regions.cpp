@@ -17,9 +17,9 @@ struct CellsToMultiPolygonWktInputOperator {
 
 struct CellsToMultiPolygonWktVarcharInputOperator {
 	static H3Index Get(const Value &value) {
-		string_t str = value.ToString();
+		string str = value.GetValue<string>();
 		H3Index cell;
-		H3Error err = stringToH3(str.GetString().c_str(), &cell);
+		H3Error err = stringToH3(str.c_str(), &cell);
 		if (err) {
 			return 0;
 		} else {
@@ -42,7 +42,7 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args, ExpressionState &sta
 	UnifiedVectorFormat lhs_data;
 	lhs.ToUnifiedFormat(count, lhs_data);
 
-	auto list_entries = (list_entry_t *)lhs_data.data;
+	auto list_entries = UnifiedVectorFormat::GetData<list_entry_t>(lhs_data);
 
 	result.SetVectorType(VectorType::FLAT_VECTOR);
 	auto result_entries = FlatVector::GetData<list_entry_t>(result);
@@ -65,9 +65,11 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args, ExpressionState &sta
 
 		auto &list_children = ListValue::GetChildren(lvalue);
 
+		size_t ii = 0;
 		auto input_set = new H3Index[list_children.size()];
-		for (size_t i = 0; i < list_children.size(); i++) {
-			input_set[i] = InputOperator::Get(list_children[i]);
+		for (const auto &child : list_children) {
+			input_set[ii] = InputOperator::Get(child);
+			ii++;
 		}
 		LinkedGeoPolygon first_lgp;
 		H3Error err = cellsToLinkedMultiPolygon(input_set, list_children.size(), &first_lgp);
