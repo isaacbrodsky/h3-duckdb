@@ -104,6 +104,9 @@ To update the submodules to latest upstream, run:
 make update_deps
 ```
 
+Note that as of DuckDB v0.9.1 the debug with assertion build of the extension is not working
+on MacOS. See duckdb/duckdb#6521.
+
 # License
 
 h3-duckdb Copyright 2022 Isaac Brodsky. Licensed under the [Apache 2.0 License](./LICENSE).
