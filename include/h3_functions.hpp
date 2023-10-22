@@ -84,8 +84,8 @@ public:
 		functions.push_back(GetGreatCircleDistanceFunction());
 
 		// Regions
-		// TODO: polygonToCells
 		functions.push_back(GetCellsToMultiPolygonWktFunction());
+		functions.push_back(GetPolygonWktToCellsFunction());
 
 		return functions;
 	}
@@ -158,8 +158,8 @@ private:
 	static CreateScalarFunctionInfo GetGreatCircleDistanceFunction();
 
 	// Regions
-	// TODO: polygonToCells
 	static CreateScalarFunctionInfo GetCellsToMultiPolygonWktFunction();
+	static CreateScalarFunctionInfo GetPolygonWktToCellsFunction();
 
 	static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
 	                       vector<CreateScalarFunctionInfo> &functions) {

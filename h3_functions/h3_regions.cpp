@@ -3,6 +3,9 @@
 
 namespace duckdb {
 
+static const std::string POLYGON = "POLYGON";
+static const std::string EMPTY = "EMPTY";
+
 // TODO: For convenience, 0 is returned instead of throwing. However, this may actually be interpreted by
 // cellsToMultiPolygon as the index referring to base cell 0.
 struct CellsToMultiPolygonWktInputOperator {
@@ -125,6 +128,115 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args, ExpressionState &sta
 	}
 }
 
+static size_t whitespace(const std::string &str, size_t offset) {
+	while (str[offset] == ' ') {
+		offset++;
+	}
+	return offset;
+}
+
+static size_t readNumber(const std::string &str, size_t offset, double &num) {
+	printf("start number\n");
+	size_t start = offset;
+	while (str[offset] != ' ' && str[offset] != ')' && str[offset] != ',') {
+		offset++;
+	}
+	std::string part = str.substr(start, offset - start);
+	num = std::stod(part);
+	printf("parsed==%f\n", num);
+	return offset;
+}
+
+static size_t readGeoLoop(const std::string &str, size_t offset, GeoLoop &loop) {
+	D_ASSERT(str[offset] == '(');
+	printf("start geoloop\n");
+
+	offset++;
+
+	std::vector<std::tuple<double, double>> verts;
+	while (str[offset] != ')') {
+		printf("need another number %c\n", str[offset]);
+		double x, y;
+		offset = readNumber(str, offset, x);
+		offset = whitespace(str, offset);
+		offset = readNumber(str, offset, y);
+		offset = whitespace(str, offset);
+		verts.push_back(std::tuple<double, double>(x, y));
+
+		if (str[offset] == ',') {
+			printf("found comma!\n");
+			offset++;
+			offset = whitespace(str, offset);
+		}
+	}
+	// Consume the )
+	offset++;
+
+	printf("verts=%lu\n", verts.size());
+	loop.numVerts = verts.size();
+	loop.verts = new LatLng[verts.size()];
+	for (size_t i = 0; i < verts.size(); i++) {
+		// TODO...
+		loop.verts[i].lat = std::get<1>(verts[i]);
+		loop.verts[i].lng = std::get<0>(verts[i]);
+	}
+
+	offset = whitespace(str, offset);
+	return offset;
+}
+
+static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	BinaryExecutor::Execute<string_t, int, list_entry_t>(
+	    args.data[0], args.data[1], result, args.size(), [&](string_t input, int res) {
+		    GeoPolygon polygon;
+
+		    std::string str = input.GetString();
+
+		    uint64_t offset = ListVector::GetListSize(result);
+		    if (str.rfind(POLYGON, 0) != 0) {
+			    return list_entry_t(offset, 0);
+		    }
+
+		    size_t strIndex = POLYGON.length();
+		    strIndex = whitespace(str, strIndex);
+
+		    if (str.rfind(EMPTY, strIndex) == strIndex) {
+			    return list_entry_t(offset, 0);
+		    }
+
+		    if (str[strIndex] == '(') {
+			    strIndex++;
+			    strIndex = readGeoLoop(str, strIndex, polygon.geoloop);
+
+			    std::vector<GeoLoop> holes;
+			    try {
+				    printf("i=%lu c=%c\n", strIndex, str[strIndex]);
+				    while (strIndex < str.length() && str[strIndex] == '(') {
+					    strIndex = whitespace(str, strIndex);
+					    GeoLoop hole;
+					    strIndex = readGeoLoop(str, strIndex, hole);
+					    holes.push_back(hole);
+				    }
+
+				    polygon.numHoles = holes.size();
+				    polygon.holes = holes.data();
+
+				    // polygonToCells(&polygon, res, flags, &out);
+				    ListVector::PushBack(result, Value::UBIGINT(polygon.numHoles));
+				    ListVector::PushBack(result, Value::UBIGINT(res));
+				    ListVector::PushBack(result, Value::UBIGINT(polygon.geoloop.numVerts));
+				    return list_entry_t(offset, 3);
+			    } catch (...) {
+				    for (const auto &hole : holes) {
+					    delete[] hole.verts;
+				    }
+				    throw;
+			    }
+		    }
+		    return list_entry_t(offset, 0);
+	    });
+}
+
 CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
 	ScalarFunctionSet funcs("h3_cells_to_multi_polygon_wkt");
 	funcs.AddFunction(ScalarFunction(
@@ -134,6 +246,12 @@ CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
 	    ScalarFunction({LogicalType::LIST(LogicalType::UBIGINT)}, LogicalType::VARCHAR,
 	                   CellsToMultiPolygonWktFunction<LogicalType::UBIGINT, CellsToMultiPolygonWktInputOperator>));
 	return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsFunction() {
+	return CreateScalarFunctionInfo(ScalarFunction("h3_polygon_wkt_to_cells",
+	                                               {LogicalType::VARCHAR, LogicalType::INTEGER},
+	                                               LogicalType::LIST(LogicalType::UBIGINT), PolygonWktToCellsFunction));
 }
 
 } // namespace duckdb
