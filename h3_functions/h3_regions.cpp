@@ -147,7 +147,9 @@ static size_t readNumber(const std::string &str, size_t offset, double &num) {
 
 static size_t readGeoLoop(const std::string &str, size_t offset, duckdb::shared_ptr<std::vector<LatLng>> verts,
                           GeoLoop &loop) {
-	D_ASSERT(str[offset] == '(');
+	if (str[offset] != '(') {
+		throw Exception(StringUtil::Format("Expected ( at pos %lu", offset));
+	}
 
 	offset++;
 	offset = whitespace(str, offset);
@@ -176,6 +178,8 @@ static size_t readGeoLoop(const std::string &str, size_t offset, duckdb::shared_
 }
 
 static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	// TODO: Note this function is not fully noexcept -- some invalid WKT strings will throw, others
+	// will return empty lists.
 	BinaryExecutor::Execute<string_t, int, list_entry_t>(
 	    args.data[0], args.data[1], result, args.size(), [&](string_t input, int res) {
 		    GeoPolygon polygon;
@@ -210,6 +214,10 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state, V
 				    strIndex = readGeoLoop(str, strIndex, verts, hole);
 				    holes.push_back(hole);
 				    holesVerts.push_back(verts);
+			    }
+			    if (str[strIndex] != ')') {
+				    throw Exception(
+				        StringUtil::Format("Invalid WKT: expected a hole loop or ')' at pos %lu", strIndex));
 			    }
 
 			    polygon.numHoles = holes.size();
