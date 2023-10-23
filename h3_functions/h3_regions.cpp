@@ -150,6 +150,7 @@ static size_t readGeoLoop(const std::string &str, size_t offset, duckdb::shared_
 	D_ASSERT(str[offset] == '(');
 
 	offset++;
+	offset = whitespace(str, offset);
 
 	while (str[offset] != ')') {
 		double x, y;
@@ -196,6 +197,8 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state, V
 
 		    if (str[strIndex] == '(') {
 			    strIndex++;
+			    strIndex = whitespace(str, strIndex);
+
 			    duckdb::shared_ptr<std::vector<LatLng>> outerVerts = duckdb::make_shared<std::vector<LatLng>>();
 			    strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
 
