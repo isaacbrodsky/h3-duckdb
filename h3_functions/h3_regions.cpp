@@ -145,7 +145,8 @@ static size_t readNumber(const std::string &str, size_t offset, double &num) {
 	return offset;
 }
 
-static size_t readGeoLoop(const std::string &str, size_t offset, std::vector<LatLng> &verts, GeoLoop &loop) {
+static size_t readGeoLoop(const std::string &str, size_t offset, duckdb::shared_ptr<std::vector<LatLng>> verts,
+                          GeoLoop &loop) {
 	D_ASSERT(str[offset] == '(');
 
 	offset++;
@@ -156,7 +157,7 @@ static size_t readGeoLoop(const std::string &str, size_t offset, std::vector<Lat
 		offset = whitespace(str, offset);
 		offset = readNumber(str, offset, y);
 		offset = whitespace(str, offset);
-		verts.push_back({.lat = degsToRads(y), .lng = degsToRads(x)});
+		verts->push_back({.lat = degsToRads(y), .lng = degsToRads(x)});
 
 		if (str[offset] == ',') {
 			offset++;
@@ -166,8 +167,8 @@ static size_t readGeoLoop(const std::string &str, size_t offset, std::vector<Lat
 	// Consume the )
 	offset++;
 
-	loop.numVerts = verts.size();
-	loop.verts = verts.data();
+	loop.numVerts = verts->size();
+	loop.verts = verts->data();
 
 	offset = whitespace(str, offset);
 	return offset;
@@ -195,15 +196,14 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state, V
 
 		    if (str[strIndex] == '(') {
 			    strIndex++;
-			    std::vector<LatLng> outerVerts;
+			    duckdb::shared_ptr<std::vector<LatLng>> outerVerts = duckdb::make_shared<std::vector<LatLng>>();
 			    strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
 
 			    std::vector<GeoLoop> holes;
-			    std::vector<std::vector<LatLng>> holesVerts;
+			    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
 			    while (strIndex < str.length() && str[strIndex] == '(') {
-				    strIndex = whitespace(str, strIndex);
 				    GeoLoop hole;
-				    std::vector<LatLng> verts;
+				    duckdb::shared_ptr<std::vector<LatLng>> verts = duckdb::make_shared<std::vector<LatLng>>();
 				    strIndex = readGeoLoop(str, strIndex, verts, hole);
 				    holes.push_back(hole);
 				    holesVerts.push_back(verts);
