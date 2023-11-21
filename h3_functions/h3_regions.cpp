@@ -3,6 +3,9 @@
 
 namespace duckdb {
 
+static const std::string POLYGON = "POLYGON";
+static const std::string EMPTY = "EMPTY";
+
 // TODO: For convenience, 0 is returned instead of throwing. However, this may actually be interpreted by
 // cellsToMultiPolygon as the index referring to base cell 0.
 struct CellsToMultiPolygonWktInputOperator {
@@ -125,6 +128,126 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args, ExpressionState &sta
 	}
 }
 
+static size_t whitespace(const std::string &str, size_t offset) {
+	while (str[offset] == ' ') {
+		offset++;
+	}
+	return offset;
+}
+
+static size_t readNumber(const std::string &str, size_t offset, double &num) {
+	size_t start = offset;
+	while (str[offset] != ' ' && str[offset] != ')' && str[offset] != ',') {
+		offset++;
+	}
+	std::string part = str.substr(start, offset - start);
+	num = std::stod(part);
+	return offset;
+}
+
+static size_t readGeoLoop(const std::string &str, size_t offset, duckdb::shared_ptr<std::vector<LatLng>> verts,
+                          GeoLoop &loop) {
+	if (str[offset] != '(') {
+		throw Exception(StringUtil::Format("Expected ( at pos %lu", offset));
+	}
+
+	offset++;
+	offset = whitespace(str, offset);
+
+	while (str[offset] != ')') {
+		double x, y;
+		offset = readNumber(str, offset, x);
+		offset = whitespace(str, offset);
+		offset = readNumber(str, offset, y);
+		offset = whitespace(str, offset);
+		verts->push_back({.lat = degsToRads(y), .lng = degsToRads(x)});
+
+		if (str[offset] == ',') {
+			offset++;
+			offset = whitespace(str, offset);
+		}
+	}
+	// Consume the )
+	offset++;
+
+	loop.numVerts = verts->size();
+	loop.verts = verts->data();
+
+	offset = whitespace(str, offset);
+	return offset;
+}
+
+static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
+	// TODO: Note this function is not fully noexcept -- some invalid WKT strings will throw, others
+	// will return empty lists.
+	BinaryExecutor::Execute<string_t, int, list_entry_t>(
+	    args.data[0], args.data[1], result, args.size(), [&](string_t input, int res) {
+		    GeoPolygon polygon;
+		    int32_t flags = 0;
+
+		    std::string str = input.GetString();
+
+		    uint64_t offset = ListVector::GetListSize(result);
+		    if (str.rfind(POLYGON, 0) != 0) {
+			    return list_entry_t(offset, 0);
+		    }
+
+		    size_t strIndex = POLYGON.length();
+		    strIndex = whitespace(str, strIndex);
+
+		    if (str.rfind(EMPTY, strIndex) == strIndex) {
+			    return list_entry_t(offset, 0);
+		    }
+
+		    if (str[strIndex] == '(') {
+			    strIndex++;
+			    strIndex = whitespace(str, strIndex);
+
+			    duckdb::shared_ptr<std::vector<LatLng>> outerVerts = duckdb::make_shared<std::vector<LatLng>>();
+			    strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
+
+			    std::vector<GeoLoop> holes;
+			    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
+			    while (strIndex < str.length() && str[strIndex] == '(') {
+				    GeoLoop hole;
+				    duckdb::shared_ptr<std::vector<LatLng>> verts = duckdb::make_shared<std::vector<LatLng>>();
+				    strIndex = readGeoLoop(str, strIndex, verts, hole);
+				    holes.push_back(hole);
+				    holesVerts.push_back(verts);
+			    }
+			    if (str[strIndex] != ')') {
+				    throw Exception(
+				        StringUtil::Format("Invalid WKT: expected a hole loop or ')' at pos %lu", strIndex));
+			    }
+
+			    polygon.numHoles = holes.size();
+			    polygon.holes = holes.data();
+
+			    int64_t numCells = 0;
+			    H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
+			    if (err) {
+				    return list_entry_t(offset, 0);
+			    } else {
+				    std::vector<H3Index> out(numCells);
+				    H3Error err2 = polygonToCells(&polygon, res, flags, out.data());
+				    if (err2) {
+					    return list_entry_t(offset, 0);
+				    } else {
+					    uint64_t actual = 0;
+					    for (H3Index outCell : out) {
+						    if (outCell != H3_NULL) {
+							    ListVector::PushBack(result, Value::UBIGINT(outCell));
+							    actual++;
+						    }
+					    }
+					    return list_entry_t(offset, actual);
+				    }
+			    }
+		    }
+		    return list_entry_t(offset, 0);
+	    });
+}
+
 CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
 	ScalarFunctionSet funcs("h3_cells_to_multi_polygon_wkt");
 	funcs.AddFunction(ScalarFunction(
@@ -134,6 +257,13 @@ CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
 	    ScalarFunction({LogicalType::LIST(LogicalType::UBIGINT)}, LogicalType::VARCHAR,
 	                   CellsToMultiPolygonWktFunction<LogicalType::UBIGINT, CellsToMultiPolygonWktInputOperator>));
 	return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsFunction() {
+	// TODO: Expose flags
+	return CreateScalarFunctionInfo(ScalarFunction("h3_polygon_wkt_to_cells",
+	                                               {LogicalType::VARCHAR, LogicalType::INTEGER},
+	                                               LogicalType::LIST(LogicalType::UBIGINT), PolygonWktToCellsFunction));
 }
 
 } // namespace duckdb

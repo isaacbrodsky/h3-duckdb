@@ -34,6 +34,8 @@ SELECT h3_cell_to_latlng(cast(586265647244115967 as ubigint));
 
 # Implemented functions
 
+This extension implements the entire [H3 API](https://h3geo.org/docs/api/indexing). The full list of functions is below:
+
 - `h3_latlng_to_cell`
 - `h3_cell_to_lat`
 - `h3_cell_to_lng`
@@ -85,6 +87,7 @@ SELECT h3_cell_to_latlng(cast(586265647244115967 as ubigint));
 - `h3_get_pentagons`
 - `h3_great_circle_distance`
 - `h3_cells_to_multi_polygon_wkt`
+- `h3_polygon_wkt_to_cells`
 
 # Development
 
