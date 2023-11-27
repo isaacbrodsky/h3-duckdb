@@ -180,14 +180,27 @@ static size_t readGeoLoop(const std::string &str, size_t offset, duckdb::shared_
 static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state, Vector &result) {
 	// TODO: Note this function is not fully noexcept -- some invalid WKT strings will throw, others
 	// will return empty lists.
-	BinaryExecutor::Execute<string_t, int, list_entry_t>(
-	    args.data[0], args.data[1], result, args.size(), [&](string_t input, int res) {
+	TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
+	    args.data[0], args.data[1], args.data[2], result, args.size(),
+	    [&](string_t input, int res, string_t input_flags) {
 		    GeoPolygon polygon;
-		    int32_t flags = 0;
+		    int32_t flags;
+
+		    uint64_t offset = ListVector::GetListSize(result);
+
+		    if (input_flags == "CONTAINMENT_CENTER") {
+			    flags = 0;
+		    } else if (input_flags == "CONTAINMENT_FULL") {
+			    flags = 1;
+		    } else if (input_flags == "CONTAINMENT_OVERLAPPING") {
+			    flags = 2;
+		    } else {
+			    // Invalid flags input
+			    return list_entry_t(offset, 0);
+		    }
 
 		    std::string str = input.GetString();
 
-		    uint64_t offset = ListVector::GetListSize(result);
 		    if (str.rfind(POLYGON, 0) != 0) {
 			    return list_entry_t(offset, 0);
 		    }
@@ -260,9 +273,8 @@ CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
 }
 
 CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsFunction() {
-	// TODO: Expose flags
 	return CreateScalarFunctionInfo(ScalarFunction("h3_polygon_wkt_to_cells",
-	                                               {LogicalType::VARCHAR, LogicalType::INTEGER},
+	                                               {LogicalType::VARCHAR, LogicalType::INTEGER, LogicalType::VARCHAR},
 	                                               LogicalType::LIST(LogicalType::UBIGINT), PolygonWktToCellsFunction));
 }
 
