@@ -208,16 +208,23 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state, V
 
 			    std::vector<GeoLoop> holes;
 			    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
-			    while (strIndex < str.length() && str[strIndex] == '(') {
-				    GeoLoop hole;
-				    duckdb::shared_ptr<std::vector<LatLng>> verts = duckdb::make_shared<std::vector<LatLng>>();
-				    strIndex = readGeoLoop(str, strIndex, verts, hole);
-				    holes.push_back(hole);
-				    holesVerts.push_back(verts);
+			    while (strIndex < str.length() && str[strIndex] == ',') {
+				    strIndex++;
+				    strIndex = whitespace(str, strIndex);
+				    if (str[strIndex] == '(') {
+					    GeoLoop hole;
+					    duckdb::shared_ptr<std::vector<LatLng>> verts = duckdb::make_shared<std::vector<LatLng>>();
+					    strIndex = readGeoLoop(str, strIndex, verts, hole);
+					    holes.push_back(hole);
+					    holesVerts.push_back(verts);
+				    } else {
+					    throw Exception(
+					        StringUtil::Format("Invalid WKT: expected a hole loop '(' after ',' at pos %lu", strIndex));
+				    }
 			    }
 			    if (str[strIndex] != ')') {
 				    throw Exception(
-				        StringUtil::Format("Invalid WKT: expected a hole loop or ')' at pos %lu", strIndex));
+				        StringUtil::Format("Invalid WKT: expected a hole loop ',' or final ')' at pos %lu", strIndex));
 			    }
 
 			    polygon.numHoles = holes.size();
