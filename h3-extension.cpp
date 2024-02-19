@@ -1,6 +1,4 @@
 #define DUCKDB_EXTENSION_MAIN
-#include "h3-extension.hpp"
-
 #include "duckdb/catalog/catalog_entry/macro_catalog_entry.hpp"
 #include "duckdb/catalog/default/default_functions.hpp"
 #include "duckdb/common/string_util.hpp"
@@ -8,10 +6,11 @@
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/tableref/table_function_ref.hpp"
 #include "h3_functions.hpp"
+#include "h3ext_extension.hpp"
 
 namespace duckdb {
 
-void H3Extension::Load(DuckDB &db) {
+void H3extExtension::Load(DuckDB &db) {
 	Connection con(db);
 	con.BeginTransaction();
 
@@ -23,7 +22,7 @@ void H3Extension::Load(DuckDB &db) {
 	con.Commit();
 }
 
-std::string H3Extension::Name() {
+std::string H3extExtension::Name() {
 	return "h3ext";
 }
 
@@ -33,7 +32,7 @@ extern "C" {
 
 DUCKDB_EXTENSION_API void h3ext_init(duckdb::DatabaseInstance &db) {
 	duckdb::DuckDB db_wrapper(db);
-	db_wrapper.LoadExtension<duckdb::H3Extension>();
+	db_wrapper.LoadExtension<duckdb::H3extExtension>();
 }
 
 DUCKDB_EXTENSION_API const char *h3ext_version() {
