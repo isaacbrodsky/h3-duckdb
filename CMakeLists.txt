@@ -54,7 +54,7 @@ add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})
 
 # Note this must be the INSTALL target name.
 # See https://stackoverflow.com/a/71080574
-target_link_libraries(${EXTENSION_NAME} h3Targets::libh3)
+target_link_libraries(${EXTENSION_NAME} h3)
 
 include_directories(src/include)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/h3/src/h3lib/include")
@@ -63,7 +63,7 @@ build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
 target_link_libraries(${LOADABLE_EXTENSION_NAME} h3)
 
 install(
-  TARGETS ${EXTENSION_NAME}
+  TARGETS ${EXTENSION_NAME} h3
   EXPORT "${DUCKDB_EXPORT_SET}"
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
   ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
