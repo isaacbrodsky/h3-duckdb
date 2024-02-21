@@ -57,7 +57,7 @@ add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})
 target_link_libraries(${EXTENSION_NAME} h3)
 
 include_directories(src/include)
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/h3/src/h3lib/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/h3/src/h3lib/include")
 
 build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
 target_link_libraries(${LOADABLE_EXTENSION_NAME} h3)
