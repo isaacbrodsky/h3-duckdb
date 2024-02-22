@@ -141,14 +141,19 @@ static size_t readNumber(const std::string &str, size_t offset, double &num) {
 		offset++;
 	}
 	std::string part = str.substr(start, offset - start);
-	num = std::stod(part);
-	return offset;
+	
+    try {
+		num = std::stod(part);
+		return offset;
+    } catch (std::invalid_argument const& ex) {
+		throw InvalidInputException(StringUtil::Format("Invalid number around %lu, %lu", start, offset));
+    }
 }
 
 static size_t readGeoLoop(const std::string &str, size_t offset, duckdb::shared_ptr<std::vector<LatLng>> verts,
                           GeoLoop &loop) {
 	if (str[offset] != '(') {
-		throw Exception(StringUtil::Format("Expected ( at pos %lu", offset));
+		throw InvalidInputException(StringUtil::Format("Expected ( at pos %lu", offset));
 	}
 
 	offset++;
@@ -218,12 +223,12 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state, V
 					    holes.push_back(hole);
 					    holesVerts.push_back(verts);
 				    } else {
-					    throw Exception(
+					    throw InvalidInputException(
 					        StringUtil::Format("Invalid WKT: expected a hole loop '(' after ',' at pos %lu", strIndex));
 				    }
 			    }
 			    if (str[strIndex] != ')') {
-				    throw Exception(
+				    throw InvalidInputException(
 				        StringUtil::Format("Invalid WKT: expected a hole loop ',' or final ')' at pos %lu", strIndex));
 			    }
 

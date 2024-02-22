@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 set(TARGET_NAME h3ext)
 set(EXTENSION_NAME ${TARGET_NAME}_extension)
+set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
+
 project(${TARGET_NAME})
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -29,7 +31,7 @@ add_subdirectory(h3)
 set(BUILD_SHARED_LIBS ON)
 
 
-set(LIB_SOURCE_FILES
+set(EXTENSION_SOURCES
   h3-extension.cpp
   h3_common.cpp
   h3_functions/h3_indexing.cpp
@@ -42,32 +44,29 @@ set(LIB_SOURCE_FILES
   h3_functions/h3_regions.cpp
 )
 set(LIB_HEADER_FILES
-  include/h3_common.hpp
-  include/h3_functions.hpp
-  include/h3-extension.hpp
+  src/include/h3_common.hpp
+  src/include/h3_functions.hpp
+  src/include/h3ext_extension.hpp
 )
-set(ALL_SOURCE_FILES ${LIB_SOURCE_FILES} ${LIB_HEADER_FILES})
+set(ALL_SOURCE_FILES ${EXTENSION_SOURCES} ${LIB_HEADER_FILES})
 
-set(EXTENSION_OBJECT_FILES ${LIB_SOURCE_FILES})
-add_library(${EXTENSION_NAME} STATIC ${EXTENSION_OBJECT_FILES})
+add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})
 
 # Note this must be the INSTALL target name.
 # See https://stackoverflow.com/a/71080574
-target_link_libraries(${EXTENSION_NAME} h3Targets::libh3)
+target_link_libraries(${EXTENSION_NAME} h3)
 
-include_directories(include)
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/h3/src/h3lib/include")
+include_directories(src/include)
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/h3/src/h3lib/include")
 
-set(PARAMETERS "-warnings")
-build_loadable_extension(${TARGET_NAME} ${PARAMETERS} ${EXTENSION_OBJECT_FILES})
-
-target_link_libraries(h3ext_loadable_extension h3)
+build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
+target_link_libraries(${LOADABLE_EXTENSION_NAME} h3)
 
 install(
-        TARGETS ${EXTENSION_NAME}
-        EXPORT "${DUCKDB_EXPORT_SET}"
-        LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-        ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
+  TARGETS ${EXTENSION_NAME} h3
+  EXPORT "${DUCKDB_EXPORT_SET}"
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
 
 
 # Automatic code formatting
