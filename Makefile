@@ -10,10 +10,11 @@ DUCKDB_PATH="/duckdb"
 
 # For non-MinGW windows the path is slightly different
 ifeq ($(OS),Windows_NT)
-ifneq ($(CXX),g++)
+# TODO: Doesn't match what should actually happen
+# ifneq ($(CXX),g++)
 	TEST_PATH="/test/Release/unittest.exe"
 	DUCKDB_PATH="/Release/duckdb.exe"
-endif
+# endif
 endif
 
 #### OSX config
