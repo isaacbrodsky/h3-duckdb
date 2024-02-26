@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.12)
 set(TARGET_NAME h3ext)
 set(EXTENSION_NAME ${TARGET_NAME}_extension)
 set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
-
+set(ENABLE_LINTING FALSE)
 project(${TARGET_NAME})
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -68,7 +68,7 @@ install(
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
   ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
 
-
+function(format_code)
 # Automatic code formatting
 # Give preference to clang-format-9
 find_program(CLANG_FORMAT_PATH NAMES clang-format-9 clang-format)
@@ -90,4 +90,9 @@ if(ENABLE_FORMAT)
 elseif(NOT CLANG_FORMAT_PATH)
     message(WARNING "clang-format was not detected, "
                     "so automatic source code reformatting is disabled")
+endif()
+endfunction()
+
+if (ENABLE_LINTING)
+  format_code()
 endif()
