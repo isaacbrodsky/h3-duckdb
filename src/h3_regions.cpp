@@ -141,13 +141,13 @@ static size_t readNumber(const std::string &str, size_t offset, double &num) {
 		offset++;
 	}
 	std::string part = str.substr(start, offset - start);
-	
-    try {
+
+	try {
 		num = std::stod(part);
 		return offset;
-    } catch (std::invalid_argument const& ex) {
+	} catch (std::invalid_argument const &ex) {
 		throw InvalidInputException(StringUtil::Format("Invalid number around %lu, %lu", start, offset));
-    }
+	}
 }
 
 static size_t readGeoLoop(const std::string &str, size_t offset, duckdb::shared_ptr<std::vector<LatLng>> verts,

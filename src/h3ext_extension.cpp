@@ -1,4 +1,6 @@
 #define DUCKDB_EXTENSION_MAIN
+#include "h3ext_extension.hpp"
+
 #include "duckdb/catalog/catalog_entry/macro_catalog_entry.hpp"
 #include "duckdb/catalog/default/default_functions.hpp"
 #include "duckdb/common/string_util.hpp"
@@ -6,7 +8,6 @@
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/tableref/table_function_ref.hpp"
 #include "h3_functions.hpp"
-#include "h3ext_extension.hpp"
 
 namespace duckdb {
 
