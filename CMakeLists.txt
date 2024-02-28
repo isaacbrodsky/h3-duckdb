@@ -21,6 +21,7 @@ set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(BUILD_FUZZERS OFF CACHE BOOL "" FORCE)
 set(ENABLE_DOCS OFF CACHE BOOL "" FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(ENABLE_LINTING OFF CACHE BOOL "" FORCE)
 
 # Build the core library as static
 # TODO: Is this needed? Consider restoring correctly
@@ -72,9 +73,7 @@ install(
 # Automatic code formatting
 # Give preference to clang-format-9
 find_program(CLANG_FORMAT_PATH NAMES clang-format-9 clang-format)
-cmake_dependent_option(
-    ENABLE_FORMAT "Enable running clang-format before compiling" ON
-    "CLANG_FORMAT_PATH" OFF)
+option(ENABLE_FORMAT "Enable running clang-format before compiling" OFF)
 if(ENABLE_FORMAT)
     # Format
     add_custom_target(format-ext
