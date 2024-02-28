@@ -32,16 +32,16 @@ set(BUILD_SHARED_LIBS ON)
 
 
 set(EXTENSION_SOURCES
-  h3-extension.cpp
-  h3_common.cpp
-  h3_functions/h3_indexing.cpp
-  h3_functions/h3_inspection.cpp
-  h3_functions/h3_hierarchy.cpp
-  h3_functions/h3_traversal.cpp
-  h3_functions/h3_vertex.cpp
-  h3_functions/h3_directededge.cpp
-  h3_functions/h3_misc.cpp
-  h3_functions/h3_regions.cpp
+  src/h3ext_extension.cpp
+  src/h3_common.cpp
+  src/h3_indexing.cpp
+  src/h3_inspection.cpp
+  src/h3_hierarchy.cpp
+  src/h3_traversal.cpp
+  src/h3_vertex.cpp
+  src/h3_directededge.cpp
+  src/h3_misc.cpp
+  src/h3_regions.cpp
 )
 set(LIB_HEADER_FILES
   src/include/h3_common.hpp
