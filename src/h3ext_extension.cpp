@@ -12,32 +12,30 @@
 namespace duckdb {
 
 void H3extExtension::Load(DuckDB &db) {
-	Connection con(db);
-	con.BeginTransaction();
+  Connection con(db);
+  con.BeginTransaction();
 
-	auto &catalog = Catalog::GetSystemCatalog(*con.context);
-	for (auto &fun : H3Functions::GetFunctions()) {
-		catalog.CreateFunction(*con.context, fun);
-	}
+  auto &catalog = Catalog::GetSystemCatalog(*con.context);
+  for (auto &fun : H3Functions::GetFunctions()) {
+    catalog.CreateFunction(*con.context, fun);
+  }
 
-	con.Commit();
+  con.Commit();
 }
 
-std::string H3extExtension::Name() {
-	return "h3ext";
-}
+std::string H3extExtension::Name() { return "h3ext"; }
 
 } // namespace duckdb
 
 extern "C" {
 
 DUCKDB_EXTENSION_API void h3ext_init(duckdb::DatabaseInstance &db) {
-	duckdb::DuckDB db_wrapper(db);
-	db_wrapper.LoadExtension<duckdb::H3extExtension>();
+  duckdb::DuckDB db_wrapper(db);
+  db_wrapper.LoadExtension<duckdb::H3extExtension>();
 }
 
 DUCKDB_EXTENSION_API const char *h3ext_version() {
-	return duckdb::DuckDB::LibraryVersion();
+  return duckdb::DuckDB::LibraryVersion();
 }
 }
 
