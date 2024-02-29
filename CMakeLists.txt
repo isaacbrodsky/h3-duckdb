@@ -14,47 +14,61 @@ if(WIN32)
 endif()
 
 # Avoid building tooling we won't need for release
-set(BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
-set(BUILD_FILTERS OFF CACHE BOOL "" FORCE)
-set(BUILD_GENERATORS OFF CACHE BOOL "" FORCE)
-set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-set(BUILD_FUZZERS OFF CACHE BOOL "" FORCE)
-set(ENABLE_DOCS OFF CACHE BOOL "" FORCE)
-set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-set(ENABLE_LINTING OFF CACHE BOOL "" FORCE)
+set(BUILD_BENCHMARKS
+    OFF
+    CACHE BOOL "" FORCE)
+set(BUILD_FILTERS
+    OFF
+    CACHE BOOL "" FORCE)
+set(BUILD_GENERATORS
+    OFF
+    CACHE BOOL "" FORCE)
+set(BUILD_TESTING
+    OFF
+    CACHE BOOL "" FORCE)
+set(BUILD_FUZZERS
+    OFF
+    CACHE BOOL "" FORCE)
+set(ENABLE_DOCS
+    OFF
+    CACHE BOOL "" FORCE)
+set(ENABLE_TESTING
+    OFF
+    CACHE BOOL "" FORCE)
+set(ENABLE_LINTING
+    OFF
+    CACHE BOOL "" FORCE)
+set(ENABLE_FORMAT
+    OFF
+    CACHE BOOL "" FORCE)
 
-# Build the core library as static
-# TODO: Is this needed? Consider restoring correctly
+# Build the core library as static TODO: Is this needed? Consider restoring
+# correctly
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(h3)
 
 # Build the rest (other than the core library dependency) as shared
 set(BUILD_SHARED_LIBS ON)
 
-
 set(EXTENSION_SOURCES
-  src/h3ext_extension.cpp
-  src/h3_common.cpp
-  src/h3_indexing.cpp
-  src/h3_inspection.cpp
-  src/h3_hierarchy.cpp
-  src/h3_traversal.cpp
-  src/h3_vertex.cpp
-  src/h3_directededge.cpp
-  src/h3_misc.cpp
-  src/h3_regions.cpp
-)
-set(LIB_HEADER_FILES
-  src/include/h3_common.hpp
-  src/include/h3_functions.hpp
-  src/include/h3ext_extension.hpp
-)
+    src/h3ext_extension.cpp
+    src/h3_common.cpp
+    src/h3_indexing.cpp
+    src/h3_inspection.cpp
+    src/h3_hierarchy.cpp
+    src/h3_traversal.cpp
+    src/h3_vertex.cpp
+    src/h3_directededge.cpp
+    src/h3_misc.cpp
+    src/h3_regions.cpp)
+set(LIB_HEADER_FILES src/include/h3_common.hpp src/include/h3_functions.hpp
+                     src/include/h3ext_extension.hpp)
 set(ALL_SOURCE_FILES ${EXTENSION_SOURCES} ${LIB_HEADER_FILES})
 
 add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})
 
-# Note this must be the INSTALL target name.
-# See https://stackoverflow.com/a/71080574
+# Note this must be the INSTALL target name. See
+# https://stackoverflow.com/a/71080574
 target_link_libraries(${EXTENSION_NAME} h3)
 
 include_directories(src/include)
@@ -68,25 +82,3 @@ install(
   EXPORT "${DUCKDB_EXPORT_SET}"
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
   ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
-
-
-# Automatic code formatting
-# Give preference to clang-format-9
-find_program(CLANG_FORMAT_PATH NAMES clang-format-9 clang-format)
-option(ENABLE_FORMAT "Enable running clang-format before compiling" OFF)
-if(ENABLE_FORMAT)
-    # Format
-    add_custom_target(format-ext
-        COMMAND ${CLANG_FORMAT_PATH}
-        -style=file:${CMAKE_CURRENT_SOURCE_DIR}/duckdb/.clang-format
-        -i
-        ${ALL_SOURCE_FILES}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Formatting sources"
-        )
-    # Always do formatting
-    add_dependencies(${EXTENSION_NAME} format-ext)
-elseif(NOT CLANG_FORMAT_PATH)
-    message(WARNING "clang-format was not detected, "
-                    "so automatic source code reformatting is disabled")
-endif()
