@@ -19,7 +19,7 @@ jobs:
       vcpkg_commit: a42af01b72c28a8e1d7b48107b33e4f286a55ef6
       duckdb_version: v0.10.0
       extension_name: h3ext
-      exclude_archs: "wasm_mvp;wasm_eh;wasm_threads;windows_amd64_rtools"
+      exclude_archs: "windows_amd64_rtools"
 
   # duckdb-stable-deploy:
   #   name: Deploy extension binaries
