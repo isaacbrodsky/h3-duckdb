@@ -1,23 +1,24 @@
-[![Main Extension Distribution Pipeline](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
+[![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
+[![Extension Deployment](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/_extension_deploy.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/_extension_deploy.yml)
 [![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v0.10.1&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v0.10.1)
 [![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.1.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-To build, type:
-```sh
-git submodule update --init
-GEN=ninja make release
-```
-(You will need Git, CMake, and a C compiler. You do not strictly need Ninja. [See below for other options.](#development))
+This is a [DuckDB](https://duckdb.org) extension that adds support for the [H3 discrete global grid system](https://github.com/uber/h3/).
 
-To run, run the bundled `duckdb` shell:
+Download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.1/linux_amd64/h3ext.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.1/linux_amd64_gcc4/h3ext.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.1/linux_arm64/h3ext.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.1/osx_amd64/h3ext.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.1/osx_arm64/h3ext.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.1/wasm_eh/h3ext.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.1/wasm_mvp/h3ext.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.1/wasm_threads/h3ext.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2es0623393a5.r2.dev/v0.10.1/windows_amd64/h3ext.duckdb_extension.gz)
+
+Run DuckDB with the unsigned option:
 ```sh
-./build/release/duckdb -unsigned
+duckdb -unsigned
 ```
+
+(Note: you must download and ungzip the extension before installing it. Installing from `https` URLs does not seem to work in DuckDB v0.10.1.)
 
 Load the extension:
 ```SQL
-load 'build/release/extension/h3ext/h3ext.duckdb_extension';
+install 'h3ext.duckdb_extension';
+load 'h3ext';
 ```
 
 Test running an H3 function:
@@ -89,13 +90,32 @@ This extension implements the entire [H3 API](https://h3geo.org/docs/api/indexin
 
 # Development
 
-The build instructions suggest using `ninja` because it enables parallelism by default.
-Using `make` instead is fine, but you will want to enable the following parallelism option,
-because building DuckDB can take a very long time (>=1 hour is not unusual). Run the below
-replacing `4` with the number of CPU cores on your machine.
+To build, type:
+```sh
+git submodule update --init
+GEN=ninja make release
+```
+
+You will need Git, CMake, and a C compiler. The build instructions suggest using `ninja`
+because it enables parallelism by default. Using `make` instead is fine, but you will want
+to enable the following parallelism option, because building DuckDB can take a very long
+time (>=1 hour is not unusual). Run the below replacing `4` with the number of CPU cores
+on your machine.
 
 ```sh
 CMAKE_BUILD_PARALLEL_LEVEL=4 make duckdb_release release
+```
+
+To run, run the bundled `duckdb` shell:
+
+```sh
+./build/release/duckdb -unsigned
+```
+
+Load the extension:
+
+```SQL
+load 'build/release/extension/h3ext/h3ext.duckdb_extension';
 ```
 
 To run tests:
