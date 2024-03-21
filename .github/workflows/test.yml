@@ -30,5 +30,6 @@ jobs:
       duckdb_version: v0.10.1
       extension_name: h3ext
       exclude_archs: "windows_amd64_rtools"
-      deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+      # ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+      deploy_latest: true
       deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
