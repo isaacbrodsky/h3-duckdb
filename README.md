@@ -13,7 +13,7 @@ Run DuckDB with the unsigned option:
 duckdb -unsigned
 ```
 
-(Note: you must download and ungzip the extension before installing it. Installing from `https` URLs does not seem to work in DuckDB v0.10.1.)
+Note: you must download and ungzip the extension to install it.
 
 Load the extension:
 ```SQL
