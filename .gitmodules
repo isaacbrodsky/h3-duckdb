@@ -4,3 +4,6 @@
 [submodule "h3"]
 	path = h3
 	url = https://github.com/uber/h3.git
+[submodule "extension-ci-tools"]
+	path = extension-ci-tools
+	url = https://github.com/duckdb/extension-ci-tools.git
