@@ -29,6 +29,8 @@ static void DirectedEdgeToCellsFunction(DataChunk &args, ExpressionState &state,
 static void OriginToDirectedEdgesFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
+  D_ASSERT(result.GetType().id() == LogicalTypeId::LIST);
+
   auto result_data = FlatVector::GetData<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
