@@ -259,74 +259,130 @@ static void LocalIjToCellFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
-// TODO: gridDisksUnsafe?
-
 CreateScalarFunctionInfo H3Functions::GetGridDiskFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_grid_disk", {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::UBIGINT),
-      GridDiskTmplFunction<GridDiskOperator>));
+  ScalarFunctionSet funcs("h3_grid_disk");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                                   LogicalType::LIST(LogicalType::UBIGINT),
+                                   GridDiskTmplFunction<GridDiskOperator>));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                                   LogicalType::LIST(LogicalType::BIGINT),
+                                   GridDiskTmplFunction<GridDiskOperator>));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_grid_disk_distances", {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-      GridDiskDistancesTmplFunction<GridDiskDistancesOperator>));
+  ScalarFunctionSet funcs("h3_grid_disk_distances");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
+                     GridDiskDistancesTmplFunction<GridDiskDistancesOperator>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
+                     GridDiskDistancesTmplFunction<GridDiskDistancesOperator>));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskUnsafeFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_grid_disk_unsafe", {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::UBIGINT),
-      GridDiskTmplFunction<GridDiskUnsafeOperator>));
+  ScalarFunctionSet funcs("h3_grid_disk_unsafe");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::UBIGINT),
+                     GridDiskTmplFunction<GridDiskUnsafeOperator>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::BIGINT),
+                     GridDiskTmplFunction<GridDiskUnsafeOperator>));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesUnsafeFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_grid_disk_distances_unsafe",
-      {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-      GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
+  ScalarFunctionSet funcs("h3_grid_disk_distances_unsafe");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
+                     GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
+                     GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesSafeFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_grid_disk_distances_safe",
-      {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-      GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
+  ScalarFunctionSet funcs("h3_grid_disk_distances_safe");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
+                     GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
+                     GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridRingUnsafeFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_grid_ring_unsafe", {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::UBIGINT), GridRingUnsafeFunction));
+  ScalarFunctionSet funcs("h3_grid_ring_unsafe");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                                   LogicalType::LIST(LogicalType::UBIGINT),
+                                   GridRingUnsafeFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                                   LogicalType::LIST(LogicalType::BIGINT),
+                                   GridRingUnsafeFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridPathCellsFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_grid_path_cells", {LogicalType::UBIGINT, LogicalType::UBIGINT},
-      LogicalType::LIST(LogicalType::UBIGINT), GridPathCellsFunction));
+  ScalarFunctionSet funcs("h3_grid_path_cells");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
+                                   LogicalType::LIST(LogicalType::UBIGINT),
+                                   GridPathCellsFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
+                                   LogicalType::LIST(LogicalType::BIGINT),
+                                   GridPathCellsFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDistanceFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_grid_distance", {LogicalType::UBIGINT, LogicalType::UBIGINT},
-      LogicalType::BIGINT, GridDistanceFunction));
+  ScalarFunctionSet funcs("h3_grid_distance");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
+                                   LogicalType::BIGINT, GridDistanceFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
+                                   LogicalType::BIGINT, GridDistanceFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToLocalIjFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_cell_to_local_ij", {LogicalType::UBIGINT, LogicalType::UBIGINT},
-      LogicalType::LIST(LogicalType::INTEGER), CellToLocalIjFunction));
+  ScalarFunctionSet funcs("h3_cell_to_local_ij");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
+                                   LogicalType::LIST(LogicalType::INTEGER),
+                                   CellToLocalIjFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
+                                   LogicalType::LIST(LogicalType::INTEGER),
+                                   CellToLocalIjFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetLocalIjToCellFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_local_ij_to_cell",
+  ScalarFunctionSet funcs("h3_local_ij_to_cell");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction(
       {LogicalType::UBIGINT, LogicalType::INTEGER, LogicalType::INTEGER},
       LogicalType::UBIGINT, LocalIjToCellFunction));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::BIGINT, LogicalType::INTEGER, LogicalType::INTEGER},
+      LogicalType::BIGINT, LocalIjToCellFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 } // namespace duckdb
