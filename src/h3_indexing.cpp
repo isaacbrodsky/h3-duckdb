@@ -226,6 +226,8 @@ CreateScalarFunctionInfo H3Functions::GetCellToLatFunction() {
                                    CellToLatVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
                                    CellToLatFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
+                                   CellToLatFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -234,6 +236,8 @@ CreateScalarFunctionInfo H3Functions::GetCellToLngFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::DOUBLE,
                                    CellToLngVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
+                                   CellToLngFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
                                    CellToLngFunction));
   return CreateScalarFunctionInfo(funcs);
 }
@@ -246,6 +250,9 @@ CreateScalarFunctionInfo H3Functions::GetCellToLatLngFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
                                    CellToLatLngFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
+                                   LogicalType::LIST(LogicalType::DOUBLE),
+                                   CellToLatLngFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -254,6 +261,8 @@ CreateScalarFunctionInfo H3Functions::GetCellToBoundaryWktFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
                                    CellToBoundaryWktVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
+                                   CellToBoundaryWktFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
                                    CellToBoundaryWktFunction));
   return CreateScalarFunctionInfo(funcs);
 }

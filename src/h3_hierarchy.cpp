@@ -274,47 +274,86 @@ static void UncompactCellsFunction(DataChunk &args, ExpressionState &state,
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToParentFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_cell_to_parent", {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::UBIGINT, CellToParentFunction));
+  ScalarFunctionSet funcs("h3_cell_to_parent");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                                   LogicalType::UBIGINT, CellToParentFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                                   LogicalType::BIGINT, CellToParentFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToChildrenFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_cell_to_children", {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::UBIGINT), CellToChildrenFunction));
+  ScalarFunctionSet funcs("h3_cell_to_children");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                                   LogicalType::LIST(LogicalType::UBIGINT),
+                                   CellToChildrenFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                                   LogicalType::LIST(LogicalType::BIGINT),
+                                   CellToChildrenFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToCenterChildFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_cell_to_center_child", {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::UBIGINT, CellToCenterChildFunction));
+  ScalarFunctionSet funcs("h3_cell_to_center_child");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                                   LogicalType::UBIGINT,
+                                   CellToCenterChildFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                                   LogicalType::BIGINT,
+                                   CellToCenterChildFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToChildPosFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_cell_to_child_pos", {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::BIGINT, CellToChildPosFunction));
+  ScalarFunctionSet funcs("h3_cell_to_child_pos");
+  // TODO: VARCHAR variant of this function
+  // Note this does not return an index, rather it returns a position ID
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                                   LogicalType::BIGINT,
+                                   CellToChildPosFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                                   LogicalType::BIGINT,
+                                   CellToChildPosFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetChildPosToCellFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_child_pos_to_cell",
+  ScalarFunctionSet funcs("h3_child_pos_to_cell");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction(
       {LogicalType::BIGINT, LogicalType::UBIGINT, LogicalType::INTEGER},
       LogicalType::UBIGINT, ChildPosToCellFunction));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::BIGINT, LogicalType::BIGINT, LogicalType::INTEGER},
+      LogicalType::BIGINT, ChildPosToCellFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetCompactCellsFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_compact_cells", {LogicalType::LIST(LogicalType::UBIGINT)},
-      LogicalType::LIST(LogicalType::UBIGINT), CompactCellsFunction));
+  ScalarFunctionSet funcs("h3_compact_cells");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::LIST(LogicalType::UBIGINT)},
+                                   LogicalType::LIST(LogicalType::UBIGINT),
+                                   CompactCellsFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::LIST(LogicalType::BIGINT)},
+                                   LogicalType::LIST(LogicalType::BIGINT),
+                                   CompactCellsFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetUncompactCellsFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_uncompact_cells",
+  ScalarFunctionSet funcs("h3_uncompact_cells");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::UBIGINT), LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::UBIGINT), UncompactCellsFunction));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::LIST(LogicalType::BIGINT), LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::BIGINT), UncompactCellsFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 } // namespace duckdb

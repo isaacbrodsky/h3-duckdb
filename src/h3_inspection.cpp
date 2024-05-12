@@ -124,15 +124,23 @@ static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState &state,
 }
 
 CreateScalarFunctionInfo H3Functions::GetGetResolutionFunction() {
-  return CreateScalarFunctionInfo(
-      ScalarFunction("h3_get_resolution", {LogicalType::UBIGINT},
-                     LogicalType::INTEGER, GetResolutionFunction));
+  ScalarFunctionSet funcs("h3_get_resolution");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::INTEGER,
+                                   GetResolutionFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::INTEGER,
+                                   GetResolutionFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGetBaseCellNumberFunction() {
-  return CreateScalarFunctionInfo(
-      ScalarFunction("h3_get_base_cell_number", {LogicalType::UBIGINT},
-                     LogicalType::INTEGER, GetBaseCellNumberFunction));
+  ScalarFunctionSet funcs("h3_get_base_cell_number");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::INTEGER,
+                                   GetBaseCellNumberFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::INTEGER,
+                                   GetBaseCellNumberFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetStringToH3Function() {
@@ -142,9 +150,12 @@ CreateScalarFunctionInfo H3Functions::GetStringToH3Function() {
 }
 
 CreateScalarFunctionInfo H3Functions::GetH3ToStringFunction() {
-  return CreateScalarFunctionInfo(
-      ScalarFunction("h3_h3_to_string", {LogicalType::UBIGINT},
-                     LogicalType::VARCHAR, H3ToStringFunction));
+  ScalarFunctionSet funcs("h3_h3_to_string");
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
+                                   H3ToStringFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
+                                   H3ToStringFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetIsValidCellFunctions() {
@@ -153,25 +164,41 @@ CreateScalarFunctionInfo H3Functions::GetIsValidCellFunctions() {
                                    IsValidCellVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
                                    IsValidCellFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
+                                   IsValidCellFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetIsResClassIIIFunction() {
-  return CreateScalarFunctionInfo(
-      ScalarFunction("h3_is_res_class_iii", {LogicalType::UBIGINT},
-                     LogicalType::BOOLEAN, IsResClassIIIFunction));
+  ScalarFunctionSet funcs("h3_is_res_class_iii");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
+                                   IsResClassIIIFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
+                                   IsResClassIIIFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetIsPentagonFunction() {
-  return CreateScalarFunctionInfo(
-      ScalarFunction("h3_is_pentagon", {LogicalType::UBIGINT},
-                     LogicalType::BOOLEAN, IsPentagonFunction));
+  ScalarFunctionSet funcs("h3_is_pentagon");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
+                                   IsPentagonFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
+                                   IsPentagonFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGetIcosahedronFacesFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_get_icosahedron_faces", {LogicalType::UBIGINT},
-      LogicalType::LIST(LogicalType::INTEGER), GetIcosahedronFacesFunction));
+  ScalarFunctionSet funcs("h3_get_icosahedron_faces");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
+                                   LogicalType::LIST(LogicalType::INTEGER),
+                                   GetIcosahedronFacesFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
+                                   LogicalType::LIST(LogicalType::INTEGER),
+                                   GetIcosahedronFacesFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 } // namespace duckdb
