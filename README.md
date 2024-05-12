@@ -53,7 +53,7 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 ### Full list of functions
 
 | Function | Notes | Description
-| --- | --- | ---
+| --: | --- | ---
 | `h3_latlng_to_cell` | [u](#fu) | Convert latitude/longitude coordinate to cell ID
 | `h3_cell_to_lat` | [v](#fv) | Convert cell ID to latitude
 | `h3_cell_to_lng` | [v](#fv) | Convert cell ID to longitude
