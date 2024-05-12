@@ -50,60 +50,64 @@ but the unsigned one is preferred and is returned when the extension can't detec
 one to use. The unsigned and signed APIs are identical. Many functions also support
 `VARCHAR` H3 index input and output.
 
-| Function |
-| --- |
-| `h3_latlng_to_cell`
-| `h3_cell_to_lat`
-| `h3_cell_to_lng`
-| `h3_cell_to_latlng`
-| `h3_cell_to_boundary_wkt`
-| `h3_get_resolution`
-| `h3_get_base_cell_number`
-| `h3_string_to_h3`
-| `h3_h3_to_string`
-| `h3_is_valid_cell`
-| `h3_is_res_class_iii`
-| `h3_is_pentagon`
-| `h3_get_icosahedron_faces`
-| `h3_cell_to_parent`
-| `h3_cell_to_children`
-| `h3_cell_to_center_child`
-| `h3_cell_to_child_pos`
-| `h3_child_pos_to_cell`
-| `h3_compact_cells`
-| `h3_uncompact_cells`
-| `h3_grid_disk`
-| `h3_grid_disk_distances`
-| `h3_grid_disk_unsafe`
-| `h3_grid_disk_distances_unsafe`
-| `h3_grid_ring_unsafe`
-| `h3_grid_path_cells`
-| `h3_grid_distance`
-| `h3_cell_to_local_ij`
-| `h3_local_ij_to_cell`
-| `h3_cell_to_vertex`
-| `h3_cell_to_vertexes`
-| `h3_vertex_to_lat`
-| `h3_vertex_to_lng`
-| `h3_vertex_to_latlng`
-| `h3_is_valid_vertex`
-| `h3_is_valid_directed_edge`
-| `h3_origin_to_directed_edges`
-| `h3_directed_edge_to_cells`
-| `h3_get_directed_edge_origin`
-| `h3_get_directed_edge_destination`
-| `h3_cells_to_directed_edge`
-| `h3_are_neighbor_cells`
-| `h3_directed_edge_to_boundary_wkt`
-| `h3_get_hexagon_area_avg`
-| `h3_cell_area`
-| `h3_edge_length`
-| `h3_get_num_cells`
-| `h3_get_res0_cells`
-| `h3_get_pentagons`
-| `h3_great_circle_distance`
-| `h3_cells_to_multi_polygon_wkt`
-| `h3_polygon_wkt_to_cells`
+| Function | Notes | Description
+| --- | --- | ---
+| `h3_latlng_to_cell` | [u](#fu) | Convert latitude/longitude coordinate to cell ID
+| `h3_cell_to_lat` | [v](#fv) | Convert cell ID to latitude
+| `h3_cell_to_lng` | [v](#fv) | Convert cell ID to longitude
+| `h3_cell_to_latlng` | [v](#fv) | Convert cell ID to latitude/longitude
+| `h3_cell_to_boundary_wkt` | [v](#fv) | Convert cell ID to cell boundary
+| `h3_get_resolution` | [i](#fi) | Get resolution number of cell ID
+| `h3_get_base_cell_number` | [i](#fi) | Get base cell number of cell ID
+| `h3_string_to_h3` | [u](#fu) | Convert VARCHAR cell ID to UBIGINT
+| `h3_h3_to_string` | [i](#fi) | Convert BIGINT or UBIGINT cell ID to VARCHAR
+| `h3_is_valid_cell` | [v](#fv) | True if this is a valid cell ID
+| `h3_is_res_class_iii` | [i](#fi) | True if the cell's resolution is class III
+| `h3_is_pentagon` | [i](#fi) | True if the cell is a pentagon
+| `h3_get_icosahedron_faces` | [i](#fi) | List of icosahedron face IDs the cell is on
+| `h3_cell_to_parent` | [i](#fi) | Get coarser cell for a cell
+| `h3_cell_to_children` | [i](#fi) | Get finer cells for a cell
+| `h3_cell_to_center_child` | [i](#fi) | Get the center finer cell for a cell
+| `h3_cell_to_child_pos` | [i](#fi) | Get a sub-indexing number for a cell inside a parent
+| `h3_child_pos_to_cell` | [i](#fi) | Convert parent and sub-indexing number to a cell ID
+| `h3_compact_cells` | [i](#fi) | Convert a set of single-resolution cells to the minimal mixed-resolution set
+| `h3_uncompact_cells` | [i](#fi) | Convert a mixed-resolution set to a single-resolution set of cells
+| `h3_grid_disk` | [i](#fi) | Find cells within a grid distance
+| `h3_grid_disk_distances` | [i](#fi) | Find cells within a grid distance, sorted by distance
+| `h3_grid_disk_unsafe` | [i](#fi) | Find cells within a grid distance, with no pentagon distortion
+| `h3_grid_disk_distances_unsafe` | [i](#fi) | Find cells within a grid distance, sorted by distance, with no pentagon distortion
+| `h3_grid_ring_unsafe` | [i](#fi) | Find cells exactly a grid distance away, with no pentagon distortion
+| `h3_grid_path_cells` | [i](#fi) | Find a grid path to connect two cells
+| `h3_grid_distance` | [i](#fi) | Find the grid distance between two cells
+| `h3_cell_to_local_ij` | [i](#fi) | Convert a cell ID to a local I,J coordinate space
+| `h3_local_ij_to_cell` | [i](#fi) | Convert a local I,J coordinate to a cell ID
+| `h3_cell_to_vertex` | [i](#fi) | Get the vertex ID for a cell ID and vertex number
+| `h3_cell_to_vertexes` | [i](#fi) | Get all vertex IDs for a cell ID
+| `h3_vertex_to_lat` | [i](#fi) | Convert a vertex ID to latitude
+| `h3_vertex_to_lng` | [i](#fi) | Convert a vertex ID to longitude
+| `h3_vertex_to_latlng` | [i](#fi) | Convert a vertex ID to latitude/longitude coordinate
+| `h3_is_valid_vertex` | [v](#fv) | True if passed a valid vertex ID
+| `h3_is_valid_directed_edge` | [v](#fv) | True if passed a valid directed edge ID
+| `h3_origin_to_directed_edges` | [i](#fi) | Get all directed edge IDs for a cell ID
+| `h3_directed_edge_to_cells` | [i](#fi) | Convert a directed edge ID to origin/destination cell IDs
+| `h3_get_directed_edge_origin` | [i](#fi) | Convert a directed edge ID to origin cell ID
+| `h3_get_directed_edge_destination` | [i](#fi) | Convert a directed edge ID to destination cell ID
+| `h3_cells_to_directed_edge` | [i](#fi) | Convert an origin/destination pair to directed edge ID
+| `h3_are_neighbor_cells` | [i](#fi) | True if the two cell IDs are directly adjacent
+| `h3_directed_edge_to_boundary_wkt` | [v](#fv) | Convert directed edge ID to linestring WKT
+| `h3_get_hexagon_area_avg` | | Get average area of a hexagon cell at resolution
+| `h3_cell_area` | [v](#fv) | Get the area of a cell ID
+| `h3_edge_length` | [v](#fv) | Get the length of a directed edge ID
+| `h3_get_num_cells` | | Get the number of cells at a resolution
+| `h3_get_res0_cells` | [u](#fu) | Get all resolution 0 cells
+| `h3_get_pentagons` | [u](#fu) | Get all pentagons at a resolution
+| `h3_great_circle_distance` | | Compute the great circle distance between two points (Haversine)
+| `h3_cells_to_multi_polygon_wkt` | [v](#fv) | Convert a set of cells to multipolygon WKT
+| `h3_polygon_wkt_to_cells` | [u](#fu) | Convert polygon WKT to a set of cells
+
+<i id="fv">v</i>: Supports VARCHAR, UBIGINT, and BIGINT input and output.
+<i id="fi">i</i>: Supports UBIGINT and BIGINT input and output. (TODO for these to support VARCHAR too.)
+<i id="fu">u</i>: Supports UBIGINT output only.
 
 # Development
 
