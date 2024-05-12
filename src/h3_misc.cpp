@@ -284,6 +284,8 @@ CreateScalarFunctionInfo H3Functions::GetCellAreaFunction() {
                                    CellAreaVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::VARCHAR},
                                    LogicalType::DOUBLE, CellAreaFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::VARCHAR},
+                                   LogicalType::DOUBLE, CellAreaFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -300,6 +302,8 @@ CreateScalarFunctionInfo H3Functions::GetEdgeLengthFunction() {
                                    LogicalType::DOUBLE,
                                    EdgeLengthVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::VARCHAR},
+                                   LogicalType::DOUBLE, EdgeLengthFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::VARCHAR},
                                    LogicalType::DOUBLE, EdgeLengthFunction));
   return CreateScalarFunctionInfo(funcs);
 }

@@ -46,6 +46,11 @@ SELECT h3_cell_area(cast(586265647244115967 as ubigint), 'km^2')
 85321.69572540345
 
 query I
+SELECT h3_cell_area(cast(586265647244115967 as bigint), 'km^2')
+----
+85321.69572540345
+
+query I
 SELECT h3_cell_area('fffffffffffffff', 'km^2')
 ----
 NULL
@@ -67,6 +72,11 @@ SELECT h3_edge_length('115283473fffffff', 'm')
 
 query I
 SELECT h3_edge_length(cast(1608492358964346879 as ubigint), 'km')
+----
+10.302930275179133
+
+query I
+SELECT h3_edge_length(cast(1608492358964346879 as bigint), 'km')
 ----
 10.302930275179133
 

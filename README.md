@@ -43,7 +43,12 @@ SELECT h3_cell_to_latlng(cast(586265647244115967 as ubigint));
 
 # Implemented functions
 
-This extension implements the entire [H3 API](https://h3geo.org/docs/api/indexing). The full list of functions is below:
+This extension implements the entire [H3 API](https://h3geo.org/docs/api/indexing). The full list of functions is below.
+
+All functions support H3 indexes specified as `UBIGINT` (`uint64`) or `BIGINT` (`int64`),
+but the unsigned one is preferred and is returned when the extension can't detect which
+one to use. The unsigned and signed APIs are identical. Many functions also support
+`VARCHAR` H3 index input and output.
 
 | Function |
 | --- |

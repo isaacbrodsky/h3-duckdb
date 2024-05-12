@@ -302,28 +302,28 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskUnsafeFunction() {
 CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesUnsafeFunction() {
   ScalarFunctionSet funcs("h3_grid_disk_distances_unsafe");
   // TODO: VARCHAR variant of this function
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
-                     LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-                     GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
-                     LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
-                     GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::UBIGINT, LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
+      GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::BIGINT, LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
+      GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesSafeFunction() {
   ScalarFunctionSet funcs("h3_grid_disk_distances_safe");
   // TODO: VARCHAR variant of this function
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
-                     LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-                     GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
-                     LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
-                     GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::UBIGINT, LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
+      GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::BIGINT, LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
+      GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
