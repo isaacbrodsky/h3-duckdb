@@ -50,6 +50,8 @@ but the unsigned one is preferred and is returned when the extension can't detec
 one to use. The unsigned and signed APIs are identical. Many functions also support
 `VARCHAR` H3 index input and output.
 
+### Full list of functions
+
 | Function | Notes | Description
 | --- | --- | ---
 | `h3_latlng_to_cell` | [u](#fu) | Convert latitude/longitude coordinate to cell ID
@@ -101,13 +103,15 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 | `h3_get_num_cells` | | Get the number of cells at a resolution
 | `h3_get_res0_cells` | [u](#fu) | Get all resolution 0 cells
 | `h3_get_pentagons` | [u](#fu) | Get all pentagons at a resolution
-| `h3_great_circle_distance` | | Compute the great circle distance between two points (Haversine)
+| `h3_great_circle_distance` | | Compute the great circle distance between two points (haversine)
 | `h3_cells_to_multi_polygon_wkt` | [v](#fv) | Convert a set of cells to multipolygon WKT
 | `h3_polygon_wkt_to_cells` | [u](#fu) | Convert polygon WKT to a set of cells
 
-<i id="fv">v</i>: Supports VARCHAR, UBIGINT, and BIGINT input and output.
-<i id="fi">i</i>: Supports UBIGINT and BIGINT input and output. (TODO for these to support VARCHAR too.)
-<i id="fu">u</i>: Supports UBIGINT output only.
+### Notes
+
+* <i id="fv">v</i>: Supports VARCHAR, UBIGINT, and BIGINT input and output.
+* <i id="fi">i</i>: Supports UBIGINT and BIGINT input and output. (TODO for these to support VARCHAR too.)
+* <i id="fu">u</i>: Supports UBIGINT output only.
 
 # Development
 
@@ -161,4 +165,4 @@ DGGRID Copyright (c) 2015 Southern Oregon University
 
 [DuckDB](https://github.com/duckdb/duckdb) Copyright 2018-2022 Stichting DuckDB Foundation (MIT License)
 
-Build system adapted from [sqlitescanner](https://github.com/duckdblabs/sqlitescanner) Copyright 2018-2022 DuckDB Labs BV (MIT License)
+[DuckDB extension-template](https://github.com/duckdb/extension-template) Copyright 2018-2022 DuckDB Labs BV (MIT License)
