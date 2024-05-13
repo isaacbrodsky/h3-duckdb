@@ -26,6 +26,11 @@ SELECT h3_cell_to_lat(h3_string_to_h3('85283473fffffff')), h3_cell_to_lng(h3_str
 37.34579337536848	-121.9763759725512
 
 query II
+SELECT h3_cell_to_lat(cast(h3_string_to_h3('85283473fffffff') as bigint)), h3_cell_to_lng(cast(h3_string_to_h3('85283473fffffff') as bigint))
+----
+37.34579337536848	-121.9763759725512
+
+query II
 SELECT h3_cell_to_lat('85283473fffffff'), h3_cell_to_lng('85283473fffffff')
 ----
 37.34579337536848	-121.9763759725512
@@ -41,6 +46,11 @@ SELECT list_transform(h3_cell_to_latlng(h3_string_to_h3('85283473fffffff')), x->
 [37.345793375368, -121.976375972551]
 
 query I
+SELECT list_transform(h3_cell_to_latlng(cast(h3_string_to_h3('85283473fffffff') as bigint)), x-> round(x, 12));
+----
+[37.345793375368, -121.976375972551]
+
+query I
 SELECT list_transform(h3_cell_to_latlng('85283473fffffff'), x-> round(x, 12));
 ----
 [37.345793375368, -121.976375972551]
@@ -52,6 +62,11 @@ NULL
 
 query I
 SELECT h3_cell_to_boundary_wkt(h3_string_to_h3('822d57fffffffff'));
+----
+POLYGON ((38.777546 44.198571, 39.938746 42.736298, 42.150674 42.631271, 43.258395 44.047542, 42.146575 45.539505, 39.897167 45.559577, 38.777546 44.198571))
+
+query I
+SELECT h3_cell_to_boundary_wkt(cast(h3_string_to_h3('822d57fffffffff') as bigint));
 ----
 POLYGON ((38.777546 44.198571, 39.938746 42.736298, 42.150674 42.631271, 43.258395 44.047542, 42.146575 45.539505, 39.897167 45.559577, 38.777546 44.198571))
 

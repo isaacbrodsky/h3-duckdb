@@ -285,6 +285,10 @@ CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
       {LogicalType::LIST(LogicalType::UBIGINT)}, LogicalType::VARCHAR,
       CellsToMultiPolygonWktFunction<LogicalType::UBIGINT,
                                      CellsToMultiPolygonWktInputOperator>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::LIST(LogicalType::BIGINT)}, LogicalType::VARCHAR,
+      CellsToMultiPolygonWktFunction<LogicalType::BIGINT,
+                                     CellsToMultiPolygonWktInputOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 

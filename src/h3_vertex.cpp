@@ -138,33 +138,57 @@ static void IsValidVertexFunction(DataChunk &args, ExpressionState &state,
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToVertexFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_cell_to_vertex", {LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::UBIGINT, CellToVertexFunction));
+  ScalarFunctionSet funcs("h3_cell_to_vertex");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                                   LogicalType::UBIGINT, CellToVertexFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                                   LogicalType::BIGINT, CellToVertexFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToVertexesFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_cell_to_vertexes", {LogicalType::UBIGINT},
-      LogicalType::LIST(LogicalType::UBIGINT), CellToVertexesFunction));
+  ScalarFunctionSet funcs("h3_cell_to_vertexes");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
+                                   LogicalType::LIST(LogicalType::UBIGINT),
+                                   CellToVertexesFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
+                                   LogicalType::LIST(LogicalType::BIGINT),
+                                   CellToVertexesFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetVertexToLatFunction() {
-  return CreateScalarFunctionInfo(
-      ScalarFunction("h3_vertex_to_lat", {LogicalType::UBIGINT},
-                     LogicalType::DOUBLE, VertexToLatFunction));
+  ScalarFunctionSet funcs("h3_vertex_to_lat");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
+                                   VertexToLatFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
+                                   VertexToLatFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetVertexToLngFunction() {
-  return CreateScalarFunctionInfo(
-      ScalarFunction("h3_vertex_to_lng", {LogicalType::UBIGINT},
-                     LogicalType::DOUBLE, VertexToLngFunction));
+  ScalarFunctionSet funcs("h3_vertex_to_lng");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
+                                   VertexToLngFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
+                                   VertexToLngFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetVertexToLatLngFunction() {
-  return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_vertex_to_latlng", {LogicalType::UBIGINT},
-      LogicalType::LIST(LogicalType::DOUBLE), VertexToLatLngFunction));
+  ScalarFunctionSet funcs("h3_vertex_to_latlng");
+  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
+                                   LogicalType::LIST(LogicalType::DOUBLE),
+                                   VertexToLatLngFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
+                                   LogicalType::LIST(LogicalType::DOUBLE),
+                                   VertexToLatLngFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetIsValidVertexFunctions() {
@@ -172,6 +196,8 @@ CreateScalarFunctionInfo H3Functions::GetIsValidVertexFunctions() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
                                    IsValidVertexVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
+                                   IsValidVertexFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
                                    IsValidVertexFunction));
   return CreateScalarFunctionInfo(funcs);
 }
