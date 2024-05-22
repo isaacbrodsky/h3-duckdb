@@ -1,6 +1,8 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
 
+#include "duckdb/common/helper.hpp"
+
 namespace duckdb {
 
 static const std::string POLYGON = "POLYGON";
