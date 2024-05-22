@@ -220,7 +220,7 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state,
           strIndex = whitespace(str, strIndex);
 
           duckdb::shared_ptr<std::vector<LatLng>> outerVerts =
-              duckdb::make_shared<std::vector<LatLng>>();
+              duckdb::make_shared_ptr<std::vector<LatLng>>();
           strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
 
           std::vector<GeoLoop> holes;
@@ -231,7 +231,7 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state,
             if (str[strIndex] == '(') {
               GeoLoop hole;
               duckdb::shared_ptr<std::vector<LatLng>> verts =
-                  duckdb::make_shared<std::vector<LatLng>>();
+                  duckdb::make_shared_ptr<std::vector<LatLng>>();
               strIndex = readGeoLoop(str, strIndex, verts, hole);
               holes.push_back(hole);
               holesVerts.push_back(verts);
