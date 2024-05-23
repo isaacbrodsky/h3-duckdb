@@ -1,6 +1,8 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
 
+#include "duckdb/common/helper.hpp"
+
 namespace duckdb {
 
 static const std::string POLYGON = "POLYGON";
@@ -219,8 +221,7 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state,
           strIndex++;
           strIndex = whitespace(str, strIndex);
 
-          duckdb::shared_ptr<std::vector<LatLng>> outerVerts =
-              duckdb::make_shared<std::vector<LatLng>>();
+          auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
           strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
 
           std::vector<GeoLoop> holes;
@@ -230,8 +231,7 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state,
             strIndex = whitespace(str, strIndex);
             if (str[strIndex] == '(') {
               GeoLoop hole;
-              duckdb::shared_ptr<std::vector<LatLng>> verts =
-                  duckdb::make_shared<std::vector<LatLng>>();
+              auto verts = duckdb::make_shared_ptr<std::vector<LatLng>>();
               strIndex = readGeoLoop(str, strIndex, verts, hole);
               holes.push_back(hole);
               holesVerts.push_back(verts);

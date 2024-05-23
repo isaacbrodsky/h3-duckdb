@@ -1,5 +1,5 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
-[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v0.10.2&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v0.10.2)
+[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v0.10.3&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v0.10.3)
 [![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.1.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
@@ -7,12 +7,12 @@ This is a [DuckDB](https://duckdb.org) extension that adds support for the [H3 d
 
 # Download
 
-Download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/linux_amd64/h3ext.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/linux_amd64_gcc4/h3ext.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/linux_arm64/h3ext.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/osx_amd64/h3ext.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/osx_arm64/h3ext.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/wasm_eh/h3ext.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/wasm_mvp/h3ext.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/wasm_threads/h3ext.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/windows_amd64/h3ext.duckdb_extension.gz)
+Download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/linux_amd64/h3ext.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/linux_amd64_gcc4/h3ext.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/linux_arm64/h3ext.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/osx_amd64/h3ext.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/osx_arm64/h3ext.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/wasm_eh/h3ext.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/wasm_mvp/h3ext.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/wasm_threads/h3ext.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/windows_amd64/h3ext.duckdb_extension.gz)
 
 For Linux x64:
 
 ```sh
-wget https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.2/linux_amd64_gcc4/h3ext.duckdb_extension.gz
+wget https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v0.10.3/linux_amd64_gcc4/h3ext.duckdb_extension.gz
 gunzip h3ext.duckdb_extension.gz
 ```
 
