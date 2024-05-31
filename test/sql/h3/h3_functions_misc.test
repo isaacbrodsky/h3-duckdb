@@ -138,17 +138,17 @@ SELECT h3_great_circle_distance(5, 5, 5, 5, 'km')
 query I
 SELECT h3_great_circle_distance(5, 5, 15, 15, 'rads')
 ----
-2.0294722767173723
+0.2447868223787244
 
 query I
 SELECT h3_great_circle_distance(5, 5, 15, 15, 'km')
 ----
-12929.782448441345
+1559.5386031690684
 
 query I
 SELECT h3_great_circle_distance(5, 5, -15, -15, 'm')
 ----
-6406265.055709438
+3130865.2809374747
 
 query I
 SELECT h3_great_circle_distance(5, 5, -15, -15, 'invalid')
