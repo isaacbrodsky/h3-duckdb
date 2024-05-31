@@ -247,8 +247,8 @@ static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
                         .GetValue<double>();
       string_t unit = args.GetValue(4, i).ToString();
 
-      LatLng latLng0 = {.lat = lat0, .lng = lng0};
-      LatLng latLng1 = {.lat = lat1, .lng = lng1};
+      LatLng latLng0 = {.lat = radsToDegs(lat0), .lng = radsToDegs(lng0)};
+      LatLng latLng1 = {.lat = radsToDegs(lat1), .lng = radsToDegs(lng1)};
 
       if (unit == "rads") {
         dist = greatCircleDistanceRads(&latLng0, &latLng1);
