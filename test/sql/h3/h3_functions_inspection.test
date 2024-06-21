@@ -11,6 +11,11 @@ SELECT h3_get_resolution(cast(586265647244115967 as bigint));
 2
 
 query I
+SELECT h3_get_resolution('822d57fffffffff');
+----
+2
+
+query I
 SELECT h3_is_valid_cell(cast(586265647244115967 as ubigint));
 ----
 true

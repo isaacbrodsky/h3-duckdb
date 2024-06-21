@@ -11,12 +11,48 @@ static void GetResolutionFunction(DataChunk &args, ExpressionState &state,
       [&](H3Index cell) { return getResolution(cell); });
 }
 
+static void GetResolutionVarcharFunction(DataChunk &args,
+                                         ExpressionState &state,
+                                         Vector &result) {
+  auto &inputs = args.data[0];
+  UnaryExecutor::ExecuteWithNulls<string_t, int>(
+      inputs, result, args.size(),
+      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+        H3Index cell;
+        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return 0;
+        } else {
+          return getResolution(cell);
+        }
+      });
+}
+
 static void GetBaseCellNumberFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<uint64_t, int>(
       inputs, result, args.size(),
       [&](H3Index cell) { return getBaseCellNumber(cell); });
+}
+
+static void GetBaseCellNumberVarcharFunction(DataChunk &args,
+                                             ExpressionState &state,
+                                             Vector &result) {
+  auto &inputs = args.data[0];
+  UnaryExecutor::ExecuteWithNulls<string_t, int>(
+      inputs, result, args.size(),
+      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+        H3Index cell;
+        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return 0;
+        } else {
+          return getBaseCellNumber(cell);
+        }
+      });
 }
 
 static void StringToH3Function(DataChunk &args, ExpressionState &state,
@@ -81,12 +117,47 @@ static void IsResClassIIIFunction(DataChunk &args, ExpressionState &state,
       [&](uint64_t cell) { return bool(isResClassIII(cell)); });
 }
 
+static void IsResClassIIIVarcharFunction(DataChunk &args,
+                                         ExpressionState &state,
+                                         Vector &result) {
+  auto &inputs = args.data[0];
+  UnaryExecutor::ExecuteWithNulls<string_t, bool>(
+      inputs, result, args.size(),
+      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+        H3Index cell;
+        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return false;
+        } else {
+          return bool(isResClassIII(cell));
+        }
+      });
+}
+
 static void IsPentagonFunction(DataChunk &args, ExpressionState &state,
                                Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<uint64_t, bool>(
       inputs, result, args.size(),
       [&](uint64_t cell) { return bool(isPentagon(cell)); });
+}
+
+static void IsPentagonVarcharFunction(DataChunk &args, ExpressionState &state,
+                                      Vector &result) {
+  auto &inputs = args.data[0];
+  UnaryExecutor::ExecuteWithNulls<string_t, bool>(
+      inputs, result, args.size(),
+      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+        H3Index cell;
+        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return false;
+        } else {
+          return bool(isPentagon(cell));
+        }
+      });
 }
 
 static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState &state,
@@ -125,20 +196,22 @@ static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState &state,
 
 CreateScalarFunctionInfo H3Functions::GetGetResolutionFunction() {
   ScalarFunctionSet funcs("h3_get_resolution");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::INTEGER,
                                    GetResolutionFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::INTEGER,
                                    GetResolutionFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::INTEGER,
+                                   GetResolutionVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGetBaseCellNumberFunction() {
   ScalarFunctionSet funcs("h3_get_base_cell_number");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::INTEGER,
                                    GetBaseCellNumberFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::INTEGER,
+                                   GetBaseCellNumberFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::INTEGER,
                                    GetBaseCellNumberFunction));
   return CreateScalarFunctionInfo(funcs);
 }
@@ -171,20 +244,22 @@ CreateScalarFunctionInfo H3Functions::GetIsValidCellFunctions() {
 
 CreateScalarFunctionInfo H3Functions::GetIsResClassIIIFunction() {
   ScalarFunctionSet funcs("h3_is_res_class_iii");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
                                    IsResClassIIIFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
+                                   IsResClassIIIFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
                                    IsResClassIIIFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetIsPentagonFunction() {
   ScalarFunctionSet funcs("h3_is_pentagon");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
                                    IsPentagonFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
+                                   IsPentagonFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
                                    IsPentagonFunction));
   return CreateScalarFunctionInfo(funcs);
 }
