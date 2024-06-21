@@ -70,6 +70,11 @@ select h3_get_icosahedron_faces(599686042433355775::bigint), h3_get_icosahedron_
 ----
 [7]	[1, 6, 11, 7, 2]
 
+query II
+select h3_get_icosahedron_faces('85283473fffffff'), h3_get_icosahedron_faces('801dfffffffffff')
+----
+[7]	[1, 6, 11, 7, 2]
+
 query I
 select h3_get_icosahedron_faces(18446744073709551615::ubigint)
 ----
@@ -77,5 +82,10 @@ NULL
 
 query I
 select h3_get_icosahedron_faces(9223372036854775807::bigint)
+----
+NULL
+
+query I
+select h3_get_icosahedron_faces('7fffffffffffffff')
 ----
 NULL

@@ -194,6 +194,51 @@ static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState &state,
   result.Verify(args.size());
 }
 
+static void GetIcosahedronFacesVarcharFunction(DataChunk &args,
+                                               ExpressionState &state,
+                                               Vector &result) {
+  UnifiedVectorFormat vdata;
+  args.data[0].ToUnifiedFormat(args.size(), vdata);
+
+  auto ldata = UnifiedVectorFormat::GetData<string_t>(vdata);
+
+  result.SetVectorType(VectorType::FLAT_VECTOR);
+  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  for (idx_t i = 0; i < args.size(); i++) {
+    result_data[i].offset = ListVector::GetListSize(result);
+
+    int faceCount;
+    int64_t actual = 0;
+    string_t cellAddress = ldata[i];
+    H3Index cell;
+    H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+    if (err0) {
+      result.SetValue(i, Value(LogicalType::SQLNULL));
+    } else {
+      H3Error err1 = maxFaceCount(cell, &faceCount);
+      if (err1) {
+        result.SetValue(i, Value(LogicalType::SQLNULL));
+      } else {
+        std::vector<int> out(faceCount);
+        H3Error err2 = getIcosahedronFaces(cell, out.data());
+        if (err2) {
+          result.SetValue(i, Value(LogicalType::SQLNULL));
+        } else {
+          for (auto val : out) {
+            if (val != -1) {
+              ListVector::PushBack(result, Value::INTEGER(val));
+              actual++;
+            }
+          }
+        }
+      }
+    }
+
+    result_data[i].length = actual;
+  }
+  result.Verify(args.size());
+}
+
 CreateScalarFunctionInfo H3Functions::GetGetResolutionFunction() {
   ScalarFunctionSet funcs("h3_get_resolution");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::INTEGER,
@@ -266,13 +311,15 @@ CreateScalarFunctionInfo H3Functions::GetIsPentagonFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetGetIcosahedronFacesFunction() {
   ScalarFunctionSet funcs("h3_get_icosahedron_faces");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::INTEGER),
                                    GetIcosahedronFacesFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::INTEGER),
                                    GetIcosahedronFacesFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
+                                   LogicalType::LIST(LogicalType::INTEGER),
+                                   GetIcosahedronFacesVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 

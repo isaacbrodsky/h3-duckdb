@@ -57,7 +57,7 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 | `h3_is_valid_cell` | [v](#fv) | True if this is a valid cell ID
 | `h3_is_res_class_iii` | [v](#fv) | True if the cell's resolution is class III
 | `h3_is_pentagon` | [v](#fv) | True if the cell is a pentagon
-| `h3_get_icosahedron_faces` | [i](#fi) | List of icosahedron face IDs the cell is on
+| `h3_get_icosahedron_faces` | [v](#fv) | List of icosahedron face IDs the cell is on
 | `h3_cell_to_parent` | [i](#fi) | Get coarser cell for a cell
 | `h3_cell_to_children` | [i](#fi) | Get finer cells for a cell
 | `h3_cell_to_center_child` | [i](#fi) | Get the center finer cell for a cell
