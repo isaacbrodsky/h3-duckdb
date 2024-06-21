@@ -50,14 +50,14 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 | `h3_cell_to_lng` | [v](#fv) | Convert cell ID to longitude
 | `h3_cell_to_latlng` | [v](#fv) | Convert cell ID to latitude/longitude
 | `h3_cell_to_boundary_wkt` | [v](#fv) | Convert cell ID to cell boundary
-| `h3_get_resolution` | [i](#fi) | Get resolution number of cell ID
-| `h3_get_base_cell_number` | [i](#fi) | Get base cell number of cell ID
+| `h3_get_resolution` | [v](#fv) | Get resolution number of cell ID
+| `h3_get_base_cell_number` | [v](#fv) | Get base cell number of cell ID
 | `h3_string_to_h3` | [u](#fu) | Convert VARCHAR cell ID to UBIGINT
 | `h3_h3_to_string` | [i](#fi) | Convert BIGINT or UBIGINT cell ID to VARCHAR
 | `h3_is_valid_cell` | [v](#fv) | True if this is a valid cell ID
-| `h3_is_res_class_iii` | [i](#fi) | True if the cell's resolution is class III
-| `h3_is_pentagon` | [i](#fi) | True if the cell is a pentagon
-| `h3_get_icosahedron_faces` | [i](#fi) | List of icosahedron face IDs the cell is on
+| `h3_is_res_class_iii` | [v](#fv) | True if the cell's resolution is class III
+| `h3_is_pentagon` | [v](#fv) | True if the cell is a pentagon
+| `h3_get_icosahedron_faces` | [v](#fv) | List of icosahedron face IDs the cell is on
 | `h3_cell_to_parent` | [i](#fi) | Get coarser cell for a cell
 | `h3_cell_to_children` | [i](#fi) | Get finer cells for a cell
 | `h3_cell_to_center_child` | [i](#fi) | Get the center finer cell for a cell
