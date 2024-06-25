@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-set(TARGET_NAME h3ext)
+set(TARGET_NAME h3)
 set(EXTENSION_NAME ${TARGET_NAME}_extension)
 set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
 
@@ -51,7 +51,7 @@ add_subdirectory(h3)
 set(BUILD_SHARED_LIBS ON)
 
 set(EXTENSION_SOURCES
-    src/h3ext_extension.cpp
+    src/h3_extension.cpp
     src/h3_common.cpp
     src/h3_indexing.cpp
     src/h3_inspection.cpp
@@ -62,7 +62,7 @@ set(EXTENSION_SOURCES
     src/h3_misc.cpp
     src/h3_regions.cpp)
 set(LIB_HEADER_FILES src/include/h3_common.hpp src/include/h3_functions.hpp
-                     src/include/h3ext_extension.hpp)
+                     src/include/h3_extension.hpp)
 set(ALL_SOURCE_FILES ${EXTENSION_SOURCES} ${LIB_HEADER_FILES})
 
 add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})

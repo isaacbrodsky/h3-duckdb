@@ -1,7 +1,7 @@
 //===----------------------------------------------------------------------===//
 //                         DuckDB
 //
-// h3ext_extension.hpp
+// h3_extension.hpp
 //
 //
 //===----------------------------------------------------------------------===//
@@ -12,7 +12,7 @@
 
 namespace duckdb {
 
-class H3extExtension : public Extension {
+class H3Extension : public Extension {
 public:
   void Load(DuckDB &db) override;
   std::string Name() override;

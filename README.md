@@ -14,8 +14,8 @@ duckdb -unsigned
 
 Load the extension:
 ```SQL
-INSTALL h3ext FROM 'https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev';
-LOAD h3ext;
+INSTALL h3 FROM 'https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev';
+LOAD h3;
 ```
 
 Test running an H3 function:
@@ -30,7 +30,7 @@ SELECT h3_cell_to_latlng(586265647244115967);
 
 ## Download
 
-If you want to directly download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64/h3ext.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64_gcc4/h3ext.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_arm64/h3ext.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_amd64/h3ext.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_arm64/h3ext.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_eh/h3ext.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_mvp/h3ext.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_threads/h3ext.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/windows_amd64/h3ext.duckdb_extension.gz)
+If you want to directly download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64/h3.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64_gcc4/h3.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_arm64/h3.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_amd64/h3.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_arm64/h3.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_eh/h3.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_mvp/h3.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_threads/h3.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/windows_amd64/h3.duckdb_extension.gz)
 
 # Implemented functions
 
@@ -131,7 +131,7 @@ To run, run the bundled `duckdb` shell:
 Load the extension:
 
 ```SQL
-load 'build/release/extension/h3ext/h3ext.duckdb_extension';
+load 'build/release/extension/h3/h3.duckdb_extension';
 ```
 
 To run tests:

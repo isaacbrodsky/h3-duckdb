@@ -1,6 +1,6 @@
 require parquet
 
-require h3ext
+require h3
 
 query I
 SELECT * from read_parquet('test/data/simple.parquet');

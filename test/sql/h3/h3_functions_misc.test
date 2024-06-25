@@ -1,4 +1,4 @@
-require h3ext
+require h3
 
 query I
 SELECT h3_get_hexagon_area_avg(0, 'km^2');

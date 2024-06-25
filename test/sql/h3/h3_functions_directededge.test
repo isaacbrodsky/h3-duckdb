@@ -1,4 +1,4 @@
-require h3ext
+require h3
 
 query I
 SELECT h3_is_valid_directed_edge('2222597fffffffff');
