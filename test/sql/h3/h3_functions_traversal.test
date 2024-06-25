@@ -1,4 +1,4 @@
-require h3ext
+require h3
 
 query I
 select h3_grid_disk(586265647244115967::ubigint, 1);

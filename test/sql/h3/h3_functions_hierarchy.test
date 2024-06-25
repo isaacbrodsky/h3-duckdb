@@ -1,4 +1,4 @@
-require h3ext
+require h3
 
 query I
 SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), 1);
