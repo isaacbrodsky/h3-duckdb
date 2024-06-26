@@ -66,12 +66,22 @@ select h3_cell_to_children(586265647244115967::bigint, 3);
 [590768765835149311, 590768834554626047, 590768903274102783, 590768971993579519, 590769040713056255, 590769109432532991, 590769178152009727]
 
 query I
+select h3_cell_to_children('822d57fffffffff', 3);
+----
+[832d50fffffffff, 832d51fffffffff, 832d52fffffffff, 832d53fffffffff, 832d54fffffffff, 832d55fffffffff, 832d56fffffffff]
+
+query I
 select h3_cell_to_children(586265647244115967::ubigint, 30);
 ----
 NULL
 
 query I
 select h3_cell_to_children(586265647244115967::bigint, 30);
+----
+NULL
+
+query I
+select h3_cell_to_children('822d57fffffffff', 30);
 ----
 NULL
 
