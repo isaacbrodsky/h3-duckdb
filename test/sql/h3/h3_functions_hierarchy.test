@@ -46,12 +46,22 @@ SELECT h3_cell_to_center_child(cast(586265647244115967 as bigint), 4);
 595272305332977663
 
 query I
+SELECT h3_cell_to_center_child('822d57fffffffff', 4);
+----
+842d501ffffffff
+
+query I
 SELECT h3_cell_to_center_child(cast(586265647244115967 as ubigint), 0);
 ----
 NULL
 
 query I
 SELECT h3_cell_to_center_child(cast(586265647244115967 as bigint), 0);
+----
+NULL
+
+query I
+SELECT h3_cell_to_center_child('822d57fffffffff', 0);
 ----
 NULL
 
@@ -96,12 +106,22 @@ select h3_cell_to_child_pos(597563343967879167::bigint, 1);
 70
 
 query I
+select h3_cell_to_child_pos('84af8b1ffffffff', 1);
+----
+70
+
+query I
 select h3_cell_to_child_pos(597563343967879167::ubigint, 100);
 ----
 NULL
 
 query I
 select h3_cell_to_child_pos(597563343967879167::bigint, 100);
+----
+NULL
+
+query I
+select h3_cell_to_child_pos('84af8b1ffffffff', 100);
 ----
 NULL
 
@@ -116,12 +136,22 @@ select h3_child_pos_to_cell(70::bigint, 584056178628100095::bigint, 4);
 597563343967879167
 
 query I
+select h3_child_pos_to_cell(70::bigint, '81afbffffffffff', 4);
+----
+84af8b1ffffffff
+
+query I
 select h3_child_pos_to_cell(70::bigint, 584056178628100095::ubigint, -1);
 ----
 NULL
 
 query I
 select h3_child_pos_to_cell(70::bigint, 584056178628100095::bigint, -1);
+----
+NULL
+
+query I
+select h3_child_pos_to_cell(70, '81afbffffffffff', -1);
 ----
 NULL
 

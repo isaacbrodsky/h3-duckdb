@@ -134,6 +134,34 @@ static void CellToChildrenVarcharFunction(DataChunk &args,
   result.Verify(args.size());
 }
 
+static void CellToCenterChildVarcharFunction(DataChunk &args,
+                                             ExpressionState &state,
+                                             Vector &result) {
+  auto &inputs = args.data[0];
+  auto &inputs2 = args.data[1];
+  BinaryExecutor::ExecuteWithNulls<string_t, int, string_t>(
+      inputs, inputs2, result, args.size(),
+      [&](string_t input, int res, ValidityMask &mask, idx_t idx) {
+        H3Index h;
+        H3Error err0 = stringToH3(input.GetString().c_str(), &h);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return StringVector::EmptyString(result, 0);
+        } else {
+          H3Index parent;
+          H3Error err1 = cellToCenterChild(h, res, &parent);
+          if (err1) {
+            mask.SetInvalid(idx);
+            return StringVector::EmptyString(result, 0);
+          } else {
+            auto str = StringUtil::Format("%llx", parent);
+            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+            return StringVector::AddString(result, strAsStr);
+          }
+        }
+      });
+}
+
 static void CellToCenterChildFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   auto &inputs = args.data[0];
@@ -152,6 +180,32 @@ static void CellToCenterChildFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+static void CellToChildPosVarcharFunction(DataChunk &args,
+                                          ExpressionState &state,
+                                          Vector &result) {
+  auto &inputs = args.data[0];
+  auto &inputs2 = args.data[1];
+  BinaryExecutor::ExecuteWithNulls<string_t, int, int64_t>(
+      inputs, inputs2, result, args.size(),
+      [&](string_t input, int res, ValidityMask &mask, idx_t idx) {
+        H3Index h;
+        H3Error err0 = stringToH3(input.GetString().c_str(), &h);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return int64_t(0);
+        } else {
+          int64_t child;
+          H3Error err1 = cellToChildPos(h, res, &child);
+          if (err1) {
+            mask.SetInvalid(idx);
+            return int64_t(0);
+          } else {
+            return child;
+          }
+        }
+      });
+}
+
 static void CellToChildPosFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
   auto &inputs = args.data[0];
@@ -166,6 +220,35 @@ static void CellToChildPosFunction(DataChunk &args, ExpressionState &state,
           return int64_t(0);
         } else {
           return child;
+        }
+      });
+}
+
+static void ChildPosToCellVarcharFunction(DataChunk &args,
+                                          ExpressionState &state,
+                                          Vector &result) {
+  auto &inputs = args.data[0];
+  auto &inputs2 = args.data[1];
+  auto &inputs3 = args.data[2];
+  TernaryExecutor::ExecuteWithNulls<int64_t, string_t, int, string_t>(
+      inputs, inputs2, inputs3, result, args.size(),
+      [&](int64_t pos, string_t input, int res, ValidityMask &mask, idx_t idx) {
+        H3Index h;
+        H3Error err0 = stringToH3(input.GetString().c_str(), &h);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return StringVector::EmptyString(result, 0);
+        } else {
+          H3Index child;
+          H3Error err = childPosToCell(pos, h, res, &child);
+          if (err) {
+            mask.SetInvalid(idx);
+            return StringVector::EmptyString(result, 0);
+          } else {
+            auto str = StringUtil::Format("%llx", child);
+            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+            return StringVector::AddString(result, strAsStr);
+          }
         }
       });
 }
@@ -376,10 +459,9 @@ CreateScalarFunctionInfo H3Functions::GetCellToChildrenFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetCellToCenterChildFunction() {
   ScalarFunctionSet funcs("h3_cell_to_center_child");
-  // funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR,
-  // LogicalType::INTEGER},
-  //                                  LogicalType::VARCHAR,
-  //                                  CellToCenterChildVarcharFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
+                                   LogicalType::VARCHAR,
+                                   CellToCenterChildVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::UBIGINT,
                                    CellToCenterChildFunction));
@@ -392,10 +474,9 @@ CreateScalarFunctionInfo H3Functions::GetCellToCenterChildFunction() {
 CreateScalarFunctionInfo H3Functions::GetCellToChildPosFunction() {
   ScalarFunctionSet funcs("h3_cell_to_child_pos");
   // Note this does not return an index, rather it returns a position ID
-  // funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR,
-  // LogicalType::INTEGER},
-  //                                  LogicalType::BIGINT,
-  //                                  CellToChildPosVarcharFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
+                                   LogicalType::BIGINT,
+                                   CellToChildPosVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::BIGINT,
                                    CellToChildPosFunction));
@@ -407,9 +488,9 @@ CreateScalarFunctionInfo H3Functions::GetCellToChildPosFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetChildPosToCellFunction() {
   ScalarFunctionSet funcs("h3_child_pos_to_cell");
-  // funcs.AddFunction(ScalarFunction(
-  //     {LogicalType::BIGINT, LogicalType::VARCHAR, LogicalType::INTEGER},
-  //     LogicalType::VARCHAR, ChildPosToCellVarcharFunction));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::BIGINT, LogicalType::VARCHAR, LogicalType::INTEGER},
+      LogicalType::VARCHAR, ChildPosToCellVarcharFunction));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::BIGINT, LogicalType::UBIGINT, LogicalType::INTEGER},
       LogicalType::UBIGINT, ChildPosToCellFunction));
