@@ -11,12 +11,22 @@ SELECT h3_cell_to_parent(cast(586265647244115967 as bigint), 1);
 581764796395814911
 
 query I
+SELECT h3_cell_to_parent('822d57fffffffff', 1);
+----
+812d7ffffffffff
+
+query I
 SELECT h3_cell_to_parent(cast(586265647244115967 as ubigint), -1);
 ----
 NULL
 
 query I
 SELECT h3_cell_to_parent(cast(586265647244115967 as bigint), -1);
+----
+NULL
+
+query I
+SELECT h3_cell_to_parent('822d57fffffffff', -1);
 ----
 NULL
 

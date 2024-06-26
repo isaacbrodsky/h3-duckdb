@@ -21,6 +21,33 @@ static void CellToParentFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+static void CellToParentVarcharFunction(DataChunk &args, ExpressionState &state,
+                                        Vector &result) {
+  auto &inputs = args.data[0];
+  auto &inputs2 = args.data[1];
+  BinaryExecutor::ExecuteWithNulls<string_t, int, string_t>(
+      inputs, inputs2, result, args.size(),
+      [&](string_t input, int res, ValidityMask &mask, idx_t idx) {
+        H3Index h;
+        H3Error err0 = stringToH3(input.GetString().c_str(), &h);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return StringVector::EmptyString(result, 0);
+        } else {
+          H3Index parent;
+          H3Error err1 = cellToParent(h, res, &parent);
+          if (err1) {
+            mask.SetInvalid(idx);
+            return StringVector::EmptyString(result, 0);
+          } else {
+            auto str = StringUtil::Format("%llx", parent);
+            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+            return StringVector::AddString(result, strAsStr);
+          }
+        }
+      });
+}
+
 static void CellToChildrenFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
   auto result_data = FlatVector::GetData<list_entry_t>(result);
@@ -275,7 +302,9 @@ static void UncompactCellsFunction(DataChunk &args, ExpressionState &state,
 
 CreateScalarFunctionInfo H3Functions::GetCellToParentFunction() {
   ScalarFunctionSet funcs("h3_cell_to_parent");
-  // TODO: VARCHAR variant of this function
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
+                                   LogicalType::VARCHAR,
+                                   CellToParentVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::UBIGINT, CellToParentFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
@@ -285,7 +314,10 @@ CreateScalarFunctionInfo H3Functions::GetCellToParentFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetCellToChildrenFunction() {
   ScalarFunctionSet funcs("h3_cell_to_children");
-  // TODO: VARCHAR variant of this function
+  // funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR,
+  // LogicalType::INTEGER},
+  //                                  LogicalType::LIST(LogicalType::VARCHAR),
+  //                                  CellToChildrenVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    CellToChildrenFunction));
@@ -297,7 +329,10 @@ CreateScalarFunctionInfo H3Functions::GetCellToChildrenFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetCellToCenterChildFunction() {
   ScalarFunctionSet funcs("h3_cell_to_center_child");
-  // TODO: VARCHAR variant of this function
+  // funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR,
+  // LogicalType::INTEGER},
+  //                                  LogicalType::VARCHAR,
+  //                                  CellToCenterChildVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::UBIGINT,
                                    CellToCenterChildFunction));
@@ -309,8 +344,11 @@ CreateScalarFunctionInfo H3Functions::GetCellToCenterChildFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetCellToChildPosFunction() {
   ScalarFunctionSet funcs("h3_cell_to_child_pos");
-  // TODO: VARCHAR variant of this function
   // Note this does not return an index, rather it returns a position ID
+  // funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR,
+  // LogicalType::INTEGER},
+  //                                  LogicalType::BIGINT,
+  //                                  CellToChildPosVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::BIGINT,
                                    CellToChildPosFunction));
@@ -322,7 +360,9 @@ CreateScalarFunctionInfo H3Functions::GetCellToChildPosFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetChildPosToCellFunction() {
   ScalarFunctionSet funcs("h3_child_pos_to_cell");
-  // TODO: VARCHAR variant of this function
+  // funcs.AddFunction(ScalarFunction(
+  //     {LogicalType::BIGINT, LogicalType::VARCHAR, LogicalType::INTEGER},
+  //     LogicalType::VARCHAR, ChildPosToCellVarcharFunction));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::BIGINT, LogicalType::UBIGINT, LogicalType::INTEGER},
       LogicalType::UBIGINT, ChildPosToCellFunction));
@@ -334,7 +374,9 @@ CreateScalarFunctionInfo H3Functions::GetChildPosToCellFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetCompactCellsFunction() {
   ScalarFunctionSet funcs("h3_compact_cells");
-  // TODO: VARCHAR variant of this function
+  // funcs.AddFunction(ScalarFunction({LogicalType::LIST(LogicalType::VARCHAR)},
+  //                                  LogicalType::LIST(LogicalType::VARCHAR),
+  //                                  CompactCellsVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::LIST(LogicalType::UBIGINT)},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    CompactCellsFunction));
@@ -346,7 +388,10 @@ CreateScalarFunctionInfo H3Functions::GetCompactCellsFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetUncompactCellsFunction() {
   ScalarFunctionSet funcs("h3_uncompact_cells");
-  // TODO: VARCHAR variant of this function
+  // funcs.AddFunction(ScalarFunction(
+  //     {LogicalType::LIST(LogicalType::VARCHAR), LogicalType::INTEGER},
+  //     LogicalType::LIST(LogicalType::VARCHAR),
+  //     UncompactCellsVarcharFunction));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::UBIGINT), LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::UBIGINT), UncompactCellsFunction));
