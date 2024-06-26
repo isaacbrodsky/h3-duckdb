@@ -97,6 +97,7 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 | `h3_great_circle_distance` | | Compute the great circle distance between two points (haversine)
 | `h3_cells_to_multi_polygon_wkt` | [v](#fv) | Convert a set of cells to multipolygon WKT
 | `h3_polygon_wkt_to_cells` | [u](#fu) | Convert polygon WKT to a set of cells
+| `h3_version` | | Get the version of the H3 library
 
 ### Notes
 

@@ -82,6 +82,7 @@ public:
     functions.push_back(GetGetRes0CellsFunction());
     functions.push_back(GetGetPentagonsFunction());
     functions.push_back(GetGreatCircleDistanceFunction());
+    functions.push_back(GetVersionFunctions());
 
     // Regions
     functions.push_back(GetCellsToMultiPolygonWktFunction());
@@ -156,6 +157,7 @@ private:
   static CreateScalarFunctionInfo GetGetRes0CellsFunction();
   static CreateScalarFunctionInfo GetGetPentagonsFunction();
   static CreateScalarFunctionInfo GetGreatCircleDistanceFunction();
+  static CreateScalarFunctionInfo GetVersionFunctions();
 
   // Regions
   static CreateScalarFunctionInfo GetCellsToMultiPolygonWktFunction();
