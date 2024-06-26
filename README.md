@@ -58,11 +58,11 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 | `h3_is_res_class_iii` | [v](#fv) | True if the cell's resolution is class III
 | `h3_is_pentagon` | [v](#fv) | True if the cell is a pentagon
 | `h3_get_icosahedron_faces` | [v](#fv) | List of icosahedron face IDs the cell is on
-| `h3_cell_to_parent` | [i](#fi) | Get coarser cell for a cell
-| `h3_cell_to_children` | [i](#fi) | Get finer cells for a cell
-| `h3_cell_to_center_child` | [i](#fi) | Get the center finer cell for a cell
-| `h3_cell_to_child_pos` | [i](#fi) | Get a sub-indexing number for a cell inside a parent
-| `h3_child_pos_to_cell` | [i](#fi) | Convert parent and sub-indexing number to a cell ID
+| `h3_cell_to_parent` | [v](#fv) | Get coarser cell for a cell
+| `h3_cell_to_children` | [v](#fv) | Get finer cells for a cell
+| `h3_cell_to_center_child` | [v](#fv) | Get the center finer cell for a cell
+| `h3_cell_to_child_pos` | [v](#fv) | Get a sub-indexing number for a cell inside a parent
+| `h3_child_pos_to_cell` | [v](#fv) | Convert parent and sub-indexing number to a cell ID
 | `h3_compact_cells` | [i](#fi) | Convert a set of single-resolution cells to the minimal mixed-resolution set
 | `h3_uncompact_cells` | [i](#fi) | Convert a mixed-resolution set to a single-resolution set of cells
 | `h3_grid_disk` | [i](#fi) | Find cells within a grid distance
