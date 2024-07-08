@@ -5,16 +5,11 @@
 
 This is a [DuckDB](https://duckdb.org) extension that adds support for the [H3 discrete global grid system](https://github.com/uber/h3/), so you can index points and geometries to hexagons in SQL.
 
-# Install
+# Get started
 
-Run DuckDB with the unsigned option:
-```sh
-duckdb -unsigned
-```
-
-Load the extension:
+Load from the [community extensions repository](https://community-extensions.duckdb.org/extensions/h3.html):
 ```SQL
-INSTALL h3 FROM 'https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev';
+INSTALL h3 FROM community;
 LOAD h3;
 ```
 
@@ -27,10 +22,6 @@ Or, using the integer API, which generally has better performance:
 ```SQL
 SELECT h3_cell_to_latlng(586265647244115967);
 ```
-
-## Download
-
-If you want to directly download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64/h3.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64_gcc4/h3.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_arm64/h3.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_amd64/h3.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_arm64/h3.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_eh/h3.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_mvp/h3.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_threads/h3.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/windows_amd64/h3.duckdb_extension.gz)
 
 # Implemented functions
 
@@ -103,6 +94,21 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 * <i id="fv">v</i>: Supports VARCHAR, UBIGINT, and BIGINT input and output.
 * <i id="fi">i</i>: Supports UBIGINT and BIGINT input and output. (TODO for these to support VARCHAR too.)
 * <i id="fu">u</i>: Supports UBIGINT output only.
+
+# Alternative download / install
+
+If you'd like to install the H3 extension from the version published here, rather than the community extension version, you will need to run DuckDB with the unsigned option:
+```sh
+duckdb -unsigned
+```
+
+Load the extension:
+```SQL
+INSTALL h3 FROM 'https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev';
+LOAD h3;
+```
+
+If you want to directly download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64/h3.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64_gcc4/h3.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_arm64/h3.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_amd64/h3.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_arm64/h3.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_eh/h3.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_mvp/h3.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_threads/h3.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/windows_amd64/h3.duckdb_extension.gz)
 
 # Development
 
