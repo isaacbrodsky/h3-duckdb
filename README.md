@@ -5,7 +5,7 @@
 
 This is a [DuckDB](https://duckdb.org) extension that adds support for the [H3 discrete global grid system](https://github.com/uber/h3/), so you can index points and geometries to hexagons in SQL.
 
-# Install
+# Get started
 
 Load from the [community extensions repository](https://community-extensions.duckdb.org/extensions/h3.html):
 ```SQL
