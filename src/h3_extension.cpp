@@ -1,5 +1,4 @@
 #define DUCKDB_EXTENSION_MAIN
-#include "h3_common.hpp"
 #include "h3_extension.hpp"
 
 #include "duckdb/catalog/catalog_entry/macro_catalog_entry.hpp"
@@ -22,11 +21,6 @@ void H3Extension::Load(DuckDB &db) {
   }
 
   con.Commit();
-
-  std::string description = StringUtil::Format(
-      "Hierarchical hexagonal geospatial indexing system (v%d.%d.%d)",
-      H3_VERSION_MAJOR, H3_VERSION_MINOR, H3_VERSION_PATCH);
-  db.instance->SetExtensionDescription("h3", description);
 }
 
 std::string H3Extension::Name() { return "h3"; }
