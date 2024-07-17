@@ -3,6 +3,7 @@
 # Extension from this repo
 duckdb_extension_load(h3
     SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}
+    LINKED_LIBS "h3/lib/libh3.a"
     LOAD_TESTS
 )
 
