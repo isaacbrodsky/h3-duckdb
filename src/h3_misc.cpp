@@ -271,6 +271,14 @@ static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
   }
 }
 
+static void VersionFunction(DataChunk &args, ExpressionState &state,
+                                        Vector &result) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+    auto str = StringUtil::Format("%d.%d.%d", H3_VERSION_MAJOR, H3_VERSION_MINOR, H3_VERSION_PATCH);
+    string_t versionStr = string_t(strdup(str.c_str()), str.size());
+    result.SetValue(0, StringVector::AddString(result, versionStr));
+}
+
 CreateScalarFunctionInfo H3Functions::GetGetHexagonAreaAvgFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
       "h3_get_hexagon_area_avg", {LogicalType::INTEGER, LogicalType::VARCHAR},
@@ -332,6 +340,13 @@ CreateScalarFunctionInfo H3Functions::GetGreatCircleDistanceFunction() {
       {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE,
        LogicalType::DOUBLE, LogicalType::VARCHAR},
       LogicalType::DOUBLE, GreatCircleDistanceFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetVersionFunctions() {
+  return CreateScalarFunctionInfo(ScalarFunction(
+      "h3_version",
+      {},
+      LogicalType::VARCHAR, VersionFunction));
 }
 
 } // namespace duckdb
