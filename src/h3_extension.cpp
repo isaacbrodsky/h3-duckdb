@@ -1,17 +1,16 @@
 #define DUCKDB_EXTENSION_MAIN
 #include "h3_extension.hpp"
 
-#include "duckdb/catalog/catalog_entry/macro_catalog_entry.hpp"
-#include "duckdb/catalog/default/default_functions.hpp"
-#include "duckdb/common/string_util.hpp"
-#include "duckdb/parser/expression/constant_expression.hpp"
-#include "duckdb/parser/expression/function_expression.hpp"
-#include "duckdb/parser/tableref/table_function_ref.hpp"
+#include "duckdb/main/extension_util.hpp"
 #include "h3_functions.hpp"
 
 namespace duckdb {
 
 void H3Extension::Load(DuckDB &db) {
+  ExtensionUtil::RegisterExtension(
+      *db.instance, "h3",
+      {"H3 hierarchical hexagonal indexing system for geospatial data"});
+
   Connection con(db);
   con.BeginTransaction();
 
