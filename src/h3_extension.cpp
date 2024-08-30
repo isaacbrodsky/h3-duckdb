@@ -3,13 +3,16 @@
 
 #include "duckdb/main/extension_util.hpp"
 #include "h3_functions.hpp"
+#include "h3api.h"
 
 namespace duckdb {
 
 void H3Extension::Load(DuckDB &db) {
-  ExtensionUtil::RegisterExtension(
-      *db.instance, "h3",
-      {"H3 hierarchical hexagonal indexing system for geospatial data"});
+  std::string description =
+      StringUtil::Format("H3 hierarchical hexagonal indexing system for "
+                         "geospatial data, v%d.%d.%d",
+                         H3_VERSION_MAJOR, H3_VERSION_MINOR, H3_VERSION_PATCH);
+  ExtensionUtil::RegisterExtension(*db.instance, "h3", {description});
 
   Connection con(db);
   con.BeginTransaction();
