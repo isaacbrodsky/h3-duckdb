@@ -210,6 +210,33 @@ static void GridDistanceFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+static void GridDistanceVarcharFunction(DataChunk &args, ExpressionState &state,
+                                 Vector &result) {
+  auto &inputs = args.data[0];
+  auto &inputs2 = args.data[1];
+  BinaryExecutor::ExecuteWithNulls<string_t, string_t, int64_t>(
+      inputs, inputs2, result, args.size(),
+      [&](string_t originInput, string_t destinationInput, ValidityMask &mask,
+          idx_t idx) {
+    H3Index origin, destination;
+    H3Error err0 = stringToH3(originInput.GetString().c_str(), &origin);
+    H3Error err1 = stringToH3(destinationInput.GetString().c_str(), &destination);
+    if (err0 || err1) {
+      mask.SetInvalid(idx);
+      return int64_t(0);
+    } else {
+        int64_t distance;
+        H3Error err = gridDistance(origin, destination, &distance);
+        if (err) {
+          mask.SetInvalid(idx);
+          return int64_t(0);
+        } else {
+          return distance;
+        }
+    }
+      });
+}
+
 static void CellToLocalIjFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto result_data = FlatVector::GetData<list_entry_t>(result);
@@ -420,11 +447,12 @@ CreateScalarFunctionInfo H3Functions::GetGridPathCellsFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetGridDistanceFunction() {
   ScalarFunctionSet funcs("h3_grid_distance");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
                                    LogicalType::BIGINT, GridDistanceFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
                                    LogicalType::BIGINT, GridDistanceFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
+                                   LogicalType::BIGINT, GridDistanceVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
