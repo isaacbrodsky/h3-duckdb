@@ -44,7 +44,7 @@ one to use. The unsigned and signed APIs are identical. Most functions also supp
 | `h3_get_resolution` | | Get resolution number of cell ID
 | `h3_get_base_cell_number` | | Get base cell number of cell ID
 | `h3_string_to_h3` | [u](#fu) | Convert VARCHAR cell ID to UBIGINT
-| `h3_h3_to_string` | [i](#fi) | Convert BIGINT or UBIGINT cell ID to VARCHAR
+| `h3_h3_to_string` | | Convert BIGINT or UBIGINT cell ID to VARCHAR
 | `h3_is_valid_cell` | | True if this is a valid cell ID
 | `h3_is_res_class_iii` | | True if the cell's resolution is class III
 | `h3_is_pentagon` | | True if the cell is a pentagon
@@ -91,7 +91,6 @@ one to use. The unsigned and signed APIs are identical. Most functions also supp
 
 ### Notes
 
-* <i id="fv">v</i>: Supports VARCHAR, UBIGINT, and BIGINT input and output.
 * <i id="fi">i</i>: Supports UBIGINT and BIGINT input and output only, not VARCHAR. (TODO)
 * <i id="fu">u</i>: Supports UBIGINT output only.
 
