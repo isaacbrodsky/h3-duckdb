@@ -56,11 +56,11 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 | `h3_child_pos_to_cell` | [v](#fv) | Convert parent and sub-indexing number to a cell ID
 | `h3_compact_cells` | [i](#fi) | Convert a set of single-resolution cells to the minimal mixed-resolution set
 | `h3_uncompact_cells` | [i](#fi) | Convert a mixed-resolution set to a single-resolution set of cells
-| `h3_grid_disk` | [i](#fi) | Find cells within a grid distance
-| `h3_grid_disk_distances` | [i](#fi) | Find cells within a grid distance, sorted by distance
-| `h3_grid_disk_unsafe` | [i](#fi) | Find cells within a grid distance, with no pentagon distortion
-| `h3_grid_disk_distances_unsafe` | [i](#fi) | Find cells within a grid distance, sorted by distance, with no pentagon distortion
-| `h3_grid_ring_unsafe` | [i](#fi) | Find cells exactly a grid distance away, with no pentagon distortion
+| `h3_grid_disk` | [v](#fv) | Find cells within a grid distance
+| `h3_grid_disk_distances` | [v](#fv) | Find cells within a grid distance, sorted by distance
+| `h3_grid_disk_unsafe` | [v](#fv) | Find cells within a grid distance, with no pentagon distortion
+| `h3_grid_disk_distances_unsafe` | [v](#fv) | Find cells within a grid distance, sorted by distance, with no pentagon distortion
+| `h3_grid_ring_unsafe` | [v](#fv) | Find cells exactly a grid distance away, with no pentagon distortion
 | `h3_grid_path_cells` | [v](#fv) | Find a grid path to connect two cells
 | `h3_grid_distance` | [v](#fv) | Find the grid distance between two cells
 | `h3_cell_to_local_ij` | [v](#fv) | Convert a cell ID to a local I,J coordinate space

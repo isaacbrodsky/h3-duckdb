@@ -53,6 +53,53 @@ static void GridDiskTmplFunction(DataChunk &args, ExpressionState &state,
   result.Verify(args.size());
 }
 
+template <class Fn>
+static void GridDiskTmplVarcharFunction(DataChunk &args, ExpressionState &state,
+                                        Vector &result) {
+  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  for (idx_t i = 0; i < args.size(); i++) {
+    result_data[i].offset = ListVector::GetListSize(result);
+
+    string originInput = args.GetValue(0, i)
+                             .DefaultCastAs(LogicalType::VARCHAR)
+                             .GetValue<string>();
+    int32_t k = args.GetValue(1, i)
+                    .DefaultCastAs(LogicalType::INTEGER)
+                    .GetValue<int32_t>();
+
+    uint64_t origin;
+    H3Error err0 = stringToH3(originInput.c_str(), &origin);
+    if (err0) {
+      result.SetValue(i, Value(LogicalType::SQLNULL));
+    } else {
+      int64_t sz;
+      H3Error err1 = maxGridDiskSize(k, &sz);
+      if (err1) {
+        result.SetValue(i, Value(LogicalType::SQLNULL));
+      } else {
+        std::vector<H3Index> out(sz);
+        H3Error err2 = Fn::fn(origin, k, out.data());
+        if (err2) {
+          result.SetValue(i, Value(LogicalType::SQLNULL));
+        } else {
+          int64_t actual = 0;
+          for (auto val : out) {
+            if (val != H3_NULL) {
+              auto str = StringUtil::Format("%llx", val);
+              string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+              ListVector::PushBack(result, strAsStr);
+              actual++;
+            }
+          }
+
+          result_data[i].length = actual;
+        }
+      }
+    }
+  }
+  result.Verify(args.size());
+}
+
 struct GridDiskDistancesOperator {
   static H3Error fn(H3Index origin, int32_t k, H3Index *out,
                     int32_t *distancesOut) {
@@ -121,6 +168,63 @@ static void GridDiskDistancesTmplFunction(DataChunk &args,
   result.Verify(args.size());
 }
 
+template <class Fn>
+static void GridDiskDistancesTmplVarcharFunction(DataChunk &args,
+                                                 ExpressionState &state,
+                                                 Vector &result) {
+  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  for (idx_t i = 0; i < args.size(); i++) {
+    result_data[i].offset = ListVector::GetListSize(result);
+
+    string originInput = args.GetValue(0, i)
+                             .DefaultCastAs(LogicalType::VARCHAR)
+                             .GetValue<string>();
+    int32_t k = args.GetValue(1, i)
+                    .DefaultCastAs(LogicalType::INTEGER)
+                    .GetValue<int32_t>();
+
+    H3Index origin;
+    H3Error err0 = stringToH3(originInput.c_str(), &origin);
+    if (err0) {
+      result.SetValue(i, Value(LogicalType::SQLNULL));
+    } else {
+      int64_t sz;
+      H3Error err1 = maxGridDiskSize(k, &sz);
+      if (err1) {
+        result.SetValue(i, Value(LogicalType::SQLNULL));
+      } else {
+        std::vector<H3Index> out(sz);
+        std::vector<int32_t> distancesOut(sz);
+        H3Error err2 = Fn::fn(origin, k, out.data(), distancesOut.data());
+        if (err2) {
+          result.SetValue(i, Value(LogicalType::SQLNULL));
+        } else {
+          // Reorganize the results similar to H3-Java sorted list of list of
+          // indexes std vector of duckdb vector
+          std::vector<vector<Value>> results(k + 1);
+          for (idx_t j = 0; j < out.size(); j++) {
+            if (out[j] != H3_NULL) {
+              auto str = StringUtil::Format("%llx", out[j]);
+              string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+              results[distancesOut[j]].push_back(strAsStr);
+            }
+          }
+
+          int64_t actual = 0;
+          for (auto val : results) {
+            ListVector::PushBack(result,
+                                 Value::LIST(LogicalType::VARCHAR, val));
+            actual++;
+          }
+
+          result_data[i].length = actual;
+        }
+      }
+    }
+  }
+  result.Verify(args.size());
+}
+
 static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
   auto result_data = FlatVector::GetData<list_entry_t>(result);
@@ -148,6 +252,47 @@ static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state,
       }
 
       result_data[i].length = actual;
+    }
+  }
+  result.Verify(args.size());
+}
+
+static void GridRingUnsafeVarcharFunction(DataChunk &args,
+                                          ExpressionState &state,
+                                          Vector &result) {
+  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  for (idx_t i = 0; i < args.size(); i++) {
+    result_data[i].offset = ListVector::GetListSize(result);
+
+    string originInput = args.GetValue(0, i)
+                             .DefaultCastAs(LogicalType::VARCHAR)
+                             .GetValue<string>();
+    int32_t k = args.GetValue(1, i)
+                    .DefaultCastAs(LogicalType::INTEGER)
+                    .GetValue<int32_t>();
+    H3Index origin;
+    H3Error err0 = stringToH3(originInput.c_str(), &origin);
+    if (err0) {
+      result.SetValue(i, Value(LogicalType::SQLNULL));
+    } else {
+      int64_t sz = k == 0 ? 1 : 6 * k;
+      std::vector<H3Index> out(sz);
+      H3Error err1 = gridRingUnsafe(origin, k, out.data());
+      if (err1) {
+        result.SetValue(i, Value(LogicalType::SQLNULL));
+      } else {
+        int64_t actual = 0;
+        for (auto val : out) {
+          if (val != H3_NULL) {
+            auto str = StringUtil::Format("%llx", val);
+            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+            ListVector::PushBack(result, strAsStr);
+            actual++;
+          }
+        }
+
+        result_data[i].length = actual;
+      }
     }
   }
   result.Verify(args.size());
@@ -404,19 +549,21 @@ static void LocalIjToCellVarcharFunction(DataChunk &args,
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskFunction() {
   ScalarFunctionSet funcs("h3_grid_disk");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    GridDiskTmplFunction<GridDiskOperator>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::BIGINT),
                                    GridDiskTmplFunction<GridDiskOperator>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::VARCHAR),
+                     GridDiskTmplVarcharFunction<GridDiskOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesFunction() {
   ScalarFunctionSet funcs("h3_grid_disk_distances");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(
       ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
@@ -425,12 +572,15 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesFunction() {
       ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
                      GridDiskDistancesTmplFunction<GridDiskDistancesOperator>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::VARCHAR, LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::LIST(LogicalType::VARCHAR)),
+      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskUnsafeFunction() {
   ScalarFunctionSet funcs("h3_grid_disk_unsafe");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(
       ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::UBIGINT),
@@ -439,12 +589,15 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskUnsafeFunction() {
       ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::BIGINT),
                      GridDiskTmplFunction<GridDiskUnsafeOperator>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::VARCHAR),
+                     GridDiskTmplVarcharFunction<GridDiskUnsafeOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesUnsafeFunction() {
   ScalarFunctionSet funcs("h3_grid_disk_distances_unsafe");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction(
       {LogicalType::UBIGINT, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
@@ -453,12 +606,15 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesUnsafeFunction() {
       {LogicalType::BIGINT, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
       GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::VARCHAR, LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::LIST(LogicalType::VARCHAR)),
+      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesUnsafeOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesSafeFunction() {
   ScalarFunctionSet funcs("h3_grid_disk_distances_safe");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction(
       {LogicalType::UBIGINT, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
@@ -467,18 +623,24 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesSafeFunction() {
       {LogicalType::BIGINT, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
       GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::VARCHAR, LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::LIST(LogicalType::VARCHAR)),
+      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesSafeOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetGridRingUnsafeFunction() {
   ScalarFunctionSet funcs("h3_grid_ring_unsafe");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    GridRingUnsafeFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::BIGINT),
                                    GridRingUnsafeFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
+                                   LogicalType::LIST(LogicalType::VARCHAR),
+                                   GridRingUnsafeVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 

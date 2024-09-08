@@ -121,6 +121,66 @@ select h3_grid_ring_unsafe(586265647244115967::bigint, 1);
 [586267846267371519, 586260699441790975, 586244756523188223, 586245306279002111, 586266196999929855, 586264547732488191]
 
 query I
+select h3_grid_disk('822d57fffffffff', 1);
+----
+[822d57fffffffff, 822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]
+
+query I
+select h3_grid_disk_distances('822d57fffffffff', 1);
+----
+[[822d57fffffffff], [822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]]
+
+query I
+select h3_grid_disk('8408001ffffffff', 1);
+----
+[840800bffffffff, 840800dffffffff, 8408001ffffffff, 8408005ffffffff, 8408007ffffffff, 8408009ffffffff]
+
+query I
+select h3_grid_disk('8408001ffffffff', -1);
+----
+NULL
+
+query I
+select h3_grid_disk_distances('8408001ffffffff', 1);
+----
+[[8408001ffffffff], [840800bffffffff, 840800dffffffff, 8408005ffffffff, 8408007ffffffff, 8408009ffffffff]]
+
+query I
+select h3_grid_disk_unsafe('822d57fffffffff', 1);
+----
+[822d57fffffffff, 822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]
+
+query I
+select h3_grid_disk_distances_unsafe('822d57fffffffff', 1);
+----
+[[822d57fffffffff], [822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]]
+
+query I
+select h3_grid_disk_unsafe('8408001ffffffff', 1);
+----
+NULL
+
+query I
+select h3_grid_disk_distances_unsafe('8408001ffffffff', 2);
+----
+NULL
+
+query I
+select h3_grid_disk_distances_safe('8408001ffffffff', 2);
+----
+[[8408001ffffffff], [8408007ffffffff, 840800bffffffff, 8408005ffffffff, 8408009ffffffff, 840800dffffffff], [8408063ffffffff, 840803dffffffff, 8408047ffffffff, 8408057ffffffff, 840802bffffffff, 840806bffffffff, 8408055ffffffff, 8408029ffffffff, 8408039ffffffff, 8408043ffffffff]]
+
+query I
+select h3_grid_ring_unsafe('8408001ffffffff', 1);
+----
+NULL
+
+query I
+select h3_grid_ring_unsafe('822d57fffffffff', 1);
+----
+[822d77fffffffff, 822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff]
+
+query I
 select h3_grid_path_cells(605035864166236159::ubigint, 605034941150920703::ubigint);
 ----
 [605035864166236159, 605035861750317055, 605035861347663871, 605035862018752511, 605034941419356159, 605034941150920703]
