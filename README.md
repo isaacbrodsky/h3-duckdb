@@ -63,8 +63,8 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 | `h3_grid_ring_unsafe` | [i](#fi) | Find cells exactly a grid distance away, with no pentagon distortion
 | `h3_grid_path_cells` | [i](#fi) | Find a grid path to connect two cells
 | `h3_grid_distance` | [i](#fi) | Find the grid distance between two cells
-| `h3_cell_to_local_ij` | [i](#fi) | Convert a cell ID to a local I,J coordinate space
-| `h3_local_ij_to_cell` | [i](#fi) | Convert a local I,J coordinate to a cell ID
+| `h3_cell_to_local_ij` | [v](#fv) | Convert a cell ID to a local I,J coordinate space
+| `h3_local_ij_to_cell` | [v](#fv) | Convert a local I,J coordinate to a cell ID
 | `h3_cell_to_vertex` | [i](#fi) | Get the vertex ID for a cell ID and vertex number
 | `h3_cell_to_vertexes` | [i](#fi) | Get all vertex IDs for a cell ID
 | `h3_vertex_to_lat` | [i](#fi) | Convert a vertex ID to latitude

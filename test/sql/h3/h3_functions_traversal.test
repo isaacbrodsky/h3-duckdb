@@ -199,3 +199,28 @@ query I
 select h3_local_ij_to_cell(605034941285138431::bigint, -1230000, -177);
 ----
 NULL
+
+query I
+select h3_cell_to_local_ij('8658412cfffffff', '8658412cfffffff');
+----
+[-123, -177]
+
+query I
+select h3_cell_to_local_ij('8658412cfffffff', '0');
+----
+NULL
+
+query I
+select h3_cell_to_local_ij('8658412cfffffff', 'abc');
+----
+NULL
+
+query I
+select h3_local_ij_to_cell('8658412cfffffff', -123, -177);
+----
+8658412cfffffff
+
+query I
+select h3_local_ij_to_cell('8658412cfffffff', -1230000, -177);
+----
+NULL
