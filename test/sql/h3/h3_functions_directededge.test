@@ -129,3 +129,43 @@ query I
 SELECT h3_directed_edge_to_boundary_wkt('115283473fffffff')
 ----
 POLYGON ((-122.037735 37.420129, -122.090429 37.337556, -122.037735 37.420129))
+
+query I
+SELECT h3_origin_to_directed_edges('85283473fffffff')
+----
+[115283473fffffff, 125283473fffffff, 135283473fffffff, 145283473fffffff, 155283473fffffff, 165283473fffffff]
+
+query I
+SELECT h3_directed_edge_to_cells('165283473fffffff')
+----
+[85283473fffffff, 85283447fffffff]
+
+query I
+SELECT h3_directed_edge_to_cells('0')
+----
+NULL
+
+query I
+SELECT h3_get_directed_edge_origin('165283473fffffff')
+----
+85283473fffffff
+
+query I
+SELECT h3_get_directed_edge_destination('165283473fffffff')
+----
+85283447fffffff
+
+query I
+SELECT h3_cells_to_directed_edge('85283473fffffff', '85283447fffffff')
+----
+165283473fffffff
+
+query I
+SELECT h3_are_neighbor_cells('85283473fffffff', '85283447fffffff')
+----
+true
+
+query I
+SELECT h3_are_neighbor_cells('85283473fffffff', '85283443fffffff')
+----
+false

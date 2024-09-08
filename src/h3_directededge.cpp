@@ -34,7 +34,7 @@ static void DirectedEdgeToCellsVarcharFunction(DataChunk &args,
     result_data[i].offset = ListVector::GetListSize(result);
 
     string edgeInput = args.GetValue(0, i)
-                           .DefaultCastAs(LogicalType::UBIGINT)
+                           .DefaultCastAs(LogicalType::VARCHAR)
                            .GetValue<string>();
 
     H3Index edge;

@@ -72,12 +72,12 @@ one to use. The unsigned and signed APIs are identical. Many functions also supp
 | `h3_vertex_to_latlng` | [i](#fi) | Convert a vertex ID to latitude/longitude coordinate
 | `h3_is_valid_vertex` | [v](#fv) | True if passed a valid vertex ID
 | `h3_is_valid_directed_edge` | [v](#fv) | True if passed a valid directed edge ID
-| `h3_origin_to_directed_edges` | [i](#fi) | Get all directed edge IDs for a cell ID
-| `h3_directed_edge_to_cells` | [i](#fi) | Convert a directed edge ID to origin/destination cell IDs
-| `h3_get_directed_edge_origin` | [i](#fi) | Convert a directed edge ID to origin cell ID
-| `h3_get_directed_edge_destination` | [i](#fi) | Convert a directed edge ID to destination cell ID
-| `h3_cells_to_directed_edge` | [i](#fi) | Convert an origin/destination pair to directed edge ID
-| `h3_are_neighbor_cells` | [i](#fi) | True if the two cell IDs are directly adjacent
+| `h3_origin_to_directed_edges` | [v](#fv) | Get all directed edge IDs for a cell ID
+| `h3_directed_edge_to_cells` | [v](#fv) | Convert a directed edge ID to origin/destination cell IDs
+| `h3_get_directed_edge_origin` | [v](#fv) | Convert a directed edge ID to origin cell ID
+| `h3_get_directed_edge_destination` | [v](#fv) | Convert a directed edge ID to destination cell ID
+| `h3_cells_to_directed_edge` | [v](#fv) | Convert an origin/destination pair to directed edge ID
+| `h3_are_neighbor_cells` | [v](#fv) | True if the two cell IDs are directly adjacent
 | `h3_directed_edge_to_boundary_wkt` | [v](#fv) | Convert directed edge ID to linestring WKT
 | `h3_get_hexagon_area_avg` | | Get average area of a hexagon cell at resolution
 | `h3_cell_area` | [v](#fv) | Get the area of a cell ID
