@@ -141,6 +141,21 @@ select h3_grid_path_cells(605035864166236159::bigint, 0::bigint);
 NULL
 
 query I
+select h3_grid_path_cells('86584e9afffffff', '8658412c7ffffff');
+----
+[86584e9afffffff, 86584e91fffffff, 86584e907ffffff, 86584e92fffffff, 8658412d7ffffff, 8658412c7ffffff]
+
+query I
+select h3_grid_path_cells('86584e9afffffff', '0');
+----
+NULL
+
+query I
+select h3_grid_path_cells('0', '86584e9afffffff');
+----
+NULL
+
+query I
 select h3_grid_distance(605035864166236159::ubigint, 605034941150920703::ubigint);
 ----
 5

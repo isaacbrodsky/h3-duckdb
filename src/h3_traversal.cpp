@@ -191,6 +191,54 @@ static void GridPathCellsFunction(DataChunk &args, ExpressionState &state,
   result.Verify(args.size());
 }
 
+static void GridPathCellsVarcharFunction(DataChunk &args,
+                                         ExpressionState &state,
+                                         Vector &result) {
+  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  for (idx_t i = 0; i < args.size(); i++) {
+    result_data[i].offset = ListVector::GetListSize(result);
+
+    string originInput = args.GetValue(0, i)
+                             .DefaultCastAs(LogicalType::VARCHAR)
+                             .GetValue<string>();
+    string destinationInput = args.GetValue(1, i)
+                                  .DefaultCastAs(LogicalType::VARCHAR)
+                                  .GetValue<string>();
+
+    H3Index origin, destination;
+    H3Error err0 = stringToH3(originInput.c_str(), &origin);
+    H3Error err1 = stringToH3(destinationInput.c_str(), &destination);
+    if (err0 || err1) {
+      result.SetValue(i, Value(LogicalType::SQLNULL));
+    } else {
+      int64_t sz;
+      H3Error err2 = gridPathCellsSize(origin, destination, &sz);
+      if (err2) {
+        result.SetValue(i, Value(LogicalType::SQLNULL));
+      } else {
+        std::vector<H3Index> out(sz);
+        H3Error err3 = gridPathCells(origin, destination, out.data());
+        if (err3) {
+          result.SetValue(i, Value(LogicalType::SQLNULL));
+        } else {
+          int64_t actual = 0;
+          for (auto val : out) {
+            if (val != H3_NULL) {
+              auto str = StringUtil::Format("%llx", val);
+              string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+              ListVector::PushBack(result, strAsStr);
+              actual++;
+            }
+          }
+
+          result_data[i].length = actual;
+        }
+      }
+    }
+  }
+  result.Verify(args.size());
+}
+
 static void GridDistanceFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   auto &inputs = args.data[0];
@@ -211,29 +259,30 @@ static void GridDistanceFunction(DataChunk &args, ExpressionState &state,
 }
 
 static void GridDistanceVarcharFunction(DataChunk &args, ExpressionState &state,
-                                 Vector &result) {
+                                        Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::ExecuteWithNulls<string_t, string_t, int64_t>(
       inputs, inputs2, result, args.size(),
       [&](string_t originInput, string_t destinationInput, ValidityMask &mask,
           idx_t idx) {
-    H3Index origin, destination;
-    H3Error err0 = stringToH3(originInput.GetString().c_str(), &origin);
-    H3Error err1 = stringToH3(destinationInput.GetString().c_str(), &destination);
-    if (err0 || err1) {
-      mask.SetInvalid(idx);
-      return int64_t(0);
-    } else {
-        int64_t distance;
-        H3Error err = gridDistance(origin, destination, &distance);
-        if (err) {
+        H3Index origin, destination;
+        H3Error err0 = stringToH3(originInput.GetString().c_str(), &origin);
+        H3Error err1 =
+            stringToH3(destinationInput.GetString().c_str(), &destination);
+        if (err0 || err1) {
           mask.SetInvalid(idx);
           return int64_t(0);
         } else {
-          return distance;
+          int64_t distance;
+          H3Error err = gridDistance(origin, destination, &distance);
+          if (err) {
+            mask.SetInvalid(idx);
+            return int64_t(0);
+          } else {
+            return distance;
+          }
         }
-    }
       });
 }
 
@@ -435,13 +484,15 @@ CreateScalarFunctionInfo H3Functions::GetGridRingUnsafeFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetGridPathCellsFunction() {
   ScalarFunctionSet funcs("h3_grid_path_cells");
-  // TODO: VARCHAR variant of this function
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    GridPathCellsFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::BIGINT),
                                    GridPathCellsFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
+                                   LogicalType::LIST(LogicalType::VARCHAR),
+                                   GridPathCellsVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -452,7 +503,8 @@ CreateScalarFunctionInfo H3Functions::GetGridDistanceFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
                                    LogicalType::BIGINT, GridDistanceFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
-                                   LogicalType::BIGINT, GridDistanceVarcharFunction));
+                                   LogicalType::BIGINT,
+                                   GridDistanceVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
