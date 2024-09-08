@@ -99,3 +99,38 @@ query I
 SELECT h3_vertex_to_lng(cast(h3_string_to_h3('2222597fffffffff') as bigint));
 ----
 88.57496213785487
+
+query I
+SELECT h3_cell_to_vertexes('823d6ffffffffff');
+----
+[2222597fffffffff, 2523d47fffffffff, 2423d47fffffffff, 21224b7fffffffff, 20224b7fffffffff, 2322597fffffffff]
+
+query I
+SELECT h3_cell_to_vertexes('fffffffffffffff');
+----
+NULL
+
+query I
+SELECT h3_cell_to_vertex('823d6ffffffffff', 0);
+----
+2222597fffffffff
+
+query I
+SELECT h3_cell_to_vertex('823d6ffffffffff', -1);
+----
+NULL
+
+query I
+SELECT h3_vertex_to_latlng('2222597fffffffff');
+----
+[39.38084284181813, 88.57496213785487]
+
+query I
+SELECT h3_vertex_to_lat('2222597fffffffff');
+----
+39.38084284181813
+
+query I
+SELECT h3_vertex_to_lng('2222597fffffffff');
+----
+88.57496213785487
