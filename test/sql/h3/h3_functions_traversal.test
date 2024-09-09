@@ -121,6 +121,66 @@ select h3_grid_ring_unsafe(586265647244115967::bigint, 1);
 [586267846267371519, 586260699441790975, 586244756523188223, 586245306279002111, 586266196999929855, 586264547732488191]
 
 query I
+select h3_grid_disk('822d57fffffffff', 1);
+----
+[822d57fffffffff, 822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]
+
+query I
+select h3_grid_disk_distances('822d57fffffffff', 1);
+----
+[[822d57fffffffff], [822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]]
+
+query I
+select h3_grid_disk('8408001ffffffff', 1);
+----
+[840800bffffffff, 840800dffffffff, 8408001ffffffff, 8408005ffffffff, 8408007ffffffff, 8408009ffffffff]
+
+query I
+select h3_grid_disk('8408001ffffffff', -1);
+----
+NULL
+
+query I
+select h3_grid_disk_distances('8408001ffffffff', 1);
+----
+[[8408001ffffffff], [840800bffffffff, 840800dffffffff, 8408005ffffffff, 8408007ffffffff, 8408009ffffffff]]
+
+query I
+select h3_grid_disk_unsafe('822d57fffffffff', 1);
+----
+[822d57fffffffff, 822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]
+
+query I
+select h3_grid_disk_distances_unsafe('822d57fffffffff', 1);
+----
+[[822d57fffffffff], [822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]]
+
+query I
+select h3_grid_disk_unsafe('8408001ffffffff', 1);
+----
+NULL
+
+query I
+select h3_grid_disk_distances_unsafe('8408001ffffffff', 2);
+----
+NULL
+
+query I
+select h3_grid_disk_distances_safe('8408001ffffffff', 2);
+----
+[[8408001ffffffff], [8408007ffffffff, 840800bffffffff, 8408005ffffffff, 8408009ffffffff, 840800dffffffff], [8408063ffffffff, 840803dffffffff, 8408047ffffffff, 8408057ffffffff, 840802bffffffff, 840806bffffffff, 8408055ffffffff, 8408029ffffffff, 8408039ffffffff, 8408043ffffffff]]
+
+query I
+select h3_grid_ring_unsafe('8408001ffffffff', 1);
+----
+NULL
+
+query I
+select h3_grid_ring_unsafe('822d57fffffffff', 1);
+----
+[822d77fffffffff, 822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff]
+
+query I
 select h3_grid_path_cells(605035864166236159::ubigint, 605034941150920703::ubigint);
 ----
 [605035864166236159, 605035861750317055, 605035861347663871, 605035862018752511, 605034941419356159, 605034941150920703]
@@ -141,6 +201,21 @@ select h3_grid_path_cells(605035864166236159::bigint, 0::bigint);
 NULL
 
 query I
+select h3_grid_path_cells('86584e9afffffff', '8658412c7ffffff');
+----
+[86584e9afffffff, 86584e91fffffff, 86584e907ffffff, 86584e92fffffff, 8658412d7ffffff, 8658412c7ffffff]
+
+query I
+select h3_grid_path_cells('86584e9afffffff', '0');
+----
+NULL
+
+query I
+select h3_grid_path_cells('0', '86584e9afffffff');
+----
+NULL
+
+query I
 select h3_grid_distance(605035864166236159::ubigint, 605034941150920703::ubigint);
 ----
 5
@@ -157,6 +232,21 @@ NULL
 
 query I
 select h3_grid_distance(605035864166236159::bigint, 0::bigint);
+----
+NULL
+
+query I
+select h3_grid_distance('86584e9afffffff', '8658412c7ffffff');
+----
+5
+
+query I
+select h3_grid_distance('86584e9afffffff', '0');
+----
+NULL
+
+query I
+select h3_grid_distance('0', '86584e9afffffff');
 ----
 NULL
 
@@ -197,5 +287,30 @@ NULL
 
 query I
 select h3_local_ij_to_cell(605034941285138431::bigint, -1230000, -177);
+----
+NULL
+
+query I
+select h3_cell_to_local_ij('8658412cfffffff', '8658412cfffffff');
+----
+[-123, -177]
+
+query I
+select h3_cell_to_local_ij('8658412cfffffff', '0');
+----
+NULL
+
+query I
+select h3_cell_to_local_ij('8658412cfffffff', 'abc');
+----
+NULL
+
+query I
+select h3_local_ij_to_cell('8658412cfffffff', -123, -177);
+----
+8658412cfffffff
+
+query I
+select h3_local_ij_to_cell('8658412cfffffff', -1230000, -177);
 ----
 NULL
