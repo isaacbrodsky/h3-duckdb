@@ -1,5 +1,5 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
-[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.0.0&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.0.0)
+[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.1.0&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.1.0)
 [![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.1.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
@@ -107,7 +107,7 @@ INSTALL h3 FROM 'https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev';
 LOAD h3;
 ```
 
-If you want to directly download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64/h3.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_amd64_gcc4/h3.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/linux_arm64/h3.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_amd64/h3.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/osx_arm64/h3.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_eh/h3.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_mvp/h3.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/wasm_threads/h3.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.0.0/windows_amd64/h3.duckdb_extension.gz)
+If you want to directly download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.1.0/linux_amd64/h3.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.1.0/linux_amd64_gcc4/h3.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.1.0/linux_arm64/h3.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.1.0/osx_amd64/h3.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.1.0/osx_arm64/h3.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.1.0/wasm_eh/h3.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.1.0/wasm_mvp/h3.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.1.0/wasm_threads/h3.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.1.0/windows_amd64/h3.duckdb_extension.gz)
 
 # Development
 
