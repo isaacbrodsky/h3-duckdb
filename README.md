@@ -54,8 +54,8 @@ one to use. The unsigned and signed APIs are identical. Most functions also supp
 | `h3_cell_to_center_child` | | Get the center finer cell for a cell
 | `h3_cell_to_child_pos` | | Get a sub-indexing number for a cell inside a parent
 | `h3_child_pos_to_cell` | | Convert parent and sub-indexing number to a cell ID
-| `h3_compact_cells` | [i](#fi) | Convert a set of single-resolution cells to the minimal mixed-resolution set
-| `h3_uncompact_cells` | [i](#fi) | Convert a mixed-resolution set to a single-resolution set of cells
+| `h3_compact_cells` | | Convert a set of single-resolution cells to the minimal mixed-resolution set
+| `h3_uncompact_cells` | | Convert a mixed-resolution set to a single-resolution set of cells
 | `h3_grid_disk` | | Find cells within a grid distance
 | `h3_grid_disk_distances` | | Find cells within a grid distance, sorted by distance
 | `h3_grid_disk_unsafe` | | Find cells within a grid distance, with no pentagon distortion
@@ -91,7 +91,6 @@ one to use. The unsigned and signed APIs are identical. Most functions also supp
 
 ### Notes
 
-* <i id="fi">i</i>: Supports UBIGINT and BIGINT input and output only, not VARCHAR. (TODO)
 * <i id="fu">u</i>: Supports UBIGINT output only.
 
 # Alternative download / install

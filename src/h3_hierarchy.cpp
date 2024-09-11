@@ -342,6 +342,91 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state,
   }
 }
 
+static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
+                                 Vector &result) {
+  D_ASSERT(args.ColumnCount() == 1);
+  auto count = args.size();
+
+  Vector &lhs = args.data[0];
+  if (lhs.GetType().id() == LogicalTypeId::SQLNULL) {
+    result.Reference(lhs);
+    return;
+  }
+
+  UnifiedVectorFormat lhs_data;
+  lhs.ToUnifiedFormat(count, lhs_data);
+
+  auto list_entries = (list_entry_t *)lhs_data.data;
+
+  result.SetVectorType(VectorType::FLAT_VECTOR);
+  auto result_entries = FlatVector::GetData<list_entry_t>(result);
+  auto &result_validity = FlatVector::Validity(result);
+
+  idx_t offset = 0;
+  for (idx_t i = 0; i < count; i++) {
+    result_entries[i].offset = offset;
+    result_entries[i].length = 0;
+    auto list_index = lhs_data.sel->get_index(i);
+
+    if (!lhs_data.validity.RowIsValid(list_index)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+
+    const auto &list_entry = list_entries[list_index];
+
+    const auto lvalue =
+        lhs.GetValue(list_entry.offset)
+            .DefaultCastAs(LogicalType::LIST(LogicalType::VARCHAR));
+
+    auto &list_children = ListValue::GetChildren(lvalue);
+
+    auto input_set = new H3Index[list_children.size()];
+    bool hasInvalid = false;
+    for (size_t i = 0; i < list_children.size(); i++) {
+      H3Index tmp;
+      H3Error tmpErr = stringToH3(list_children[i].GetValue<string>().c_str(), &tmp);
+      if (tmpErr) {
+        hasInvalid = true;
+        break;
+      } else {
+      input_set[i] = tmp;
+      }
+    }
+    if (hasInvalid) {
+      result_validity.SetInvalid(i);
+      continue;
+    } else {
+      auto compacted = new H3Index[list_children.size()]();
+      H3Error err = compactCells(input_set, compacted, list_children.size());
+
+      if (err) {
+        result_validity.SetInvalid(i);
+      } else {
+        int64_t actual = 0;
+        for (size_t i = 0; i < list_children.size(); i++) {
+          auto child_val = compacted[i];
+          if (child_val != H3_NULL) {
+            auto str = StringUtil::Format("%llx", child_val);
+            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+            ListVector::PushBack(result, strAsStr);
+            actual++;
+          }
+        }
+
+        result_entries[i].length = actual;
+        offset += actual;
+      }
+    }
+  }
+
+  result.Verify(args.size());
+
+  if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
+}
+
 static void UncompactCellsFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
   D_ASSERT(args.ColumnCount() == 2);
@@ -431,6 +516,110 @@ static void UncompactCellsFunction(DataChunk &args, ExpressionState &state,
   }
 }
 
+static void UncompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
+                                   Vector &result) {
+  D_ASSERT(args.ColumnCount() == 2);
+  auto count = args.size();
+
+  Vector &lhs = args.data[0];
+  if (lhs.GetType().id() == LogicalTypeId::SQLNULL) {
+    result.Reference(lhs);
+    return;
+  }
+  Vector res_vec = args.data[1];
+  if (res_vec.GetType().id() == LogicalTypeId::SQLNULL) {
+    result.Reference(res_vec);
+    return;
+  }
+
+  UnifiedVectorFormat lhs_data;
+  lhs.ToUnifiedFormat(count, lhs_data);
+  UnifiedVectorFormat res_data;
+  res_vec.ToUnifiedFormat(count, res_data);
+
+  auto list_entries = (list_entry_t *)lhs_data.data;
+
+  result.SetVectorType(VectorType::FLAT_VECTOR);
+  auto result_entries = FlatVector::GetData<list_entry_t>(result);
+  auto &result_validity = FlatVector::Validity(result);
+
+  idx_t offset = 0;
+  for (idx_t i = 0; i < count; i++) {
+    result_entries[i].offset = offset;
+    result_entries[i].length = 0;
+    auto list_index = lhs_data.sel->get_index(i);
+
+    if (!lhs_data.validity.RowIsValid(list_index) ||
+        !res_data.validity.RowIsValid(list_index)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+
+    const auto &list_entry = list_entries[list_index];
+
+    const auto lvalue =
+        lhs.GetValue(list_entry.offset)
+            .DefaultCastAs(LogicalType::LIST(LogicalType::VARCHAR));
+    const auto res = res_vec.GetValue(i)
+                         .DefaultCastAs(LogicalType::INTEGER)
+                         .GetValue<int32_t>();
+
+    auto &list_children = ListValue::GetChildren(lvalue);
+
+    auto input_set = new H3Index[list_children.size()];
+    bool hasInvalid = false;
+    for (size_t i = 0; i < list_children.size(); i++) {
+      H3Index tmp;
+      H3Error tmpErr = stringToH3(list_children[i].GetValue<string>().c_str(), &tmp);
+      if (tmpErr) {
+        hasInvalid = true;
+        break;
+      } else {
+      input_set[i] = tmp;
+      }
+    }
+    if (hasInvalid) {
+      result_validity.SetInvalid(i);
+      continue;
+    } else {
+      int64_t uncompacted_sz;
+      H3Error sz_err = uncompactCellsSize(input_set, list_children.size(), res,
+                                          &uncompacted_sz);
+      if (sz_err) {
+        result_validity.SetInvalid(i);
+        continue;
+      }
+      auto uncompacted = new H3Index[uncompacted_sz]();
+      H3Error err = uncompactCells(input_set, list_children.size(), uncompacted,
+                                  uncompacted_sz, res);
+
+      if (err) {
+        result_validity.SetInvalid(i);
+      } else {
+        int64_t actual = 0;
+        for (size_t i = 0; i < uncompacted_sz; i++) {
+          auto child_val = uncompacted[i];
+          if (child_val != H3_NULL) {
+            auto str = StringUtil::Format("%llx", child_val);
+            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+            ListVector::PushBack(result, strAsStr);
+            actual++;
+          }
+        }
+
+        result_entries[i].length = actual;
+        offset += actual;
+      }
+    }
+  }
+
+  result.Verify(args.size());
+
+  if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
+}
+
 CreateScalarFunctionInfo H3Functions::GetCellToParentFunction() {
   ScalarFunctionSet funcs("h3_cell_to_parent");
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
@@ -502,9 +691,9 @@ CreateScalarFunctionInfo H3Functions::GetChildPosToCellFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetCompactCellsFunction() {
   ScalarFunctionSet funcs("h3_compact_cells");
-  // funcs.AddFunction(ScalarFunction({LogicalType::LIST(LogicalType::VARCHAR)},
-  //                                  LogicalType::LIST(LogicalType::VARCHAR),
-  //                                  CompactCellsVarcharFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::LIST(LogicalType::VARCHAR)},
+                                   LogicalType::LIST(LogicalType::VARCHAR),
+                                   CompactCellsVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::LIST(LogicalType::UBIGINT)},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    CompactCellsFunction));
@@ -516,10 +705,10 @@ CreateScalarFunctionInfo H3Functions::GetCompactCellsFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetUncompactCellsFunction() {
   ScalarFunctionSet funcs("h3_uncompact_cells");
-  // funcs.AddFunction(ScalarFunction(
-  //     {LogicalType::LIST(LogicalType::VARCHAR), LogicalType::INTEGER},
-  //     LogicalType::LIST(LogicalType::VARCHAR),
-  //     UncompactCellsVarcharFunction));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::LIST(LogicalType::VARCHAR), LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::VARCHAR),
+      UncompactCellsVarcharFunction));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::UBIGINT), LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::UBIGINT), UncompactCellsFunction));
