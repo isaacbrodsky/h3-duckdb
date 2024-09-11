@@ -187,6 +187,39 @@ static void GetRes0CellsFunction(DataChunk &args, ExpressionState &state,
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
 }
 
+static void GetRes0CellsVarcharFunction(DataChunk &args, ExpressionState &state,
+                                        Vector &result) {
+  auto result_data = FlatVector::GetData<list_entry_t>(result);
+
+  int sz = res0CellCount();
+
+  for (idx_t i = 0; i < args.size(); i++) {
+    result_data[i].offset = ListVector::GetListSize(result);
+
+    std::vector<H3Index> out(sz);
+    H3Error err1 = getRes0Cells(out.data());
+    if (err1) {
+      // This should be unreachable
+      result.SetValue(i, Value(LogicalType::SQLNULL));
+    } else {
+      int64_t actual = 0;
+      for (auto val : out) {
+        if (val != H3_NULL) {
+          auto str = StringUtil::Format("%llx", val);
+          string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+          ListVector::PushBack(result, strAsStr);
+          actual++;
+        }
+      }
+      // actual should always be 122
+
+      result_data[i].length = actual;
+    }
+  }
+  result.Verify(args.size());
+  result.SetVectorType(VectorType::CONSTANT_VECTOR);
+}
+
 static void GetPentagonsFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   auto result_data = FlatVector::GetData<list_entry_t>(result);
@@ -209,6 +242,41 @@ static void GetPentagonsFunction(DataChunk &args, ExpressionState &state,
       for (auto val : out) {
         if (val != H3_NULL) {
           ListVector::PushBack(result, Value::UBIGINT(val));
+          actual++;
+        }
+      }
+      // actual should always be 12
+
+      result_data[i].length = actual;
+    }
+  }
+  result.Verify(args.size());
+}
+
+static void GetPentagonsVarcharFunction(DataChunk &args, ExpressionState &state,
+                                        Vector &result) {
+  auto result_data = FlatVector::GetData<list_entry_t>(result);
+
+  int sz = pentagonCount();
+
+  for (idx_t i = 0; i < args.size(); i++) {
+    result_data[i].offset = ListVector::GetListSize(result);
+
+    int32_t res = args.GetValue(0, i)
+                      .DefaultCastAs(LogicalType::INTEGER)
+                      .GetValue<int32_t>();
+
+    std::vector<H3Index> out(sz);
+    H3Error err1 = getPentagons(res, out.data());
+    if (err1) {
+      result.SetValue(i, Value(LogicalType::SQLNULL));
+    } else {
+      int64_t actual = 0;
+      for (auto val : out) {
+        if (val != H3_NULL) {
+          auto str = StringUtil::Format("%llx", val);
+          string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+          ListVector::PushBack(result, strAsStr);
           actual++;
         }
       }
@@ -320,10 +388,22 @@ CreateScalarFunctionInfo H3Functions::GetGetRes0CellsFunction() {
       GetRes0CellsFunction));
 }
 
+CreateScalarFunctionInfo H3Functions::GetGetRes0CellsVarcharFunction() {
+  return CreateScalarFunctionInfo(ScalarFunction(
+      "h3_get_res0_cells_varchar", {}, LogicalType::LIST(LogicalType::VARCHAR),
+      GetRes0CellsVarcharFunction));
+}
+
 CreateScalarFunctionInfo H3Functions::GetGetPentagonsFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
       "h3_get_pentagons", {LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::UBIGINT), GetPentagonsFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetGetPentagonsVarcharFunction() {
+  return CreateScalarFunctionInfo(ScalarFunction(
+      "h3_get_pentagons_varchar", {LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::VARCHAR), GetPentagonsVarcharFunction));
 }
 
 CreateScalarFunctionInfo H3Functions::GetGreatCircleDistanceFunction() {

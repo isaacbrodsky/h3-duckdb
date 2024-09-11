@@ -19,6 +19,7 @@ public:
 
     // Indexing
     functions.push_back(GetLatLngToCellFunction());
+    functions.push_back(GetLatLngToCellVarcharFunction());
     functions.push_back(GetCellToLatFunction());
     functions.push_back(GetCellToLngFunction());
     functions.push_back(GetCellToLatLngFunction());
@@ -80,12 +81,15 @@ public:
     functions.push_back(GetEdgeLengthFunction());
     functions.push_back(GetGetNumCellsFunction());
     functions.push_back(GetGetRes0CellsFunction());
+    functions.push_back(GetGetRes0CellsVarcharFunction());
     functions.push_back(GetGetPentagonsFunction());
+    functions.push_back(GetGetPentagonsVarcharFunction());
     functions.push_back(GetGreatCircleDistanceFunction());
 
     // Regions
     functions.push_back(GetCellsToMultiPolygonWktFunction());
     functions.push_back(GetPolygonWktToCellsFunction());
+    functions.push_back(GetPolygonWktToCellsVarcharFunction());
 
     return functions;
   }
@@ -93,6 +97,7 @@ public:
 private:
   // Indexing
   static CreateScalarFunctionInfo GetLatLngToCellFunction();
+  static CreateScalarFunctionInfo GetLatLngToCellVarcharFunction();
   static CreateScalarFunctionInfo GetCellToLatFunction();
   static CreateScalarFunctionInfo GetCellToLngFunction();
   static CreateScalarFunctionInfo GetCellToLatLngFunction();
@@ -154,12 +159,15 @@ private:
   static CreateScalarFunctionInfo GetEdgeLengthFunction();
   static CreateScalarFunctionInfo GetGetNumCellsFunction();
   static CreateScalarFunctionInfo GetGetRes0CellsFunction();
+  static CreateScalarFunctionInfo GetGetRes0CellsVarcharFunction();
   static CreateScalarFunctionInfo GetGetPentagonsFunction();
+  static CreateScalarFunctionInfo GetGetPentagonsVarcharFunction();
   static CreateScalarFunctionInfo GetGreatCircleDistanceFunction();
 
   // Regions
   static CreateScalarFunctionInfo GetCellsToMultiPolygonWktFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsFunction();
+  static CreateScalarFunctionInfo GetPolygonWktToCellsVarcharFunction();
 
   static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
                          vector<CreateScalarFunctionInfo> &functions) {

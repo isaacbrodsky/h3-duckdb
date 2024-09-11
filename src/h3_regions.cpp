@@ -275,6 +275,91 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+static void PolygonWktToCellsVarcharFunction(DataChunk &args,
+                                             ExpressionState &state,
+                                             Vector &result) {
+  // TODO: Note this function is not fully noexcept -- some invalid WKT strings
+  // will throw, others will return empty lists.
+  BinaryExecutor::Execute<string_t, int, list_entry_t>(
+      args.data[0], args.data[1], result, args.size(),
+      [&](string_t input, int res) {
+        GeoPolygon polygon;
+        int32_t flags = 0;
+
+        std::string str = input.GetString();
+
+        uint64_t offset = ListVector::GetListSize(result);
+        if (str.rfind(POLYGON, 0) != 0) {
+          return list_entry_t(offset, 0);
+        }
+
+        size_t strIndex = POLYGON.length();
+        strIndex = whitespace(str, strIndex);
+
+        if (str.rfind(EMPTY, strIndex) == strIndex) {
+          return list_entry_t(offset, 0);
+        }
+
+        if (str[strIndex] == '(') {
+          strIndex++;
+          strIndex = whitespace(str, strIndex);
+
+          auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+          strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
+
+          std::vector<GeoLoop> holes;
+          std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
+          while (strIndex < str.length() && str[strIndex] == ',') {
+            strIndex++;
+            strIndex = whitespace(str, strIndex);
+            if (str[strIndex] == '(') {
+              GeoLoop hole;
+              auto verts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+              strIndex = readGeoLoop(str, strIndex, verts, hole);
+              holes.push_back(hole);
+              holesVerts.push_back(verts);
+            } else {
+              throw InvalidInputException(StringUtil::Format(
+                  "Invalid WKT: expected a hole loop '(' after ',' at pos %lu",
+                  strIndex));
+            }
+          }
+          if (str[strIndex] != ')') {
+            throw InvalidInputException(StringUtil::Format(
+                "Invalid WKT: expected a hole loop ',' or final ')' at pos %lu",
+                strIndex));
+          }
+
+          polygon.numHoles = holes.size();
+          polygon.holes = holes.data();
+
+          int64_t numCells = 0;
+          H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
+          if (err) {
+            return list_entry_t(offset, 0);
+          } else {
+            std::vector<H3Index> out(numCells);
+            H3Error err2 = polygonToCells(&polygon, res, flags, out.data());
+            if (err2) {
+              return list_entry_t(offset, 0);
+            } else {
+              uint64_t actual = 0;
+              for (H3Index outCell : out) {
+                if (outCell != H3_NULL) {
+                  auto str = StringUtil::Format("%llx", outCell);
+                  string_t strAsStr = string_t(strdup(str.c_str()), str.size());
+                  ListVector::PushBack(result, strAsStr);
+                  actual++;
+                }
+              }
+              return list_entry_t(offset, actual);
+            }
+          }
+        }
+        return list_entry_t(offset, 0);
+      });
+}
+
 CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
   ScalarFunctionSet funcs("h3_cells_to_multi_polygon_wkt");
   funcs.AddFunction(ScalarFunction(
@@ -297,6 +382,15 @@ CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
       "h3_polygon_wkt_to_cells", {LogicalType::VARCHAR, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::UBIGINT), PolygonWktToCellsFunction));
+}
+
+CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsVarcharFunction() {
+  // TODO: Expose flags
+  return CreateScalarFunctionInfo(
+      ScalarFunction("h3_polygon_wkt_to_cells_varchar",
+                     {LogicalType::VARCHAR, LogicalType::INTEGER},
+                     LogicalType::LIST(LogicalType::VARCHAR),
+                     PolygonWktToCellsVarcharFunction));
 }
 
 } // namespace duckdb
