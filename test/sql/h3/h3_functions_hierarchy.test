@@ -184,3 +184,39 @@ query I
 select h3_uncompact_cells([581764796395814911::bigint], 2)
 ----
 [586264547732488191, 586265097488302079, 586265647244115967, 586266196999929855, 586266746755743743, 586267296511557631, 586267846267371519]
+
+
+query I
+select h3_compact_cells(['822d57fffffffff', '822d0ffffffffff', '822c27fffffffff', '822c2ffffffffff', '822d5ffffffffff', '822d47fffffffff', '822d77fffffffff'])
+----
+[822d57fffffffff, 822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]
+
+query I
+select h3_compact_cells(['822d67fffffffff', '822d5ffffffffff', '822d4ffffffffff', '822d57fffffffff', '822d77fffffffff', '822d6ffffffffff', '822d47fffffffff'])
+----
+[812d7ffffffffff]
+
+query I
+select h3_compact_cells(['X', '822d5ffffffffff', '822d4ffffffffff', '822d57fffffffff', '822d77fffffffff', '822d6ffffffffff', '822d47fffffffff'])
+----
+NULL
+
+query I
+select h3_compact_cells([])
+----
+[]
+
+query I
+select h3_uncompact_cells(['812d7ffffffffff'], 2)
+----
+[822d47fffffffff, 822d4ffffffffff, 822d57fffffffff, 822d5ffffffffff, 822d67fffffffff, 822d6ffffffffff, 822d77fffffffff]
+
+query I
+select h3_uncompact_cells(['X'], 2)
+----
+NULL
+
+query I
+select h3_uncompact_cells([], 2)
+----
+[]
