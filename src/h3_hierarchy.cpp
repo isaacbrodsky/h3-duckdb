@@ -343,7 +343,7 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state,
 }
 
 static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
-                                 Vector &result) {
+                                        Vector &result) {
   D_ASSERT(args.ColumnCount() == 1);
   auto count = args.size();
 
@@ -385,12 +385,13 @@ static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
     bool hasInvalid = false;
     for (size_t i = 0; i < list_children.size(); i++) {
       H3Index tmp;
-      H3Error tmpErr = stringToH3(list_children[i].GetValue<string>().c_str(), &tmp);
+      H3Error tmpErr =
+          stringToH3(list_children[i].GetValue<string>().c_str(), &tmp);
       if (tmpErr) {
         hasInvalid = true;
         break;
       } else {
-      input_set[i] = tmp;
+        input_set[i] = tmp;
       }
     }
     if (hasInvalid) {
@@ -516,8 +517,9 @@ static void UncompactCellsFunction(DataChunk &args, ExpressionState &state,
   }
 }
 
-static void UncompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
-                                   Vector &result) {
+static void UncompactCellsVarcharFunction(DataChunk &args,
+                                          ExpressionState &state,
+                                          Vector &result) {
   D_ASSERT(args.ColumnCount() == 2);
   auto count = args.size();
 
@@ -570,12 +572,13 @@ static void UncompactCellsVarcharFunction(DataChunk &args, ExpressionState &stat
     bool hasInvalid = false;
     for (size_t i = 0; i < list_children.size(); i++) {
       H3Index tmp;
-      H3Error tmpErr = stringToH3(list_children[i].GetValue<string>().c_str(), &tmp);
+      H3Error tmpErr =
+          stringToH3(list_children[i].GetValue<string>().c_str(), &tmp);
       if (tmpErr) {
         hasInvalid = true;
         break;
       } else {
-      input_set[i] = tmp;
+        input_set[i] = tmp;
       }
     }
     if (hasInvalid) {
@@ -591,7 +594,7 @@ static void UncompactCellsVarcharFunction(DataChunk &args, ExpressionState &stat
       }
       auto uncompacted = new H3Index[uncompacted_sz]();
       H3Error err = uncompactCells(input_set, list_children.size(), uncompacted,
-                                  uncompacted_sz, res);
+                                   uncompacted_sz, res);
 
       if (err) {
         result_validity.SetInvalid(i);
@@ -707,8 +710,7 @@ CreateScalarFunctionInfo H3Functions::GetUncompactCellsFunction() {
   ScalarFunctionSet funcs("h3_uncompact_cells");
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::VARCHAR), LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::VARCHAR),
-      UncompactCellsVarcharFunction));
+      LogicalType::LIST(LogicalType::VARCHAR), UncompactCellsVarcharFunction));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::UBIGINT), LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::UBIGINT), UncompactCellsFunction));
