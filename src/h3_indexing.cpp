@@ -28,7 +28,7 @@ static void LatLngToCellVarcharFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
-  TernaryExecutor::ExecuteWithNulls<double, double, int, H3Index>(
+  TernaryExecutor::ExecuteWithNulls<double, double, int, string_t>(
       inputs, inputs2, inputs3, result, args.size(),
       [&](double lat, double lng, int res, ValidityMask &mask, idx_t idx) {
         H3Index cell;
