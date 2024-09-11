@@ -202,6 +202,11 @@ select h3_compact_cells(['X', '822d5ffffffffff', '822d4ffffffffff', '822d57fffff
 NULL
 
 query I
+select h3_compact_cells([])
+----
+[]
+
+query I
 select h3_uncompact_cells(['812d7ffffffffff'], 2)
 ----
 [822d47fffffffff, 822d4ffffffffff, 822d57fffffffff, 822d5ffffffffff, 822d67fffffffff, 822d6ffffffffff, 822d77fffffffff]
@@ -210,3 +215,8 @@ query I
 select h3_uncompact_cells(['X'], 2)
 ----
 NULL
+
+query I
+select h3_uncompact_cells([], 2)
+----
+[]
