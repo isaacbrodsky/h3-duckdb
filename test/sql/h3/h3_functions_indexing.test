@@ -21,22 +21,22 @@ SELECT printf('%x', h3_latlng_to_cell(37.7752702151959, -122.418307270836, 9)::b
 8928308280fffff
 
 query I
-SELECT h3_latlng_to_cell_varchar(0, 0, -1);
+SELECT h3_latlng_to_cell_string(0, 0, -1);
 ----
 NULL
 
 query I
-SELECT h3_latlng_to_cell_varchar(0, 0, 1);
+SELECT h3_latlng_to_cell_string(0, 0, 1);
 ----
 81757ffffffffff
 
 query I
-SELECT h3_latlng_to_cell_varchar(37.7752702151959, NULL, 9);
+SELECT h3_latlng_to_cell_string(37.7752702151959, NULL, 9);
 ----
 NULL
 
 query I
-SELECT h3_latlng_to_cell_varchar(37.7752702151959, -122.418307270836, 9);
+SELECT h3_latlng_to_cell_string(37.7752702151959, -122.418307270836, 9);
 ----
 8928308280fffff
 

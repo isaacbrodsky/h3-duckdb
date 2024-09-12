@@ -244,7 +244,7 @@ CreateScalarFunctionInfo H3Functions::GetLatLngToCellFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetLatLngToCellVarcharFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_latlng_to_cell_varchar",
+      "h3_latlng_to_cell_string",
       {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::INTEGER},
       LogicalType::VARCHAR, LatLngToCellVarcharFunction));
 }

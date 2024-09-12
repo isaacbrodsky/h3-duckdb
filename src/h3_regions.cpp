@@ -387,7 +387,7 @@ CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsFunction() {
 CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsVarcharFunction() {
   // TODO: Expose flags
   return CreateScalarFunctionInfo(
-      ScalarFunction("h3_polygon_wkt_to_cells_varchar",
+      ScalarFunction("h3_polygon_wkt_to_cells_string",
                      {LogicalType::VARCHAR, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::VARCHAR),
                      PolygonWktToCellsVarcharFunction));

@@ -390,7 +390,7 @@ CreateScalarFunctionInfo H3Functions::GetGetRes0CellsFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetGetRes0CellsVarcharFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_get_res0_cells_varchar", {}, LogicalType::LIST(LogicalType::VARCHAR),
+      "h3_get_res0_cells_string", {}, LogicalType::LIST(LogicalType::VARCHAR),
       GetRes0CellsVarcharFunction));
 }
 
@@ -402,7 +402,7 @@ CreateScalarFunctionInfo H3Functions::GetGetPentagonsFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetGetPentagonsVarcharFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
-      "h3_get_pentagons_varchar", {LogicalType::INTEGER},
+      "h3_get_pentagons_string", {LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::VARCHAR), GetPentagonsVarcharFunction));
 }
 
