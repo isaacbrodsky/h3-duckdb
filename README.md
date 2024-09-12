@@ -37,7 +37,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | Function | Description
 | --: | ---
 | `h3_latlng_to_cell` | Convert latitude/longitude coordinate to cell ID
-| `h3_latlng_to_cell_string` | Convert latitude/longitude coordinate to cell ID
+| `h3_latlng_to_cell_string` | Convert latitude/longitude coordinate to cell ID (returns VARCHAR)
 | `h3_cell_to_lat` | Convert cell ID to latitude
 | `h3_cell_to_lng` | Convert cell ID to longitude
 | `h3_cell_to_latlng` | Convert cell ID to latitude/longitude
@@ -85,17 +85,13 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_edge_length` | Get the length of a directed edge ID
 | `h3_get_num_cells` | Get the number of cells at a resolution
 | `h3_get_res0_cells` | Get all resolution 0 cells
-| `h3_get_res0_cells_string` | Get all resolution 0 cells
+| `h3_get_res0_cells_string` | Get all resolution 0 cells (returns VARCHAR)
 | `h3_get_pentagons` | Get all pentagons at a resolution
-| `h3_get_pentagons_string` | Get all pentagons at a resolution
+| `h3_get_pentagons_string` | Get all pentagons at a resolution (returns VARCHAR)
 | `h3_great_circle_distance` | Compute the great circle distance between two points (haversine)
 | `h3_cells_to_multi_polygon_wkt` | Convert a set of cells to multipolygon WKT
 | `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells
-| `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells
-
-### Notes
-
-* <i id="fu">u</i>: Supports UBIGINT output only.
+| `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells (returns VARCHAR)
 
 # Alternative download / install
 
