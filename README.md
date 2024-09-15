@@ -61,6 +61,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_grid_disk_distances` | Find cells within a grid distance, sorted by distance
 | `h3_grid_disk_unsafe` | Find cells within a grid distance, with no pentagon distortion
 | `h3_grid_disk_distances_unsafe` | Find cells within a grid distance, sorted by distance, with no pentagon distortion
+| `h3_grid_disk_distances_safe` | Find cells within a grid distance, sorted by distance
 | `h3_grid_ring_unsafe` | Find cells exactly a grid distance away, with no pentagon distortion
 | `h3_grid_path_cells` | Find a grid path to connect two cells
 | `h3_grid_distance` | Find the grid distance between two cells
@@ -82,6 +83,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_directed_edge_to_boundary_wkt` | Convert directed edge ID to linestring WKT
 | `h3_get_hexagon_area_avg` | Get average area of a hexagon cell at resolution
 | `h3_cell_area` | Get the area of a cell ID
+| `h3_get_hexagon_edge_length_avg` | Average hexagon edge length at resolution
 | `h3_edge_length` | Get the length of a directed edge ID
 | `h3_get_num_cells` | Get the number of cells at a resolution
 | `h3_get_res0_cells` | Get all resolution 0 cells
