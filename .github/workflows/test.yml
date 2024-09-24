@@ -12,11 +12,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  duckdb-next-build:
+    name: Build extension binaries
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@main
+    with:
+      duckdb_version: main
+      ci_tools_version: main
+      extension_name: h3
+      exclude_archs: "windows_amd64_rtools"
+
   duckdb-stable-build:
     name: Build extension binaries
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.1.1
     with:
       duckdb_version: v1.1.1
+      ci_tools_version: v1.1.1
       extension_name: h3
       exclude_archs: "windows_amd64_rtools"
 
@@ -28,6 +38,5 @@ jobs:
     with:
       duckdb_version: v1.1.1
       extension_name: h3
-      exclude_archs: "windows_amd64_rtools"
       deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
-      deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+      exclude_archs: "windows_amd64_rtools"
