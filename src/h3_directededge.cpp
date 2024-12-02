@@ -349,7 +349,7 @@ struct DirectedEdgeToBoundaryOperator {
       // TODO: Is it possible to return null here instead?
       return StringVector::EmptyString(result, 0);
     } else {
-      std::string str = "POLYGON ((";
+      std::string str = "LINESTRING ((";
       for (int i = 0; i <= boundary.numVerts; i++) {
         std::string sep = (i == 0) ? "" : ", ";
         int vertIndex = (i == boundary.numVerts) ? 0 : i;

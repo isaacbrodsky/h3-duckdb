@@ -109,6 +109,14 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args,
               lat_lng_sep = ", ";
               lat_lng = lat_lng->next;
             }
+
+            if (loop->first) {
+              // Duplicate first vertex, to close the polygon
+              str += StringUtil::Format(", %f %f",
+                                        radsToDegs(loop->first->vertex.lng),
+                                        radsToDegs(loop->first->vertex.lat));
+            }
+
             str += ")";
             loop_sep = ", ";
             loop = loop->next;
