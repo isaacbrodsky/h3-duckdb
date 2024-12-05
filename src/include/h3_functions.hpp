@@ -90,6 +90,8 @@ public:
     functions.push_back(GetCellsToMultiPolygonWktFunction());
     functions.push_back(GetPolygonWktToCellsFunction());
     functions.push_back(GetPolygonWktToCellsVarcharFunction());
+    functions.push_back(GetPolygonWktToCellsExperimentalFunction());
+    functions.push_back(GetPolygonWktToCellsExperimentalVarcharFunction());
 
     return functions;
   }
@@ -168,6 +170,8 @@ private:
   static CreateScalarFunctionInfo GetCellsToMultiPolygonWktFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsVarcharFunction();
+  static CreateScalarFunctionInfo GetPolygonWktToCellsExperimentalFunction();
+  static CreateScalarFunctionInfo GetPolygonWktToCellsExperimentalVarcharFunction();
 
   static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
                          vector<CreateScalarFunctionInfo> &functions) {
