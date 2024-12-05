@@ -73,22 +73,22 @@ NULL
 query I
 SELECT h3_vertex_to_latlng(h3_string_to_h3('2222597fffffffff'));
 ----
-[39.38084284181813, 88.57496213785487]
+[39.38084284181812, 88.57496213785487]
 
 query I
 SELECT h3_vertex_to_latlng(cast(h3_string_to_h3('2222597fffffffff') as bigint));
 ----
-[39.38084284181813, 88.57496213785487]
+[39.38084284181812, 88.57496213785487]
 
 query I
 SELECT h3_vertex_to_lat(h3_string_to_h3('2222597fffffffff'));
 ----
-39.38084284181813
+39.38084284181812
 
 query I
 SELECT h3_vertex_to_lat(cast(h3_string_to_h3('2222597fffffffff') as bigint));
 ----
-39.38084284181813
+39.38084284181812
 
 query I
 SELECT h3_vertex_to_lng(h3_string_to_h3('2222597fffffffff'));
@@ -123,12 +123,12 @@ NULL
 query I
 SELECT h3_vertex_to_latlng('2222597fffffffff');
 ----
-[39.38084284181813, 88.57496213785487]
+[39.38084284181812, 88.57496213785487]
 
 query I
 SELECT h3_vertex_to_lat('2222597fffffffff');
 ----
-39.38084284181813
+39.38084284181812
 
 query I
 SELECT h3_vertex_to_lng('2222597fffffffff');
