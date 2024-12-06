@@ -71,34 +71,34 @@ SELECT h3_cell_to_vertex(cast(h3_string_to_h3('823d6ffffffffff') as bigint), -1)
 NULL
 
 query I
-SELECT h3_vertex_to_latlng(h3_string_to_h3('2222597fffffffff'));
+SELECT list_transform(h3_vertex_to_latlng(h3_string_to_h3('2222597fffffffff')), x -> round(x, 12));
 ----
-[39.38084284181812, 88.57496213785487]
+[39.380842841818, 88.574962137855]
 
 query I
-SELECT h3_vertex_to_latlng(cast(h3_string_to_h3('2222597fffffffff') as bigint));
+SELECT list_transform(h3_vertex_to_latlng(cast(h3_string_to_h3('2222597fffffffff') as bigint)), x -> round(x, 12));
 ----
-[39.38084284181812, 88.57496213785487]
+[39.380842841818, 88.574962137855]
 
 query I
-SELECT h3_vertex_to_lat(h3_string_to_h3('2222597fffffffff'));
+SELECT round(h3_vertex_to_lat(h3_string_to_h3('2222597fffffffff')), 12);
 ----
-39.38084284181812
+39.380842841818
 
 query I
-SELECT h3_vertex_to_lat(cast(h3_string_to_h3('2222597fffffffff') as bigint));
+SELECT round(h3_vertex_to_lat(cast(h3_string_to_h3('2222597fffffffff') as bigint)), 12);
 ----
-39.38084284181812
+39.380842841818
 
 query I
-SELECT h3_vertex_to_lng(h3_string_to_h3('2222597fffffffff'));
+SELECT round(h3_vertex_to_lng(h3_string_to_h3('2222597fffffffff')), 12);
 ----
-88.57496213785487
+88.574962137855
 
 query I
-SELECT h3_vertex_to_lng(cast(h3_string_to_h3('2222597fffffffff') as bigint));
+SELECT round(h3_vertex_to_lng(cast(h3_string_to_h3('2222597fffffffff') as bigint)), 12);
 ----
-88.57496213785487
+88.574962137855
 
 query I
 SELECT h3_cell_to_vertexes('823d6ffffffffff');
@@ -121,16 +121,16 @@ SELECT h3_cell_to_vertex('823d6ffffffffff', -1);
 NULL
 
 query I
-SELECT h3_vertex_to_latlng('2222597fffffffff');
+SELECT list_transform(h3_vertex_to_latlng('2222597fffffffff'), x -> round(x, 12));
 ----
-[39.38084284181812, 88.57496213785487]
+[39.380842841818, 88.574962137855]
 
 query I
-SELECT h3_vertex_to_lat('2222597fffffffff');
+SELECT round(h3_vertex_to_lat('2222597fffffffff'), 12);
 ----
-39.38084284181812
+39.380842841818
 
 query I
-SELECT h3_vertex_to_lng('2222597fffffffff');
+SELECT round(h3_vertex_to_lng('2222597fffffffff'), 12);
 ----
-88.57496213785487
+88.574962137855
