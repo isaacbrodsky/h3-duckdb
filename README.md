@@ -1,6 +1,6 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
 [![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.1.3&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.1.3)
-[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.1.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.1.0)
+[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.2.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.2.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 This is a [DuckDB](https://duckdb.org) extension that adds support for the [H3 discrete global grid system](https://github.com/uber/h3/), so you can index points and geometries to hexagons in SQL.
@@ -94,6 +94,8 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_cells_to_multi_polygon_wkt` | Convert a set of cells to multipolygon WKT
 | `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells
 | `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells (returns VARCHAR)
+| `h3_polygon_wkt_to_cells_experimental` | Convert polygon WKT to a set of cells, new algorithm
+| `h3_polygon_wkt_to_cells_experimental_string` | Convert polygon WKT to a set of cells, new algorithm (returns VARCHAR)
 
 # Alternative download / install
 
