@@ -381,6 +381,8 @@ static void PolygonWktToCellsExperimentalFunction(DataChunk &args, ExpressionSta
 			    flags = 1;
 		    } else if (flagsStr == "CONTAINMENT_OVERLAPPING") {
 			    flags = 2;
+		    } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX") {
+			    flags = 3;
 		    } else {
 			    // Invalid flags input
 			    return list_entry_t(offset, 0);
@@ -477,6 +479,8 @@ static void PolygonWktToCellsExperimentalVarcharFunction(DataChunk &args,
 			    flags = 1;
 		    } else if (flagsStr == "CONTAINMENT_OVERLAPPING") {
 			    flags = 2;
+		    } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX") {
+			    flags = 3;
 		    } else {
 			    // Invalid flags input
 			    return list_entry_t(offset, 0);
