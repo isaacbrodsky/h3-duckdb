@@ -194,6 +194,7 @@ struct CellToBoundaryOperator {
       std::string str = "POLYGON ((";
       for (int i = 0; i <= boundary.numVerts; i++) {
         std::string sep = (i == 0) ? "" : ", ";
+        // Add an extra vertex onto the end to close the polygon
         int vertIndex = (i == boundary.numVerts) ? 0 : i;
         str += StringUtil::Format("%s%f %f", sep,
                                   radsToDegs(boundary.verts[vertIndex].lng),
