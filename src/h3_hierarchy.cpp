@@ -716,6 +716,8 @@ CreateScalarFunctionInfo H3Functions::GetChildPosToCellFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetCompactCellsFunction() {
   ScalarFunctionSet funcs("h3_compact_cells");
+  // TODO: Refactor this to use a templated InputOperator, reference
+  // h3_cells_to_multi_polygon_wkt
   funcs.AddFunction(ScalarFunction({LogicalType::LIST(LogicalType::VARCHAR)},
                                    LogicalType::LIST(LogicalType::VARCHAR),
                                    CompactCellsVarcharFunction));
@@ -730,6 +732,8 @@ CreateScalarFunctionInfo H3Functions::GetCompactCellsFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetUncompactCellsFunction() {
   ScalarFunctionSet funcs("h3_uncompact_cells");
+  // TODO: Refactor this to use a templated InputOperator, reference
+  // h3_cells_to_multi_polygon_wkt
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::VARCHAR), LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::VARCHAR), UncompactCellsVarcharFunction));
