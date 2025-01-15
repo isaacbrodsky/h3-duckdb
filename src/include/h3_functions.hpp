@@ -171,7 +171,8 @@ private:
   static CreateScalarFunctionInfo GetPolygonWktToCellsFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsVarcharFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsExperimentalFunction();
-  static CreateScalarFunctionInfo GetPolygonWktToCellsExperimentalVarcharFunction();
+  static CreateScalarFunctionInfo
+  GetPolygonWktToCellsExperimentalVarcharFunction();
 
   static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
                          vector<CreateScalarFunctionInfo> &functions) {
