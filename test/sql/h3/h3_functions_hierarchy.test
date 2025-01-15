@@ -220,3 +220,22 @@ query I
 select h3_uncompact_cells([], 2)
 ----
 []
+
+statement ok
+-- seed a few geometries from a single point
+CREATE TABLE h3_child_cells AS 
+WITH h3BaseCell AS ( SELECT h3_latlng_to_cell(51.477928, -0.001545, 5) AS base_cell_id) -- create h3 cell @ res 5 from regular wgs84 latlng point
+    , kRing AS ( select UNNEST ( h3_cell_to_children(base_cell_id, 6) ) aS h3_child_id FROM h3BaseCell ) -- grab the base cell's childred @ res 6
+-- create the new table with rows for each child, consisting of their id, and boundary as a spatial geometry + wkt varchar
+SELECT h3_child_id, ST_GeomFromText( h3_cell_to_boundary_wkt(h3_child_id) ) AS geom, h3_cell_to_boundary_wkt(h3_child_id) AS wkt 
+FROM kRing;
+
+statement ok
+-- polyfill the res 6 child cells @ res 7
+CREATE TABLE h3_child_cells_polyfilled AS SELECT h3_child_id, h3_polygon_wkt_to_cells(wkt, 7) AS polyfilled FROM h3_child_cells;
+
+query I
+-- compact the polyfilled boundaries
+SELECT h3_child_id, h3_compact_cells(polyfilled) FROM h3_child_cells_polyfilled;
+----
+[]
