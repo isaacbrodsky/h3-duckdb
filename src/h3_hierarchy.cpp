@@ -351,16 +351,22 @@ static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
   D_ASSERT(args.ColumnCount() == 1);
   auto count = args.size();
 
-  Vector &lhs = args.data[0];
-  if (lhs.GetType().id() == LogicalTypeId::SQLNULL) {
-    result.Reference(lhs);
+  Vector &lists = args.data[0];
+  if (lists.GetType().id() == LogicalTypeId::SQLNULL) {
+    result.Reference(lists);
     return;
   }
 
-  UnifiedVectorFormat lhs_data;
-  lhs.ToUnifiedFormat(count, lhs_data);
+  auto lists_size = ListVector::GetListSize(lists);
+  auto &child_vector = ListVector::GetEntry(lists);
+  child_vector.Flatten(lists_size);
 
-  auto list_entries = (list_entry_t *)lhs_data.data;
+  UnifiedVectorFormat child_data;
+  child_vector.ToUnifiedFormat(lists_size, child_data);
+
+  UnifiedVectorFormat lists_data;
+  lists.ToUnifiedFormat(count, lists_data);
+  auto list_entries = UnifiedVectorFormat::GetData<list_entry_t>(lists_data);
 
   result.SetVectorType(VectorType::FLAT_VECTOR);
   auto result_entries = FlatVector::GetData<list_entry_t>(result);
@@ -370,48 +376,47 @@ static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
   for (idx_t i = 0; i < count; i++) {
     result_entries[i].offset = offset;
     result_entries[i].length = 0;
-    auto list_index = lhs_data.sel->get_index(i);
+    auto list_index = lists_data.sel->get_index(i);
 
-    if (!lhs_data.validity.RowIsValid(list_index)) {
+    if (!lists_data.validity.RowIsValid(list_index)) {
       result_validity.SetInvalid(i);
       continue;
     }
 
-    const auto &list_entry = list_entries[list_index];
-
-    const auto lvalue =
-        lhs.GetValue(list_entry.offset)
-            .DefaultCastAs(LogicalType::LIST(LogicalType::VARCHAR));
-
-    auto &list_children = ListValue::GetChildren(lvalue);
-
-    vector<H3Index> input_set(list_children.size());
+    vector<H3Index> input_set(list_entries[i].length);
     bool hasInvalid = false;
-    for (size_t i = 0; i < list_children.size(); i++) {
-      H3Index tmp;
-      H3Error tmpErr =
-          stringToH3(list_children[i].GetValue<string>().c_str(), &tmp);
-      if (tmpErr) {
-        hasInvalid = true;
-        break;
-      } else {
-        input_set[i] = tmp;
+    for (size_t j = 0; j < list_entries[i].length; j++) {
+      if (child_data.validity.RowIsValid(
+              child_data.sel->get_index(list_entries[i].offset + j))) {
+        H3Index tmp;
+        H3Error tmpErr = stringToH3(
+            ((string_t *)child_data
+                 .data)[child_data.sel->get_index(list_entries[i].offset + j)]
+                .GetString()
+                .c_str(),
+            &tmp);
+        if (tmpErr) {
+          hasInvalid = true;
+          break;
+        } else {
+          input_set[j] = tmp;
+        }
       }
     }
     if (hasInvalid) {
       result_validity.SetInvalid(i);
       continue;
     } else {
-      vector<H3Index> compacted(list_children.size());
-      H3Error err = compactCells(input_set.data(), compacted.data(),
-                                 list_children.size());
+      vector<H3Index> compacted(input_set.size());
+      H3Error err =
+          compactCells(input_set.data(), compacted.data(), input_set.size());
 
       if (err) {
         result_validity.SetInvalid(i);
       } else {
         int64_t actual = 0;
-        for (size_t i = 0; i < list_children.size(); i++) {
-          auto child_val = compacted[i];
+        for (size_t k = 0; k < input_set.size(); k++) {
+          auto child_val = compacted[k];
           if (child_val != H3_NULL) {
             auto str = StringUtil::Format("%llx", child_val);
             string_t strAsStr = string_t(strdup(str.c_str()), str.size());
@@ -428,7 +433,7 @@ static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
 
   result.Verify(args.size());
 
-  if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
+  if (lists.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
 }
