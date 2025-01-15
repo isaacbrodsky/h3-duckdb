@@ -311,12 +311,12 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state,
 
     auto &list_children = ListValue::GetChildren(lvalue);
 
-    auto input_set = new H3Index[list_children.size()];
+    vector<H3Index> input_set(list_children.size());
     for (size_t i = 0; i < list_children.size(); i++) {
       input_set[i] = list_children[i].GetValue<uint64_t>();
     }
-    auto compacted = new H3Index[list_children.size()]();
-    H3Error err = compactCells(input_set, compacted, list_children.size());
+    vector<H3Index> compacted(list_children.size());
+    H3Error err = compactCells(input_set.data(), compacted.data(), list_children.size());
 
     if (err) {
       result_validity.SetInvalid(i);
@@ -381,7 +381,7 @@ static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
 
     auto &list_children = ListValue::GetChildren(lvalue);
 
-    auto input_set = new H3Index[list_children.size()];
+    vector<H3Index> input_set(list_children.size());
     bool hasInvalid = false;
     for (size_t i = 0; i < list_children.size(); i++) {
       H3Index tmp;
@@ -398,8 +398,8 @@ static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
       result_validity.SetInvalid(i);
       continue;
     } else {
-      auto compacted = new H3Index[list_children.size()]();
-      H3Error err = compactCells(input_set, compacted, list_children.size());
+      vector<H3Index> compacted(list_children.size());
+      H3Error err = compactCells(input_set.data(), compacted.data(), list_children.size());
 
       if (err) {
         result_validity.SetInvalid(i);
@@ -478,19 +478,19 @@ static void UncompactCellsFunction(DataChunk &args, ExpressionState &state,
 
     auto &list_children = ListValue::GetChildren(lvalue);
 
-    auto input_set = new H3Index[list_children.size()];
+    vector<H3Index> input_set(list_children.size());
     for (size_t i = 0; i < list_children.size(); i++) {
       input_set[i] = list_children[i].GetValue<uint64_t>();
     }
     int64_t uncompacted_sz;
-    H3Error sz_err = uncompactCellsSize(input_set, list_children.size(), res,
+    H3Error sz_err = uncompactCellsSize(input_set.data(), list_children.size(), res,
                                         &uncompacted_sz);
     if (sz_err) {
       result_validity.SetInvalid(i);
       continue;
     }
-    auto uncompacted = new H3Index[uncompacted_sz]();
-    H3Error err = uncompactCells(input_set, list_children.size(), uncompacted,
+    vector<H3Index> uncompacted(uncompacted_sz);
+    H3Error err = uncompactCells(input_set.data(), list_children.size(), uncompacted.data(),
                                  uncompacted_sz, res);
 
     if (err) {
@@ -568,7 +568,7 @@ static void UncompactCellsVarcharFunction(DataChunk &args,
 
     auto &list_children = ListValue::GetChildren(lvalue);
 
-    auto input_set = new H3Index[list_children.size()];
+    vector<H3Index> input_set(list_children.size());
     bool hasInvalid = false;
     for (size_t i = 0; i < list_children.size(); i++) {
       H3Index tmp;
@@ -586,14 +586,14 @@ static void UncompactCellsVarcharFunction(DataChunk &args,
       continue;
     } else {
       int64_t uncompacted_sz;
-      H3Error sz_err = uncompactCellsSize(input_set, list_children.size(), res,
+      H3Error sz_err = uncompactCellsSize(input_set.data(), list_children.size(), res,
                                           &uncompacted_sz);
       if (sz_err) {
         result_validity.SetInvalid(i);
         continue;
       }
-      auto uncompacted = new H3Index[uncompacted_sz]();
-      H3Error err = uncompactCells(input_set, list_children.size(), uncompacted,
+      vector<H3Index> uncompacted(uncompacted_sz);
+      H3Error err = uncompactCells(input_set.data(), list_children.size(), uncompacted.data(),
                                    uncompacted_sz, res);
 
       if (err) {

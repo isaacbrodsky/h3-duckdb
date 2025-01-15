@@ -75,14 +75,14 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args,
     auto &list_children = ListValue::GetChildren(lvalue);
 
     size_t ii = 0;
-    auto input_set = new H3Index[list_children.size()];
+    vector<H3Index> input_set(list_children.size());
     for (const auto &child : list_children) {
       input_set[ii] = InputOperator::Get(child);
       ii++;
     }
     LinkedGeoPolygon first_lgp;
     H3Error err =
-        cellsToLinkedMultiPolygon(input_set, list_children.size(), &first_lgp);
+        cellsToLinkedMultiPolygon(input_set.data(), list_children.size(), &first_lgp);
 
     if (err) {
       result_validity.SetInvalid(i);
