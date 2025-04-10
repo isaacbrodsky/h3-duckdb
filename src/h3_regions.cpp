@@ -384,13 +384,15 @@ static void PolygonWktToCellsExperimentalFunction(DataChunk &args,
         uint64_t offset = ListVector::GetListSize(result);
 
         // TODO: Make flags easier to work with
-        if (flagsStr == "CONTAINMENT_CENTER") {
+        if (flagsStr == "CONTAINMENT_CENTER" || flagsStr == "center") {
           flags = 0;
-        } else if (flagsStr == "CONTAINMENT_FULL") {
+        } else if (flagsStr == "CONTAINMENT_FULL" || flagsStr == "full") {
           flags = 1;
-        } else if (flagsStr == "CONTAINMENT_OVERLAPPING") {
+        } else if (flagsStr == "CONTAINMENT_OVERLAPPING" ||
+                   flagsStr == "overlap") {
           flags = 2;
-        } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX") {
+        } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX" ||
+                   flagsStr == "overlap_bbox") {
           flags = 3;
         } else {
           // Invalid flags input
@@ -484,13 +486,15 @@ static void PolygonWktToCellsExperimentalVarcharFunction(DataChunk &args,
         uint64_t offset = ListVector::GetListSize(result);
 
         // TODO: Make flags easier to work with
-        if (flagsStr == "CONTAINMENT_CENTER") {
+        if (flagsStr == "CONTAINMENT_CENTER" || flagsStr == "center") {
           flags = 0;
-        } else if (flagsStr == "CONTAINMENT_FULL") {
+        } else if (flagsStr == "CONTAINMENT_FULL" || flagsStr == "full") {
           flags = 1;
-        } else if (flagsStr == "CONTAINMENT_OVERLAPPING") {
+        } else if (flagsStr == "CONTAINMENT_OVERLAPPING" ||
+                   flagsStr == "overlap") {
           flags = 2;
-        } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX") {
+        } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX" ||
+                   flagsStr == "overlap_bbox") {
           flags = 3;
         } else {
           // Invalid flags input
