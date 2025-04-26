@@ -373,9 +373,9 @@ static void PolygonWktToCellsExperimentalFunction(DataChunk &args,
                                                   Vector &result) {
   // TODO: Note this function is not fully noexcept -- some invalid WKT strings
   // will throw, others will return empty lists.
-  TernaryExecutor::Execute<string_t, string_t, int, list_entry_t>(
+  TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
       args.data[0], args.data[1], args.data[2], result, args.size(),
-      [&](string_t input, string_t flagsStr, int res) {
+      [&](string_t input, int res, string_t flagsStr) {
         GeoPolygon polygon;
         int32_t flags = 0;
 
@@ -475,9 +475,9 @@ static void PolygonWktToCellsExperimentalVarcharFunction(DataChunk &args,
                                                          Vector &result) {
   // TODO: Note this function is not fully noexcept -- some invalid WKT strings
   // will throw, others will return empty lists.
-  TernaryExecutor::Execute<string_t, string_t, int, list_entry_t>(
+  TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
       args.data[0], args.data[1], args.data[2], result, args.size(),
-      [&](string_t input, string_t flagsStr, int res) {
+      [&](string_t input, int res, string_t flagsStr) {
         GeoPolygon polygon;
         int32_t flags = 0;
 
@@ -611,7 +611,7 @@ CreateScalarFunctionInfo
 H3Functions::GetPolygonWktToCellsExperimentalFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
       "h3_polygon_wkt_to_cells_experimental",
-      {LogicalType::VARCHAR, LogicalType::VARCHAR, LogicalType::INTEGER},
+      {LogicalType::VARCHAR, LogicalType::INTEGER, LogicalType::VARCHAR},
       LogicalType::LIST(LogicalType::UBIGINT),
       PolygonWktToCellsExperimentalFunction));
 }
@@ -620,7 +620,7 @@ CreateScalarFunctionInfo
 H3Functions::GetPolygonWktToCellsExperimentalVarcharFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
       "h3_polygon_wkt_to_cells_experimental_string",
-      {LogicalType::VARCHAR, LogicalType::VARCHAR, LogicalType::INTEGER},
+      {LogicalType::VARCHAR, LogicalType::INTEGER, LogicalType::VARCHAR},
       LogicalType::LIST(LogicalType::VARCHAR),
       PolygonWktToCellsExperimentalVarcharFunction));
 }
