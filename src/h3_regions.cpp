@@ -1,5 +1,3 @@
-#include <type_traits>
-
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
 
