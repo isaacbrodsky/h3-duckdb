@@ -1,3 +1,6 @@
+# name: test/sql/h3/h3_functions_misc.test
+# group: [h3]
+
 require h3
 
 query I
