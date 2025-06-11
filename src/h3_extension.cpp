@@ -27,5 +27,4 @@ std::string H3Extension::Name() { return "h3"; }
 extern "C" {
 
 DUCKDB_CPP_EXTENSION_ENTRY(h3, loader) { duckdb::LoadInternal(loader); }
-
 }
