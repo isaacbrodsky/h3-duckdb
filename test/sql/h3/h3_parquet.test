@@ -1,3 +1,6 @@
+# name: test/sql/h3/h3_parquet.test
+# group: [h3]
+
 require parquet
 
 require h3
