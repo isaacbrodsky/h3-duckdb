@@ -50,6 +50,7 @@ public:
     functions.push_back(GetGridDiskUnsafeFunction());
     functions.push_back(GetGridDiskDistancesUnsafeFunction());
     functions.push_back(GetGridDiskDistancesSafeFunction());
+    functions.push_back(GetGridRingFunction());
     functions.push_back(GetGridRingUnsafeFunction());
     functions.push_back(GetGridPathCellsFunction());
     functions.push_back(GetGridDistanceFunction());
@@ -130,6 +131,7 @@ private:
   static CreateScalarFunctionInfo GetGridDiskUnsafeFunction();
   static CreateScalarFunctionInfo GetGridDiskDistancesUnsafeFunction();
   static CreateScalarFunctionInfo GetGridDiskDistancesSafeFunction();
+  static CreateScalarFunctionInfo GetGridRingFunction();
   static CreateScalarFunctionInfo GetGridRingUnsafeFunction();
   static CreateScalarFunctionInfo GetGridPathCellsFunction();
   static CreateScalarFunctionInfo GetGridDistanceFunction();
