@@ -40,3 +40,12 @@ jobs:
       extension_name: h3
       deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
       deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+
+  code-quality-check:
+    name: Code Quality Check
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@main
+    with:
+      duckdb_version: v1.3.1
+      ci_tools_version: main
+      extension_name: h3
+      format_checks: 'format;tidy'
