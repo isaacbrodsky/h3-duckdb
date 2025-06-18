@@ -1,6 +1,6 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
 [![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.3.1&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.3.1)
-[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.2.1&color=blue)](https://github.com/uber/h3/releases/tag/v4.2.1)
+[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.3.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.3.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 This is a [DuckDB](https://duckdb.org) extension that adds support for the [H3 discrete global grid system](https://github.com/uber/h3/), so you can index points and geometries to hexagons in SQL.
@@ -62,6 +62,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_grid_disk_unsafe` | Find cells within a grid distance, with no pentagon distortion
 | `h3_grid_disk_distances_unsafe` | Find cells within a grid distance, sorted by distance, with no pentagon distortion
 | `h3_grid_disk_distances_safe` | Find cells within a grid distance, sorted by distance
+| `h3_grid_ring` | Find cells exactly a grid distance away
 | `h3_grid_ring_unsafe` | Find cells exactly a grid distance away, with no pentagon distortion
 | `h3_grid_path_cells` | Find a grid path to connect two cells
 | `h3_grid_distance` | Find the grid distance between two cells
