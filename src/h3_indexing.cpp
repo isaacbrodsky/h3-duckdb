@@ -129,6 +129,7 @@ static void CellToLngVarcharFunction(DataChunk &args, ExpressionState &state,
 
 static void CellToLatLngFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
+  result.SetVectorType(VectorType::FLAT_VECTOR);
   auto result_data = FlatVector::GetData<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
@@ -289,17 +290,17 @@ CreateScalarFunctionInfo H3Functions::GetCellToLatLngFunction() {
                                    LogicalType::LIST(LogicalType::DOUBLE),
                                    CellToLatLngVarcharFunction, nullptr, nullptr, nullptr, nullptr,
                                    LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   FunctionStability::CONSISTENT));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
                                    CellToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
                                    LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   FunctionStability::CONSISTENT));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
                                    CellToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
                                    LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   FunctionStability::CONSISTENT));
   return CreateScalarFunctionInfo(funcs);
 }
 
