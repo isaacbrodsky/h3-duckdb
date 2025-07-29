@@ -359,8 +359,7 @@ struct DirectedEdgeToBoundaryOperator {
       }
       str += "))";
 
-      string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-      return StringVector::AddString(result, strAsStr);
+      return StringVector::AddString(result, str);
     }
   }
 };
