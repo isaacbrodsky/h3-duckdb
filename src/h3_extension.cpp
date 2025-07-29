@@ -1,6 +1,8 @@
 #define DUCKDB_EXTENSION_MAIN
 #include "h3_extension.hpp"
 
+#include "duckdb/main/connection.hpp"
+#include "duckdb/main/database.hpp"
 #include "duckdb/main/extension_util.hpp"
 #include "h3_functions.hpp"
 #include "h3api.h"
