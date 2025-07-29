@@ -276,13 +276,19 @@ CreateScalarFunctionInfo H3Functions::GetCellToLatLngFunction() {
   ScalarFunctionSet funcs("h3_cell_to_latlng");
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   CellToLatLngVarcharFunction));
+                                   CellToLatLngVarcharFunction, nullptr, nullptr, nullptr, nullptr,
+                                   LogicalType(LogicalTypeId::INVALID),
+                                   FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   CellToLatLngFunction));
+                                   CellToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
+                                   LogicalType(LogicalTypeId::INVALID),
+                                   FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   CellToLatLngFunction));
+                                   CellToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
+                                   LogicalType(LogicalTypeId::INVALID),
+                                   FunctionStability::VOLATILE));
   return CreateScalarFunctionInfo(funcs);
 }
 

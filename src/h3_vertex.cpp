@@ -342,13 +342,19 @@ CreateScalarFunctionInfo H3Functions::GetVertexToLatLngFunction() {
   ScalarFunctionSet funcs("h3_vertex_to_latlng");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   VertexToLatLngFunction));
+                                   VertexToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
+                                   LogicalType(LogicalTypeId::INVALID),
+                                   FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   VertexToLatLngFunction));
+                                   VertexToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
+                                   LogicalType(LogicalTypeId::INVALID),
+                                   FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   VertexToLatLngVarcharFunction));
+                                   VertexToLatLngVarcharFunction, nullptr, nullptr, nullptr, nullptr,
+                                   LogicalType(LogicalTypeId::INVALID),
+                                   FunctionStability::VOLATILE));
   return CreateScalarFunctionInfo(funcs);
 }
 
