@@ -290,8 +290,6 @@ static void GetPentagonsVarcharFunction(DataChunk &args, ExpressionState &state,
 
 static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-
   UnifiedVectorFormat unitData;
 
   args.data[4].ToUnifiedFormat(args.size(), unitData);
