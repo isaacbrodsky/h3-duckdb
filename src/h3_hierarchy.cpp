@@ -662,17 +662,17 @@ CreateScalarFunctionInfo H3Functions::GetCellToChildrenFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::VARCHAR),
                                    CellToChildrenVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    CellToChildrenFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::BIGINT),
                                    CellToChildrenFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   return CreateScalarFunctionInfo(funcs);
 }

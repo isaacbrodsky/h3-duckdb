@@ -396,7 +396,7 @@ CreateScalarFunctionInfo H3Functions::GetGetPentagonsFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
       "h3_get_pentagons", {LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::UBIGINT), GetPentagonsFunction, nullptr, nullptr, nullptr, nullptr,
-      LogicalType(LogicalTypeId::INVALID),
+      LogicalType::INVALID,
       FunctionStability::VOLATILE));
 }
 
@@ -404,7 +404,7 @@ CreateScalarFunctionInfo H3Functions::GetGetPentagonsVarcharFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
       "h3_get_pentagons_string", {LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::VARCHAR), GetPentagonsVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-      LogicalType(LogicalTypeId::INVALID),
+      LogicalType::INVALID,
       FunctionStability::VOLATILE));
 }
 
@@ -414,7 +414,7 @@ CreateScalarFunctionInfo H3Functions::GetGreatCircleDistanceFunction() {
       {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE,
        LogicalType::DOUBLE, LogicalType::VARCHAR},
       LogicalType::DOUBLE, GreatCircleDistanceFunction, nullptr, nullptr, nullptr, nullptr,
-      LogicalType(LogicalTypeId::INVALID),
+      LogicalType::INVALID,
       FunctionStability::VOLATILE));
 }
 

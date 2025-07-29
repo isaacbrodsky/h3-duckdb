@@ -409,17 +409,17 @@ CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToCellsFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    DirectedEdgeToCellsFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    DirectedEdgeToCellsFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::VARCHAR),
                                    DirectedEdgeToCellsVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   return CreateScalarFunctionInfo(funcs);
 }
@@ -429,17 +429,17 @@ CreateScalarFunctionInfo H3Functions::GetOriginToDirectedEdgesFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    OriginToDirectedEdgesFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
                                    OriginToDirectedEdgesFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::VARCHAR),
                                    OriginToDirectedEdgesVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   return CreateScalarFunctionInfo(funcs);
 }

@@ -314,17 +314,17 @@ CreateScalarFunctionInfo H3Functions::GetGetIcosahedronFacesFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::INTEGER),
                                    GetIcosahedronFacesFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::INTEGER),
                                    GetIcosahedronFacesFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::INTEGER),
                                    GetIcosahedronFacesVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType(LogicalTypeId::INVALID),
+                                   LogicalType::INVALID,
                                    FunctionStability::VOLATILE));
   return CreateScalarFunctionInfo(funcs);
 }
