@@ -106,17 +106,17 @@ false
 query I
 SELECT h3_directed_edge_to_boundary_wkt(0::ubigint)
 ----
-NULL
+(empty)
 
 query I
 SELECT h3_directed_edge_to_boundary_wkt(0::bigint)
 ----
-NULL
+(empty)
 
 query I
 SELECT h3_directed_edge_to_boundary_wkt('0')
 ----
-NULL
+(empty)
 
 query I
 SELECT h3_directed_edge_to_boundary_wkt(1608492358964346879::ubigint)
