@@ -183,8 +183,8 @@ static void GetRes0CellsFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = actual;
     }
   }
-  result.Verify(args.size());
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  result.Verify(args.size());
 }
 
 static void GetRes0CellsVarcharFunction(DataChunk &args, ExpressionState &state,
@@ -216,8 +216,8 @@ static void GetRes0CellsVarcharFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = actual;
     }
   }
-  result.Verify(args.size());
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  result.Verify(args.size());
 }
 
 static void GetPentagonsFunction(DataChunk &args, ExpressionState &state,

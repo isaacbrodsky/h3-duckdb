@@ -345,11 +345,10 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state,
     }
   }
 
-  result.Verify(args.size());
-
   if (lists.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
