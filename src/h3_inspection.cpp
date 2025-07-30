@@ -191,6 +191,9 @@ static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState &state,
 
     result_data[i].length = actual;
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -235,6 +238,9 @@ static void GetIcosahedronFacesVarcharFunction(DataChunk &args,
     }
 
     result_data[i].length = actual;
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -313,19 +319,13 @@ CreateScalarFunctionInfo H3Functions::GetGetIcosahedronFacesFunction() {
   ScalarFunctionSet funcs("h3_get_icosahedron_faces");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::INTEGER),
-                                   GetIcosahedronFacesFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GetIcosahedronFacesFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::INTEGER),
-                                   GetIcosahedronFacesFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GetIcosahedronFacesFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::INTEGER),
-                                   GetIcosahedronFacesVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GetIcosahedronFacesVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 

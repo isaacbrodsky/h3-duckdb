@@ -147,6 +147,9 @@ static void CellToLatLngFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = 2;
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -178,6 +181,9 @@ static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state,
         result_data[i].length = 2;
       }
     }
+  }
+  if (args.AllConstant()) {
+  	result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -288,19 +294,13 @@ CreateScalarFunctionInfo H3Functions::GetCellToLatLngFunction() {
   ScalarFunctionSet funcs("h3_cell_to_latlng");
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   CellToLatLngVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::CONSISTENT));
+                                   CellToLatLngVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   CellToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::CONSISTENT));
+                                   CellToLatLngFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   CellToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::CONSISTENT));
+                                   CellToLatLngFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 

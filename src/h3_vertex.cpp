@@ -235,6 +235,9 @@ static void VertexToLatLngFunction(DataChunk &args, ExpressionState &state,
     ListVector::PushBack(result, radsToDegs(latLng.lng));
     result_data[i].length = 2;
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -263,6 +266,9 @@ static void VertexToLatLngVarcharFunction(DataChunk &args,
         result_data[i].length = 2;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -342,19 +348,13 @@ CreateScalarFunctionInfo H3Functions::GetVertexToLatLngFunction() {
   ScalarFunctionSet funcs("h3_vertex_to_latlng");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   VertexToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   VertexToLatLngFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   VertexToLatLngFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   VertexToLatLngFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::DOUBLE),
-                                   VertexToLatLngVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   VertexToLatLngVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 

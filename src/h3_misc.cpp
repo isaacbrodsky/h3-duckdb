@@ -250,6 +250,9 @@ static void GetPentagonsFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = actual;
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -284,6 +287,9 @@ static void GetPentagonsVarcharFunction(DataChunk &args, ExpressionState &state,
 
       result_data[i].length = actual;
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -335,6 +341,10 @@ static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
       result.SetValue(i, Value(LogicalType::SQLNULL));
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
+  result.Verify(args.size());
 }
 
 CreateScalarFunctionInfo H3Functions::GetGetHexagonAreaAvgFunction() {
@@ -395,17 +405,13 @@ CreateScalarFunctionInfo H3Functions::GetGetRes0CellsVarcharFunction() {
 CreateScalarFunctionInfo H3Functions::GetGetPentagonsFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
       "h3_get_pentagons", {LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::UBIGINT), GetPentagonsFunction, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      LogicalType::LIST(LogicalType::UBIGINT), GetPentagonsFunction));
 }
 
 CreateScalarFunctionInfo H3Functions::GetGetPentagonsVarcharFunction() {
   return CreateScalarFunctionInfo(ScalarFunction(
       "h3_get_pentagons_string", {LogicalType::INTEGER},
-      LogicalType::LIST(LogicalType::VARCHAR), GetPentagonsVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      LogicalType::LIST(LogicalType::VARCHAR), GetPentagonsVarcharFunction));
 }
 
 CreateScalarFunctionInfo H3Functions::GetGreatCircleDistanceFunction() {
@@ -413,9 +419,7 @@ CreateScalarFunctionInfo H3Functions::GetGreatCircleDistanceFunction() {
       "h3_great_circle_distance",
       {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE,
        LogicalType::DOUBLE, LogicalType::VARCHAR},
-      LogicalType::DOUBLE, GreatCircleDistanceFunction, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      LogicalType::DOUBLE, GreatCircleDistanceFunction));
 }
 
 } // namespace duckdb

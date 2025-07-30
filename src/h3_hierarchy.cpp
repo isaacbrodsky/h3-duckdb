@@ -83,6 +83,9 @@ static void CellToChildrenFunction(DataChunk &args, ExpressionState &state,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -130,6 +133,9 @@ static void CellToChildrenVarcharFunction(DataChunk &args,
         }
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -661,19 +667,13 @@ CreateScalarFunctionInfo H3Functions::GetCellToChildrenFunction() {
   ScalarFunctionSet funcs("h3_cell_to_children");
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::VARCHAR),
-                                   CellToChildrenVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   CellToChildrenVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::UBIGINT),
-                                   CellToChildrenFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   CellToChildrenFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::BIGINT),
-                                   CellToChildrenFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   CellToChildrenFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 

@@ -50,6 +50,9 @@ static void GridDiskTmplFunction(DataChunk &args, ExpressionState &state,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -96,6 +99,9 @@ static void GridDiskTmplVarcharFunction(DataChunk &args, ExpressionState &state,
         }
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -165,6 +171,9 @@ static void GridDiskDistancesTmplFunction(DataChunk &args,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -222,6 +231,9 @@ static void GridDiskDistancesTmplVarcharFunction(DataChunk &args,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -258,6 +270,9 @@ static void GridRingFunction(DataChunk &args, ExpressionState &state,
         result_data[i].length = actual;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -304,6 +319,9 @@ static void GridRingVarcharFunction(DataChunk &args, ExpressionState &state,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -335,6 +353,9 @@ static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state,
 
       result_data[i].length = actual;
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -377,6 +398,9 @@ static void GridRingUnsafeVarcharFunction(DataChunk &args,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -414,6 +438,9 @@ static void GridPathCellsFunction(DataChunk &args, ExpressionState &state,
         result_data[i].length = actual;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -462,6 +489,9 @@ static void GridPathCellsVarcharFunction(DataChunk &args,
         }
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -537,6 +567,9 @@ static void CellToLocalIjFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = 2;
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -571,6 +604,9 @@ static void CellToLocalIjVarcharFunction(DataChunk &args,
         result_data[i].length = 2;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -633,20 +669,14 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskFunction() {
   ScalarFunctionSet funcs("h3_grid_disk");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::UBIGINT),
-                                   GridDiskTmplFunction<GridDiskOperator>, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridDiskTmplFunction<GridDiskOperator>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::BIGINT),
-                                   GridDiskTmplFunction<GridDiskOperator>, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridDiskTmplFunction<GridDiskOperator>));
   funcs.AddFunction(
       ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::VARCHAR),
-                     GridDiskTmplVarcharFunction<GridDiskOperator>, nullptr, nullptr, nullptr, nullptr,
-                     LogicalType::INVALID,
-                     FunctionStability::VOLATILE));
+                     GridDiskTmplVarcharFunction<GridDiskOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -655,21 +685,15 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesFunction() {
   funcs.AddFunction(
       ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-                     GridDiskDistancesTmplFunction<GridDiskDistancesOperator>, nullptr, nullptr, nullptr, nullptr,
-                     LogicalType::INVALID,
-                     FunctionStability::VOLATILE));
+                     GridDiskDistancesTmplFunction<GridDiskDistancesOperator>));
   funcs.AddFunction(
       ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
-                     GridDiskDistancesTmplFunction<GridDiskDistancesOperator>, nullptr, nullptr, nullptr, nullptr,
-                     LogicalType::INVALID,
-                     FunctionStability::VOLATILE));
+                     GridDiskDistancesTmplFunction<GridDiskDistancesOperator>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::VARCHAR, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::VARCHAR)),
-      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesOperator>, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -678,21 +702,15 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskUnsafeFunction() {
   funcs.AddFunction(
       ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::UBIGINT),
-                     GridDiskTmplFunction<GridDiskUnsafeOperator>, nullptr, nullptr, nullptr, nullptr,
-                     LogicalType::INVALID,
-                     FunctionStability::VOLATILE));
+                     GridDiskTmplFunction<GridDiskUnsafeOperator>));
   funcs.AddFunction(
       ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::BIGINT),
-                     GridDiskTmplFunction<GridDiskUnsafeOperator>, nullptr, nullptr, nullptr, nullptr,
-                     LogicalType::INVALID,
-                     FunctionStability::VOLATILE));
+                     GridDiskTmplFunction<GridDiskUnsafeOperator>));
   funcs.AddFunction(
       ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::VARCHAR),
-                     GridDiskTmplVarcharFunction<GridDiskUnsafeOperator>, nullptr, nullptr, nullptr, nullptr,
-                     LogicalType::INVALID,
-                     FunctionStability::VOLATILE));
+                     GridDiskTmplVarcharFunction<GridDiskUnsafeOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -701,21 +719,15 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesUnsafeFunction() {
   funcs.AddFunction(ScalarFunction(
       {LogicalType::UBIGINT, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-      GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::BIGINT, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
-      GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::VARCHAR, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::VARCHAR)),
-      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesUnsafeOperator>, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesUnsafeOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -724,21 +736,15 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesSafeFunction() {
   funcs.AddFunction(ScalarFunction(
       {LogicalType::UBIGINT, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-      GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::BIGINT, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
-      GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::VARCHAR, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::LIST(LogicalType::VARCHAR)),
-      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesSafeOperator>, nullptr, nullptr, nullptr, nullptr,
-      LogicalType::INVALID,
-      FunctionStability::VOLATILE));
+      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesSafeOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -746,19 +752,13 @@ CreateScalarFunctionInfo H3Functions::GetGridRingFunction() {
   ScalarFunctionSet funcs("h3_grid_ring");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::UBIGINT),
-                                   GridRingFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridRingFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::BIGINT),
-                                   GridRingFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridRingFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::VARCHAR),
-                                   GridRingVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridRingVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -766,19 +766,13 @@ CreateScalarFunctionInfo H3Functions::GetGridRingUnsafeFunction() {
   ScalarFunctionSet funcs("h3_grid_ring_unsafe");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::UBIGINT),
-                                   GridRingUnsafeFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridRingUnsafeFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::BIGINT),
-                                   GridRingUnsafeFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridRingUnsafeFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::VARCHAR),
-                                   GridRingUnsafeVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridRingUnsafeVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -786,19 +780,13 @@ CreateScalarFunctionInfo H3Functions::GetGridPathCellsFunction() {
   ScalarFunctionSet funcs("h3_grid_path_cells");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
-                                   GridPathCellsFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridPathCellsFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::BIGINT),
-                                   GridPathCellsFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridPathCellsFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::VARCHAR),
-                                   GridPathCellsVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   GridPathCellsVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -818,19 +806,13 @@ CreateScalarFunctionInfo H3Functions::GetCellToLocalIjFunction() {
   ScalarFunctionSet funcs("h3_cell_to_local_ij");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::INTEGER),
-                                   CellToLocalIjFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   CellToLocalIjFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::INTEGER),
-                                   CellToLocalIjFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   CellToLocalIjFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::VARCHAR),
-                                   CellToLocalIjVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   CellToLocalIjVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 

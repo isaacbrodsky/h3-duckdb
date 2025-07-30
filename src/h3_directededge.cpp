@@ -23,6 +23,9 @@ static void DirectedEdgeToCellsFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = 2;
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -58,6 +61,9 @@ static void DirectedEdgeToCellsVarcharFunction(DataChunk &args,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -88,6 +94,9 @@ static void OriginToDirectedEdgesFunction(DataChunk &args,
 
       result_data[i].length = actual;
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -128,6 +137,9 @@ static void OriginToDirectedEdgesVarcharFunction(DataChunk &args,
         result_data[i].length = actual;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -408,19 +420,13 @@ CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToCellsFunction() {
   ScalarFunctionSet funcs("h3_directed_edge_to_cells");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
-                                   DirectedEdgeToCellsFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   DirectedEdgeToCellsFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
-                                   DirectedEdgeToCellsFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   DirectedEdgeToCellsFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::VARCHAR),
-                                   DirectedEdgeToCellsVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   DirectedEdgeToCellsVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -428,19 +434,13 @@ CreateScalarFunctionInfo H3Functions::GetOriginToDirectedEdgesFunction() {
   ScalarFunctionSet funcs("h3_origin_to_directed_edges");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
-                                   OriginToDirectedEdgesFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   OriginToDirectedEdgesFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
                                    LogicalType::LIST(LogicalType::UBIGINT),
-                                   OriginToDirectedEdgesFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   OriginToDirectedEdgesFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
                                    LogicalType::LIST(LogicalType::VARCHAR),
-                                   OriginToDirectedEdgesVarcharFunction, nullptr, nullptr, nullptr, nullptr,
-                                   LogicalType::INVALID,
-                                   FunctionStability::VOLATILE));
+                                   OriginToDirectedEdgesVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
