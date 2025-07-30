@@ -351,69 +351,59 @@ static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
       [&](H3Index input) { return bool(isValidDirectedEdge(input)); });
 }
 
+struct DirectedEdgeToBoundaryOperator {
+  template <class INPUT_TYPE, class RESULT_TYPE>
+  static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+    CellBoundary boundary;
+    H3Error err = directedEdgeToBoundary(input, &boundary);
+
+    if (err) {
+      // TODO: Is it possible to return null here instead?
+      return StringVector::EmptyString(result, 0);
+    } else {
+      std::string str = "LINESTRING ((";
+      for (int i = 0; i <= boundary.numVerts; i++) {
+        std::string sep = (i == 0) ? "" : ", ";
+        int vertIndex = (i == boundary.numVerts) ? 0 : i;
+        str += StringUtil::Format("%s%f %f", sep,
+                                  radsToDegs(boundary.verts[vertIndex].lng),
+                                  radsToDegs(boundary.verts[vertIndex].lat));
+      }
+      str += "))";
+
+      return StringVector::AddString(result, str);
+    }
+  }
+};
+
 static void DirectedEdgeToBoundaryWktFunction(DataChunk &args,
                                               ExpressionState &state,
                                               Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<uint64_t, string_t>(
-      inputs, result, args.size(),
-      [&](uint64_t input, ValidityMask &mask, idx_t idx) {
-        CellBoundary boundary;
-        H3Error err = directedEdgeToBoundary(input, &boundary);
-
-        if (err) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
-        } else {
-          std::string str = "LINESTRING ((";
-          for (int i = 0; i <= boundary.numVerts; i++) {
-            std::string sep = (i == 0) ? "" : ", ";
-            int vertIndex = (i == boundary.numVerts) ? 0 : i;
-            str += StringUtil::Format("%s%f %f", sep,
-                                      radsToDegs(boundary.verts[vertIndex].lng),
-                                      radsToDegs(boundary.verts[vertIndex].lat));
-          }
-          str += "))";
-
-          return StringVector::AddString(result, str);
-        }
-      });
+  UnaryExecutor::ExecuteString<uint64_t, string_t,
+                               DirectedEdgeToBoundaryOperator>(
+      args.data[0], result, args.size());
 }
+
+struct DirectedEdgeToBoundaryVarcharOperator {
+  template <class INPUT_TYPE, class RESULT_TYPE>
+  static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+    H3Index h;
+    H3Error err = stringToH3(input.GetString().c_str(), &h);
+    if (err) {
+      return StringVector::EmptyString(result, 0);
+    } else {
+      return DirectedEdgeToBoundaryOperator().Operation<H3Index, RESULT_TYPE>(
+          h, result);
+    }
+  }
+};
 
 static void DirectedEdgeToBoundaryWktVarcharFunction(DataChunk &args,
                                                      ExpressionState &state,
                                                      Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t input, ValidityMask &mask, idx_t idx) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
-        } else {
-          CellBoundary boundary;
-          H3Error err = directedEdgeToBoundary(h, &boundary);
-
-          if (err) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
-          } else {
-            std::string str = "LINESTRING ((";
-            for (int i = 0; i <= boundary.numVerts; i++) {
-              std::string sep = (i == 0) ? "" : ", ";
-              int vertIndex = (i == boundary.numVerts) ? 0 : i;
-              str += StringUtil::Format("%s%f %f", sep,
-                                        radsToDegs(boundary.verts[vertIndex].lng),
-                                        radsToDegs(boundary.verts[vertIndex].lat));
-            }
-            str += "))";
-
-            return StringVector::AddString(result, str);
-          }
-        }
-      });
+  UnaryExecutor::ExecuteString<string_t, string_t,
+                               DirectedEdgeToBoundaryVarcharOperator>(
+      args.data[0], result, args.size());
 }
 
 CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToCellsFunction() {

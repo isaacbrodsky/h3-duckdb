@@ -188,70 +188,58 @@ static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state,
   result.Verify(args.size());
 }
 
+struct CellToBoundaryOperator {
+  template <class INPUT_TYPE, class RESULT_TYPE>
+  static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+    CellBoundary boundary;
+    H3Error err = cellToBoundary(input, &boundary);
+
+    if (err) {
+      // TODO: Is it possible to return null here instead?
+      return StringVector::EmptyString(result, 0);
+    } else {
+      std::string str = "POLYGON ((";
+      for (int i = 0; i <= boundary.numVerts; i++) {
+        std::string sep = (i == 0) ? "" : ", ";
+        // Add an extra vertex onto the end to close the polygon
+        int vertIndex = (i == boundary.numVerts) ? 0 : i;
+        str += StringUtil::Format("%s%f %f", sep,
+                                  radsToDegs(boundary.verts[vertIndex].lng),
+                                  radsToDegs(boundary.verts[vertIndex].lat));
+      }
+      str += "))";
+
+      return StringVector::AddString(result, str);
+    }
+  }
+};
+
 static void CellToBoundaryWktFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<uint64_t, string_t>(
-      inputs, result, args.size(),
-      [&](uint64_t input, ValidityMask &mask, idx_t idx) {
-        CellBoundary boundary;
-        H3Error err = cellToBoundary(input, &boundary);
-
-        if (err) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
-        } else {
-          std::string str = "POLYGON ((";
-          for (int i = 0; i <= boundary.numVerts; i++) {
-            std::string sep = (i == 0) ? "" : ", ";
-            // Add an extra vertex onto the end to close the polygon
-            int vertIndex = (i == boundary.numVerts) ? 0 : i;
-            str += StringUtil::Format("%s%f %f", sep,
-                                      radsToDegs(boundary.verts[vertIndex].lng),
-                                      radsToDegs(boundary.verts[vertIndex].lat));
-          }
-          str += "))";
-
-          return StringVector::AddString(result, str);
-        }
-      });
+  UnaryExecutor::ExecuteString<uint64_t, string_t, CellToBoundaryOperator>(
+      args.data[0], result, args.size());
 }
+
+struct CellToBoundaryVarcharOperator {
+  template <class INPUT_TYPE, class RESULT_TYPE>
+  static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+    H3Index h;
+    H3Error err = stringToH3(input.GetString().c_str(), &h);
+    if (err) {
+      return StringVector::EmptyString(result, 0);
+    } else {
+      return CellToBoundaryOperator().Operation<H3Index, RESULT_TYPE>(h,
+                                                                      result);
+    }
+  }
+};
 
 static void CellToBoundaryWktVarcharFunction(DataChunk &args,
                                              ExpressionState &state,
                                              Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t input, ValidityMask &mask, idx_t idx) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
-        } else {
-          CellBoundary boundary;
-          H3Error err = cellToBoundary(h, &boundary);
-
-          if (err) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
-          } else {
-            std::string str = "POLYGON ((";
-            for (int i = 0; i <= boundary.numVerts; i++) {
-              std::string sep = (i == 0) ? "" : ", ";
-              // Add an extra vertex onto the end to close the polygon
-              int vertIndex = (i == boundary.numVerts) ? 0 : i;
-              str += StringUtil::Format("%s%f %f", sep,
-                                        radsToDegs(boundary.verts[vertIndex].lng),
-                                        radsToDegs(boundary.verts[vertIndex].lat));
-            }
-            str += "))";
-
-            return StringVector::AddString(result, str);
-          }
-        }
-      });
+  UnaryExecutor::ExecuteString<string_t, string_t,
+                               CellToBoundaryVarcharOperator>(
+      args.data[0], result, args.size());
 }
 
 CreateScalarFunctionInfo H3Functions::GetLatLngToCellFunction() {
