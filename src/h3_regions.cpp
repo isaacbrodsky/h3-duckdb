@@ -138,7 +138,6 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args,
   }
 
   result.Verify(args.size());
-
   if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }

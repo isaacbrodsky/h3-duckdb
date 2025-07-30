@@ -81,11 +81,11 @@ static void CellToVertexesFunction(DataChunk &args, ExpressionState &state,
     }
     offset += actual;
   }
-  result.Verify(args.size());
 
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 static void CellToVertexesVarcharFunction(DataChunk &args,
@@ -129,11 +129,11 @@ static void CellToVertexesVarcharFunction(DataChunk &args,
       offset += actual;
     }
   }
-  result.Verify(args.size());
 
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 static void VertexToLatFunction(DataChunk &args, ExpressionState &state,
