@@ -50,6 +50,9 @@ static void GridDiskTmplFunction(DataChunk &args, ExpressionState &state,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -96,6 +99,9 @@ static void GridDiskTmplVarcharFunction(DataChunk &args, ExpressionState &state,
         }
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -165,6 +171,9 @@ static void GridDiskDistancesTmplFunction(DataChunk &args,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -222,6 +231,9 @@ static void GridDiskDistancesTmplVarcharFunction(DataChunk &args,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -258,6 +270,9 @@ static void GridRingFunction(DataChunk &args, ExpressionState &state,
         result_data[i].length = actual;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -304,6 +319,9 @@ static void GridRingVarcharFunction(DataChunk &args, ExpressionState &state,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -335,6 +353,9 @@ static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state,
 
       result_data[i].length = actual;
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -377,6 +398,9 @@ static void GridRingUnsafeVarcharFunction(DataChunk &args,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -414,6 +438,9 @@ static void GridPathCellsFunction(DataChunk &args, ExpressionState &state,
         result_data[i].length = actual;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -462,6 +489,9 @@ static void GridPathCellsVarcharFunction(DataChunk &args,
         }
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -537,6 +567,9 @@ static void CellToLocalIjFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = 2;
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -571,6 +604,9 @@ static void CellToLocalIjVarcharFunction(DataChunk &args,
         result_data[i].length = 2;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }

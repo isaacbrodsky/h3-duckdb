@@ -23,6 +23,9 @@ static void DirectedEdgeToCellsFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = 2;
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -58,6 +61,9 @@ static void DirectedEdgeToCellsVarcharFunction(DataChunk &args,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -88,6 +94,9 @@ static void OriginToDirectedEdgesFunction(DataChunk &args,
 
       result_data[i].length = actual;
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -128,6 +137,9 @@ static void OriginToDirectedEdgesVarcharFunction(DataChunk &args,
         result_data[i].length = actual;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -359,8 +371,7 @@ struct DirectedEdgeToBoundaryOperator {
       }
       str += "))";
 
-      string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-      return StringVector::AddString(result, strAsStr);
+      return StringVector::AddString(result, str);
     }
   }
 };

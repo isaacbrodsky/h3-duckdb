@@ -1,5 +1,8 @@
 #include "h3_common.hpp"
 
+#include "duckdb/common/exception.hpp"
+#include "duckdb/common/string_util.hpp"
+
 namespace duckdb {
 
 void ThrowH3Error(H3Error err) {

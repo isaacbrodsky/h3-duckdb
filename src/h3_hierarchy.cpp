@@ -83,6 +83,9 @@ static void CellToChildrenFunction(DataChunk &args, ExpressionState &state,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -130,6 +133,9 @@ static void CellToChildrenVarcharFunction(DataChunk &args,
         }
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -339,11 +345,10 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state,
     }
   }
 
-  result.Verify(args.size());
-
   if (lists.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
@@ -431,11 +436,10 @@ static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
     }
   }
 
-  result.Verify(args.size());
-
   if (lists.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 static void UncompactCellsFunction(DataChunk &args, ExpressionState &state,
@@ -525,11 +529,10 @@ static void UncompactCellsFunction(DataChunk &args, ExpressionState &state,
     }
   }
 
-  result.Verify(args.size());
-
   if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 static void UncompactCellsVarcharFunction(DataChunk &args,
@@ -638,11 +641,10 @@ static void UncompactCellsVarcharFunction(DataChunk &args,
     }
   }
 
-  result.Verify(args.size());
-
   if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToParentFunction() {

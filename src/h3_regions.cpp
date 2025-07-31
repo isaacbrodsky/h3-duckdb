@@ -137,11 +137,10 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args,
     }
   }
 
-  result.Verify(args.size());
-
   if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 static size_t whitespace(const std::string &str, size_t offset) {

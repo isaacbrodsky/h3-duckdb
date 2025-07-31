@@ -129,6 +129,7 @@ static void CellToLngVarcharFunction(DataChunk &args, ExpressionState &state,
 
 static void CellToLatLngFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
+  result.SetVectorType(VectorType::FLAT_VECTOR);
   auto result_data = FlatVector::GetData<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
@@ -145,6 +146,9 @@ static void CellToLatLngFunction(DataChunk &args, ExpressionState &state,
       ListVector::PushBack(result, radsToDegs(latLng.lng));
       result_data[i].length = 2;
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -178,6 +182,9 @@ static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state,
       }
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -202,8 +209,7 @@ struct CellToBoundaryOperator {
       }
       str += "))";
 
-      string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-      return StringVector::AddString(result, strAsStr);
+      return StringVector::AddString(result, str);
     }
   }
 };
