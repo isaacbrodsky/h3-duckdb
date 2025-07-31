@@ -183,7 +183,7 @@ static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state,
     }
   }
   if (args.AllConstant()) {
-  	result.SetVectorType(VectorType::CONSTANT_VECTOR);
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
