@@ -13,7 +13,6 @@ concurrency:
 
 jobs:
   duckdb-next-build:
-    # FIXME: h3 is incompatible with duckdb main branch, due to extension API changes
     name: Build extension binaries
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@main
     with:
