@@ -191,6 +191,9 @@ static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState &state,
 
     result_data[i].length = actual;
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -235,6 +238,9 @@ static void GetIcosahedronFacesVarcharFunction(DataChunk &args,
     }
 
     result_data[i].length = actual;
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }

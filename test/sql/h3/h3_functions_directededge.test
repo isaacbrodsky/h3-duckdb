@@ -104,19 +104,19 @@ SELECT h3_are_neighbor_cells(599686042433355775::bigint, 599686029548453887::big
 false
 
 query I
-SELECT strlen(h3_directed_edge_to_boundary_wkt(0::ubigint))
+SELECT h3_directed_edge_to_boundary_wkt(0::ubigint)
 ----
-0
+(empty)
 
 query I
-SELECT strlen(h3_directed_edge_to_boundary_wkt(0::bigint))
+SELECT h3_directed_edge_to_boundary_wkt(0::bigint)
 ----
-0
+(empty)
 
 query I
-SELECT strlen(h3_directed_edge_to_boundary_wkt('0'))
+SELECT h3_directed_edge_to_boundary_wkt('0')
 ----
-0
+(empty)
 
 query I
 SELECT h3_directed_edge_to_boundary_wkt(1608492358964346879::ubigint)

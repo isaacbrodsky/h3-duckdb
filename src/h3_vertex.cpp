@@ -81,11 +81,11 @@ static void CellToVertexesFunction(DataChunk &args, ExpressionState &state,
     }
     offset += actual;
   }
-  result.Verify(args.size());
 
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 static void CellToVertexesVarcharFunction(DataChunk &args,
@@ -129,11 +129,11 @@ static void CellToVertexesVarcharFunction(DataChunk &args,
       offset += actual;
     }
   }
-  result.Verify(args.size());
 
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
+  result.Verify(args.size());
 }
 
 static void VertexToLatFunction(DataChunk &args, ExpressionState &state,
@@ -235,6 +235,9 @@ static void VertexToLatLngFunction(DataChunk &args, ExpressionState &state,
     ListVector::PushBack(result, radsToDegs(latLng.lng));
     result_data[i].length = 2;
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
@@ -263,6 +266,9 @@ static void VertexToLatLngVarcharFunction(DataChunk &args,
         result_data[i].length = 2;
       }
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }

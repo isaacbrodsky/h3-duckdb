@@ -183,8 +183,8 @@ static void GetRes0CellsFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = actual;
     }
   }
-  result.Verify(args.size());
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  result.Verify(args.size());
 }
 
 static void GetRes0CellsVarcharFunction(DataChunk &args, ExpressionState &state,
@@ -216,8 +216,8 @@ static void GetRes0CellsVarcharFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = actual;
     }
   }
-  result.Verify(args.size());
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  result.Verify(args.size());
 }
 
 static void GetPentagonsFunction(DataChunk &args, ExpressionState &state,
@@ -249,6 +249,9 @@ static void GetPentagonsFunction(DataChunk &args, ExpressionState &state,
 
       result_data[i].length = actual;
     }
+  }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
   result.Verify(args.size());
 }
@@ -285,13 +288,14 @@ static void GetPentagonsVarcharFunction(DataChunk &args, ExpressionState &state,
       result_data[i].length = actual;
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
   result.Verify(args.size());
 }
 
 static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-
   UnifiedVectorFormat unitData;
 
   args.data[4].ToUnifiedFormat(args.size(), unitData);
@@ -337,6 +341,10 @@ static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
       result.SetValue(i, Value(LogicalType::SQLNULL));
     }
   }
+  if (args.AllConstant()) {
+    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  }
+  result.Verify(args.size());
 }
 
 CreateScalarFunctionInfo H3Functions::GetGetHexagonAreaAvgFunction() {
