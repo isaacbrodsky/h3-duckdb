@@ -144,13 +144,13 @@ static void OriginToDirectedEdgesVarcharFunction(DataChunk &args,
   result.Verify(args.size());
 }
 
+template <typename T>
 static void GetDirectedEdgeOriginFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<uint64_t, uint64_t>(
-      inputs, result, args.size(),
-      [&](uint64_t input, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::ExecuteWithNulls<T, T>(
+      inputs, result, args.size(), [&](T input, ValidityMask &mask, idx_t idx) {
         H3Index out;
         H3Error err = getDirectedEdgeOrigin(input, &out);
         if (err) {
@@ -189,13 +189,13 @@ static void GetDirectedEdgeOriginVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void GetDirectedEdgeDestinationFunction(DataChunk &args,
                                                ExpressionState &state,
                                                Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<uint64_t, uint64_t>(
-      inputs, result, args.size(),
-      [&](uint64_t input, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::ExecuteWithNulls<T, T>(
+      inputs, result, args.size(), [&](T input, ValidityMask &mask, idx_t idx) {
         H3Index out;
         H3Error err = getDirectedEdgeDestination(input, &out);
         if (err) {
@@ -234,13 +234,14 @@ static void GetDirectedEdgeDestinationVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void CellsToDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<uint64_t, uint64_t, uint64_t>(
+  BinaryExecutor::ExecuteWithNulls<T, T, T>(
       inputs, inputs2, result, args.size(),
-      [&](uint64_t input, uint64_t input2, ValidityMask &mask, idx_t idx) {
+      [&](T input, T input2, ValidityMask &mask, idx_t idx) {
         H3Index out;
         H3Error err = cellsToDirectedEdge(input, input2, &out);
         if (err) {
@@ -282,13 +283,14 @@ static void CellsToDirectedEdgeVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void AreNeighborCellsFunction(DataChunk &args, ExpressionState &state,
                                      Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<uint64_t, uint64_t, bool>(
+  BinaryExecutor::ExecuteWithNulls<T, T, bool>(
       inputs, inputs2, result, args.size(),
-      [&](uint64_t input, uint64_t input2, ValidityMask &mask, idx_t idx) {
+      [&](T input, T input2, ValidityMask &mask, idx_t idx) {
         int out;
         H3Error err = areNeighborCells(input, input2, &out);
         if (err) {
@@ -343,12 +345,13 @@ static void IsValidDirectedEdgeVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<H3Index, bool>(
-      inputs, result, args.size(),
-      [&](H3Index input) { return bool(isValidDirectedEdge(input)); });
+  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
+    return bool(isValidDirectedEdge(input));
+  });
 }
 
 struct DirectedEdgeToBoundaryOperator {
@@ -376,11 +379,11 @@ struct DirectedEdgeToBoundaryOperator {
   }
 };
 
+template <typename T>
 static void DirectedEdgeToBoundaryWktFunction(DataChunk &args,
                                               ExpressionState &state,
                                               Vector &result) {
-  UnaryExecutor::ExecuteString<uint64_t, string_t,
-                               DirectedEdgeToBoundaryOperator>(
+  UnaryExecutor::ExecuteString<T, string_t, DirectedEdgeToBoundaryOperator>(
       args.data[0], result, args.size());
 }
 
@@ -437,9 +440,9 @@ CreateScalarFunctionInfo H3Functions::GetOriginToDirectedEdgesFunction() {
 CreateScalarFunctionInfo H3Functions::GetGetDirectedEdgeOriginFunction() {
   ScalarFunctionSet funcs("h3_get_directed_edge_origin");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::UBIGINT,
-                                   GetDirectedEdgeOriginFunction));
+                                   GetDirectedEdgeOriginFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BIGINT,
-                                   GetDirectedEdgeOriginFunction));
+                                   GetDirectedEdgeOriginFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
                                    GetDirectedEdgeOriginVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
@@ -447,10 +450,12 @@ CreateScalarFunctionInfo H3Functions::GetGetDirectedEdgeOriginFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetGetDirectedEdgeDestinationFunction() {
   ScalarFunctionSet funcs("h3_get_directed_edge_destination");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::UBIGINT,
-                                   GetDirectedEdgeDestinationFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BIGINT,
-                                   GetDirectedEdgeDestinationFunction));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::UBIGINT}, LogicalType::UBIGINT,
+                     GetDirectedEdgeDestinationFunction<uint64_t>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::BIGINT}, LogicalType::BIGINT,
+                     GetDirectedEdgeDestinationFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
                                    GetDirectedEdgeDestinationVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
@@ -460,10 +465,10 @@ CreateScalarFunctionInfo H3Functions::GetCellsToDirectedEdgeFunction() {
   ScalarFunctionSet funcs("h3_cells_to_directed_edge");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
                                    LogicalType::UBIGINT,
-                                   CellsToDirectedEdgeFunction));
+                                   CellsToDirectedEdgeFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
                                    LogicalType::BIGINT,
-                                   CellsToDirectedEdgeFunction));
+                                   CellsToDirectedEdgeFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
                                    LogicalType::VARCHAR,
                                    CellsToDirectedEdgeVarcharFunction));
@@ -474,10 +479,10 @@ CreateScalarFunctionInfo H3Functions::GetAreNeighborCellsFunction() {
   ScalarFunctionSet funcs("h3_are_neighbor_cells");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
                                    LogicalType::BOOLEAN,
-                                   AreNeighborCellsFunction));
+                                   AreNeighborCellsFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
                                    LogicalType::BOOLEAN,
-                                   AreNeighborCellsFunction));
+                                   AreNeighborCellsFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
                                    LogicalType::BOOLEAN,
                                    AreNeighborCellsVarcharFunction));
@@ -489,9 +494,9 @@ CreateScalarFunctionInfo H3Functions::GetIsValidDirectedEdgeFunctions() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
                                    IsValidDirectedEdgeVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
-                                   IsValidDirectedEdgeFunction));
+                                   IsValidDirectedEdgeFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
-                                   IsValidDirectedEdgeFunction));
+                                   IsValidDirectedEdgeFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -499,10 +504,11 @@ CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToBoundaryWktFunction() {
   ScalarFunctionSet funcs("h3_directed_edge_to_boundary_wkt");
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
                                    DirectedEdgeToBoundaryWktVarcharFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
-                                   DirectedEdgeToBoundaryWktFunction));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
+                     DirectedEdgeToBoundaryWktFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
-                                   DirectedEdgeToBoundaryWktFunction));
+                                   DirectedEdgeToBoundaryWktFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
