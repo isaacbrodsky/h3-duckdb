@@ -3,13 +3,14 @@
 
 namespace duckdb {
 
+template <typename T>
 static void CellToVertexFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<H3Index, int32_t, H3Index>(
+  BinaryExecutor::ExecuteWithNulls<T, int32_t, T>(
       inputs, inputs2, result, args.size(),
-      [&](H3Index cell, int32_t vertexNum, ValidityMask &mask, idx_t idx) {
+      [&](T cell, int32_t vertexNum, ValidityMask &mask, idx_t idx) {
         H3Index vertex;
         H3Error err = cellToVertex(cell, vertexNum, &vertex);
         if (err) {
@@ -136,12 +137,13 @@ static void CellToVertexesVarcharFunction(DataChunk &args,
   result.Verify(args.size());
 }
 
+template <typename T>
 static void VertexToLatFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<H3Index, double>(
+  UnaryExecutor::ExecuteWithNulls<T, double>(
       inputs, result, args.size(),
-      [&](H3Index vertex, ValidityMask &mask, idx_t idx) {
+      [&](T vertex, ValidityMask &mask, idx_t idx) {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = vertexToLatLng(vertex, &latLng);
         if (err) {
@@ -177,12 +179,13 @@ static void VertexToLatVarcharFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+template <typename T>
 static void VertexToLngFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<H3Index, double>(
+  UnaryExecutor::ExecuteWithNulls<T, double>(
       inputs, result, args.size(),
-      [&](H3Index vertex, ValidityMask &mask, idx_t idx) {
+      [&](T vertex, ValidityMask &mask, idx_t idx) {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = vertexToLatLng(vertex, &latLng);
         if (err) {
@@ -288,20 +291,23 @@ static void IsValidVertexVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void IsValidVertexFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<H3Index, bool>(
-      inputs, result, args.size(),
-      [&](H3Index input) { return bool(isValidVertex(input)); });
+  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
+    return bool(isValidVertex(input));
+  });
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToVertexFunction() {
   ScalarFunctionSet funcs("h3_cell_to_vertex");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
-                                   LogicalType::UBIGINT, CellToVertexFunction));
+                                   LogicalType::UBIGINT,
+                                   CellToVertexFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
-                                   LogicalType::BIGINT, CellToVertexFunction));
+                                   LogicalType::BIGINT,
+                                   CellToVertexFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
                                    LogicalType::VARCHAR,
                                    CellToVertexVarcharFunction));
@@ -325,9 +331,9 @@ CreateScalarFunctionInfo H3Functions::GetCellToVertexesFunction() {
 CreateScalarFunctionInfo H3Functions::GetVertexToLatFunction() {
   ScalarFunctionSet funcs("h3_vertex_to_lat");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
-                                   VertexToLatFunction));
+                                   VertexToLatFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
-                                   VertexToLatFunction));
+                                   VertexToLatFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::DOUBLE,
                                    VertexToLatVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
@@ -336,9 +342,9 @@ CreateScalarFunctionInfo H3Functions::GetVertexToLatFunction() {
 CreateScalarFunctionInfo H3Functions::GetVertexToLngFunction() {
   ScalarFunctionSet funcs("h3_vertex_to_lng");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
-                                   VertexToLngFunction));
+                                   VertexToLngFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
-                                   VertexToLngFunction));
+                                   VertexToLngFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::DOUBLE,
                                    VertexToLngVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
@@ -363,9 +369,9 @@ CreateScalarFunctionInfo H3Functions::GetIsValidVertexFunctions() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
                                    IsValidVertexVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
-                                   IsValidVertexFunction));
+                                   IsValidVertexFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
-                                   IsValidVertexFunction));
+                                   IsValidVertexFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
