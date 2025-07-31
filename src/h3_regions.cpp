@@ -33,7 +33,7 @@ struct CellsToMultiPolygonWktVarcharInputOperator {
   }
 };
 
-template <LogicalTypeId InputType, class InputOperator>
+template <typename InputType, class InputOperator>
 static void CellsToMultiPolygonWktFunction(DataChunk &args,
                                            ExpressionState &state,
                                            Vector &result) {
@@ -58,13 +58,11 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args,
   auto list_entries = UnifiedVectorFormat::GetData<list_entry_t>(lists_data);
 
   result.SetVectorType(VectorType::FLAT_VECTOR);
-  auto result_entries = FlatVector::GetData<list_entry_t>(result);
+  auto result_entries = FlatVector::GetData<string_t>(result);
   auto &result_validity = FlatVector::Validity(result);
 
   idx_t offset = 0;
   for (idx_t i = 0; i < count; i++) {
-    result_entries[i].offset = offset;
-    result_entries[i].length = 0;
     auto list_index = lists_data.sel->get_index(i);
 
     if (!lists_data.validity.RowIsValid(list_index)) {
@@ -610,14 +608,14 @@ CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::VARCHAR)}, LogicalType::VARCHAR,
       CellsToMultiPolygonWktFunction<
-          LogicalType::VARCHAR, CellsToMultiPolygonWktVarcharInputOperator>));
+          string_t, CellsToMultiPolygonWktVarcharInputOperator>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::UBIGINT)}, LogicalType::VARCHAR,
-      CellsToMultiPolygonWktFunction<LogicalType::UBIGINT,
+      CellsToMultiPolygonWktFunction<uint64_t,
                                      CellsToMultiPolygonWktInputOperator>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::BIGINT)}, LogicalType::VARCHAR,
-      CellsToMultiPolygonWktFunction<LogicalType::BIGINT,
+      CellsToMultiPolygonWktFunction<int64_t,
                                      CellsToMultiPolygonWktInputOperator>));
   return CreateScalarFunctionInfo(funcs);
 }
