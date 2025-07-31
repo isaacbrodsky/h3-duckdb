@@ -3,12 +3,12 @@
 
 namespace duckdb {
 
+template <typename T>
 static void GetResolutionFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<uint64_t, int>(
-      inputs, result, args.size(),
-      [&](H3Index cell) { return getResolution(cell); });
+  UnaryExecutor::Execute<T, int>(inputs, result, args.size(),
+                                 [&](T cell) { return getResolution(cell); });
 }
 
 static void GetResolutionVarcharFunction(DataChunk &args,
@@ -29,12 +29,13 @@ static void GetResolutionVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void GetBaseCellNumberFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<uint64_t, int>(
-      inputs, result, args.size(),
-      [&](H3Index cell) { return getBaseCellNumber(cell); });
+  UnaryExecutor::Execute<T, int>(inputs, result, args.size(), [&](T cell) {
+    return getBaseCellNumber(cell);
+  });
 }
 
 static void GetBaseCellNumberVarcharFunction(DataChunk &args,
@@ -81,9 +82,10 @@ struct H3ToStringOperator {
   }
 };
 
+template <typename T>
 static void H3ToStringFunction(DataChunk &args, ExpressionState &state,
                                Vector &result) {
-  UnaryExecutor::ExecuteString<uint64_t, string_t, H3ToStringOperator>(
+  UnaryExecutor::ExecuteString<T, string_t, H3ToStringOperator>(
       args.data[0], result, args.size());
 }
 
@@ -101,20 +103,22 @@ static void IsValidCellVarcharFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+template <typename T>
 static void IsValidCellFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<H3Index, bool>(
-      inputs, result, args.size(),
-      [&](H3Index input) { return bool(isValidCell(input)); });
+  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
+    return bool(isValidCell(input));
+  });
 }
 
+template <typename T>
 static void IsResClassIIIFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<uint64_t, bool>(
-      inputs, result, args.size(),
-      [&](uint64_t cell) { return bool(isResClassIII(cell)); });
+  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T cell) {
+    return bool(isResClassIII(cell));
+  });
 }
 
 static void IsResClassIIIVarcharFunction(DataChunk &args,
@@ -135,12 +139,13 @@ static void IsResClassIIIVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void IsPentagonFunction(DataChunk &args, ExpressionState &state,
                                Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<uint64_t, bool>(
-      inputs, result, args.size(),
-      [&](uint64_t cell) { return bool(isPentagon(cell)); });
+  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T cell) {
+    return bool(isPentagon(cell));
+  });
 }
 
 static void IsPentagonVarcharFunction(DataChunk &args, ExpressionState &state,
@@ -248,9 +253,9 @@ static void GetIcosahedronFacesVarcharFunction(DataChunk &args,
 CreateScalarFunctionInfo H3Functions::GetGetResolutionFunction() {
   ScalarFunctionSet funcs("h3_get_resolution");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::INTEGER,
-                                   GetResolutionFunction));
+                                   GetResolutionFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::INTEGER,
-                                   GetResolutionFunction));
+                                   GetResolutionFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::INTEGER,
                                    GetResolutionVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
@@ -259,11 +264,11 @@ CreateScalarFunctionInfo H3Functions::GetGetResolutionFunction() {
 CreateScalarFunctionInfo H3Functions::GetGetBaseCellNumberFunction() {
   ScalarFunctionSet funcs("h3_get_base_cell_number");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::INTEGER,
-                                   GetBaseCellNumberFunction));
+                                   GetBaseCellNumberFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::INTEGER,
-                                   GetBaseCellNumberFunction));
+                                   GetBaseCellNumberFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::INTEGER,
-                                   GetBaseCellNumberFunction));
+                                   GetBaseCellNumberVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -276,9 +281,9 @@ CreateScalarFunctionInfo H3Functions::GetStringToH3Function() {
 CreateScalarFunctionInfo H3Functions::GetH3ToStringFunction() {
   ScalarFunctionSet funcs("h3_h3_to_string");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
-                                   H3ToStringFunction));
+                                   H3ToStringFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
-                                   H3ToStringFunction));
+                                   H3ToStringFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -287,31 +292,31 @@ CreateScalarFunctionInfo H3Functions::GetIsValidCellFunctions() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
                                    IsValidCellVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
-                                   IsValidCellFunction));
+                                   IsValidCellFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
-                                   IsValidCellFunction));
+                                   IsValidCellFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetIsResClassIIIFunction() {
   ScalarFunctionSet funcs("h3_is_res_class_iii");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
-                                   IsResClassIIIFunction));
+                                   IsResClassIIIFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
-                                   IsResClassIIIFunction));
+                                   IsResClassIIIFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
-                                   IsResClassIIIFunction));
+                                   IsResClassIIIVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetIsPentagonFunction() {
   ScalarFunctionSet funcs("h3_is_pentagon");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
-                                   IsPentagonFunction));
+                                   IsPentagonFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
-                                   IsPentagonFunction));
+                                   IsPentagonFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
-                                   IsPentagonFunction));
+                                   IsPentagonVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
