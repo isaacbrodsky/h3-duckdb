@@ -352,8 +352,7 @@ static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
 }
 
 struct DirectedEdgeToBoundaryOperator {
-  Vector &result;
-  DirectedEdgeToBoundaryOperator(Vector &_result) : result(_result) {}
+  explicit DirectedEdgeToBoundaryOperator(Vector &_result) : result(_result) {}
 
   string_t operator()(uint64_t input, ValidityMask &mask, idx_t idx) {
     CellBoundary boundary;
@@ -376,6 +375,9 @@ struct DirectedEdgeToBoundaryOperator {
       return StringVector::AddString(result, str);
     }
   }
+
+private:
+  Vector &result;
 };
 
 static void DirectedEdgeToBoundaryWktFunction(DataChunk &args,
@@ -388,8 +390,8 @@ static void DirectedEdgeToBoundaryWktFunction(DataChunk &args,
 }
 
 struct DirectedEdgeToBoundaryVarcharOperator {
-  Vector &result;
-  DirectedEdgeToBoundaryVarcharOperator(Vector &_result) : result(_result) {}
+  explicit DirectedEdgeToBoundaryVarcharOperator(Vector &_result)
+      : result(_result) {}
 
   string_t operator()(string_t input, ValidityMask &mask, idx_t idx) {
     H3Index h;
@@ -401,6 +403,9 @@ struct DirectedEdgeToBoundaryVarcharOperator {
       return DirectedEdgeToBoundaryOperator(result)(h, mask, idx);
     }
   }
+
+private:
+  Vector &result;
 };
 
 static void DirectedEdgeToBoundaryWktVarcharFunction(DataChunk &args,
