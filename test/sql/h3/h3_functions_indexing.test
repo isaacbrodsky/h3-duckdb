@@ -96,7 +96,7 @@ POLYGON ((38.777546 44.198571, 39.938746 42.736298, 42.150674 42.631271, 43.2583
 query I
 SELECT h3_cell_to_boundary_wkt(h3_string_to_h3('fffffffffffffff'));
 ----
-(empty)
+NULL
 
 query I
 SELECT h3_cell_to_boundary_wkt('822d57fffffffff');
@@ -106,4 +106,4 @@ POLYGON ((38.777546 44.198571, 39.938746 42.736298, 42.150674 42.631271, 43.2583
 query I
 SELECT h3_cell_to_boundary_wkt('zzz');
 ----
-(empty)
+NULL
