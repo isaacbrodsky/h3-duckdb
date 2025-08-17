@@ -387,8 +387,7 @@ template <typename T>
 static void DirectedEdgeToBoundaryWktFunction(DataChunk &args,
                                               ExpressionState &state,
                                               Vector &result) {
-  UnaryExecutor::ExecuteWithNulls<T, string_t,
-                                  DirectedEdgeToBoundaryOperator>(
+  UnaryExecutor::ExecuteWithNulls<T, string_t, DirectedEdgeToBoundaryOperator>(
       args.data[0], result, args.size(),
       DirectedEdgeToBoundaryOperator{result});
 }
