@@ -1,3 +1,4 @@
+#include "fmt/format.h"
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
 
@@ -189,13 +190,13 @@ static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state,
 }
 
 struct CellToBoundaryOperator {
-  template <class INPUT_TYPE, class RESULT_TYPE>
-  static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+  explicit CellToBoundaryOperator(Vector &_result) : result(_result) {}
+  string_t operator()(uint64_t input, ValidityMask &mask, idx_t idx) {
     CellBoundary boundary;
     H3Error err = cellToBoundary(input, &boundary);
 
     if (err) {
-      // TODO: Is it possible to return null here instead?
+      mask.SetInvalid(idx);
       return StringVector::EmptyString(result, 0);
     } else {
       std::string str = "POLYGON ((";
@@ -212,35 +213,41 @@ struct CellToBoundaryOperator {
       return StringVector::AddString(result, str);
     }
   }
+
+private:
+  Vector &result;
 };
 
 template <typename T>
 static void CellToBoundaryWktFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
-  UnaryExecutor::ExecuteString<T, string_t, CellToBoundaryOperator>(
-      args.data[0], result, args.size());
+  UnaryExecutor::ExecuteWithNulls<T, string_t>(
+      args.data[0], result, args.size(), CellToBoundaryOperator{result});
 }
 
 struct CellToBoundaryVarcharOperator {
-  template <class INPUT_TYPE, class RESULT_TYPE>
-  static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+  explicit CellToBoundaryVarcharOperator(Vector &_result) : result(_result) {}
+
+  string_t operator()(string_t input, ValidityMask &mask, idx_t idx) {
     H3Index h;
     H3Error err = stringToH3(input.GetString().c_str(), &h);
     if (err) {
+      mask.SetInvalid(idx);
       return StringVector::EmptyString(result, 0);
     } else {
-      return CellToBoundaryOperator().Operation<H3Index, RESULT_TYPE>(h,
-                                                                      result);
+      return CellToBoundaryOperator(result)(h, mask, idx);
     }
   }
+
+private:
+  Vector &result;
 };
 
 static void CellToBoundaryWktVarcharFunction(DataChunk &args,
                                              ExpressionState &state,
                                              Vector &result) {
-  UnaryExecutor::ExecuteString<string_t, string_t,
-                               CellToBoundaryVarcharOperator>(
-      args.data[0], result, args.size());
+  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
+      args.data[0], result, args.size(), CellToBoundaryVarcharOperator{result});
 }
 
 CreateScalarFunctionInfo H3Functions::GetLatLngToCellFunction() {

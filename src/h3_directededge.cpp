@@ -355,13 +355,14 @@ static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
 }
 
 struct DirectedEdgeToBoundaryOperator {
-  template <class INPUT_TYPE, class RESULT_TYPE>
-  static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+  explicit DirectedEdgeToBoundaryOperator(Vector &_result) : result(_result) {}
+
+  string_t operator()(uint64_t input, ValidityMask &mask, idx_t idx) {
     CellBoundary boundary;
     H3Error err = directedEdgeToBoundary(input, &boundary);
 
     if (err) {
-      // TODO: Is it possible to return null here instead?
+      mask.SetInvalid(idx);
       return StringVector::EmptyString(result, 0);
     } else {
       std::string str = "LINESTRING ((";
@@ -377,36 +378,46 @@ struct DirectedEdgeToBoundaryOperator {
       return StringVector::AddString(result, str);
     }
   }
+
+private:
+  Vector &result;
 };
 
 template <typename T>
 static void DirectedEdgeToBoundaryWktFunction(DataChunk &args,
                                               ExpressionState &state,
                                               Vector &result) {
-  UnaryExecutor::ExecuteString<T, string_t, DirectedEdgeToBoundaryOperator>(
-      args.data[0], result, args.size());
+  UnaryExecutor::ExecuteWithNulls<T, string_t,
+                                  DirectedEdgeToBoundaryOperator>(
+      args.data[0], result, args.size(),
+      DirectedEdgeToBoundaryOperator{result});
 }
 
 struct DirectedEdgeToBoundaryVarcharOperator {
-  template <class INPUT_TYPE, class RESULT_TYPE>
-  static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
+  explicit DirectedEdgeToBoundaryVarcharOperator(Vector &_result)
+      : result(_result) {}
+
+  string_t operator()(string_t input, ValidityMask &mask, idx_t idx) {
     H3Index h;
     H3Error err = stringToH3(input.GetString().c_str(), &h);
     if (err) {
+      mask.SetInvalid(idx);
       return StringVector::EmptyString(result, 0);
     } else {
-      return DirectedEdgeToBoundaryOperator().Operation<H3Index, RESULT_TYPE>(
-          h, result);
+      return DirectedEdgeToBoundaryOperator(result)(h, mask, idx);
     }
   }
+
+private:
+  Vector &result;
 };
 
 static void DirectedEdgeToBoundaryWktVarcharFunction(DataChunk &args,
                                                      ExpressionState &state,
                                                      Vector &result) {
-  UnaryExecutor::ExecuteString<string_t, string_t,
-                               DirectedEdgeToBoundaryVarcharOperator>(
-      args.data[0], result, args.size());
+  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
+      args.data[0], result, args.size(),
+      DirectedEdgeToBoundaryVarcharOperator{result});
 }
 
 CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToCellsFunction() {
