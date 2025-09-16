@@ -65,11 +65,12 @@ static void CellAreaVarcharFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+template <typename T>
 static void CellAreaFunction(DataChunk &args, ExpressionState &state,
                              Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<H3Index, string_t, double>(
+  BinaryExecutor::ExecuteWithNulls<T, string_t, double>(
       inputs, inputs2, result, args.size(), CellAreaFunctionInternal);
 }
 
@@ -133,11 +134,12 @@ static void EdgeLengthVarcharFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+template <typename T>
 static void EdgeLengthFunction(DataChunk &args, ExpressionState &state,
                                Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<H3Index, string_t, double>(
+  BinaryExecutor::ExecuteWithNulls<T, string_t, double>(
       inputs, inputs2, result, args.size(), EdgeLengthFunctionInternal);
 }
 
@@ -359,9 +361,11 @@ CreateScalarFunctionInfo H3Functions::GetCellAreaFunction() {
                                    LogicalType::DOUBLE,
                                    CellAreaVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::VARCHAR},
-                                   LogicalType::DOUBLE, CellAreaFunction));
+                                   LogicalType::DOUBLE,
+                                   CellAreaFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::VARCHAR},
-                                   LogicalType::DOUBLE, CellAreaFunction));
+                                   LogicalType::DOUBLE,
+                                   CellAreaFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -378,9 +382,11 @@ CreateScalarFunctionInfo H3Functions::GetEdgeLengthFunction() {
                                    LogicalType::DOUBLE,
                                    EdgeLengthVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::VARCHAR},
-                                   LogicalType::DOUBLE, EdgeLengthFunction));
+                                   LogicalType::DOUBLE,
+                                   EdgeLengthFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::VARCHAR},
-                                   LogicalType::DOUBLE, EdgeLengthFunction));
+                                   LogicalType::DOUBLE,
+                                   EdgeLengthFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 

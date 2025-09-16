@@ -496,14 +496,14 @@ static void GridPathCellsVarcharFunction(DataChunk &args,
   result.Verify(args.size());
 }
 
+template <typename T>
 static void GridDistanceFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<uint64_t, uint64_t, int64_t>(
+  BinaryExecutor::ExecuteWithNulls<T, T, int64_t>(
       inputs, inputs2, result, args.size(),
-      [&](uint64_t origin, uint64_t destination, ValidityMask &mask,
-          idx_t idx) {
+      [&](T origin, T destination, ValidityMask &mask, idx_t idx) {
         int64_t distance;
         H3Error err = gridDistance(origin, destination, &distance);
         if (err) {
@@ -611,14 +611,15 @@ static void CellToLocalIjVarcharFunction(DataChunk &args,
   result.Verify(args.size());
 }
 
+template <typename T>
 static void LocalIjToCellFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
-  TernaryExecutor::ExecuteWithNulls<H3Index, int32_t, int32_t, H3Index>(
+  TernaryExecutor::ExecuteWithNulls<T, int32_t, int32_t, T>(
       inputs, inputs2, inputs3, result, args.size(),
-      [&](H3Index origin, int32_t i, int32_t j, ValidityMask &mask, idx_t idx) {
+      [&](T origin, int32_t i, int32_t j, ValidityMask &mask, idx_t idx) {
         uint32_t mode = 0; // TODO: Expose mode to the user when applicable
 
         CoordIJ coordIJ{.i = i, .j = j};
@@ -793,9 +794,11 @@ CreateScalarFunctionInfo H3Functions::GetGridPathCellsFunction() {
 CreateScalarFunctionInfo H3Functions::GetGridDistanceFunction() {
   ScalarFunctionSet funcs("h3_grid_distance");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
-                                   LogicalType::BIGINT, GridDistanceFunction));
+                                   LogicalType::BIGINT,
+                                   GridDistanceFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
-                                   LogicalType::BIGINT, GridDistanceFunction));
+                                   LogicalType::BIGINT,
+                                   GridDistanceFunction<int64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
                                    LogicalType::BIGINT,
                                    GridDistanceVarcharFunction));
@@ -820,10 +823,10 @@ CreateScalarFunctionInfo H3Functions::GetLocalIjToCellFunction() {
   ScalarFunctionSet funcs("h3_local_ij_to_cell");
   funcs.AddFunction(ScalarFunction(
       {LogicalType::UBIGINT, LogicalType::INTEGER, LogicalType::INTEGER},
-      LogicalType::UBIGINT, LocalIjToCellFunction));
+      LogicalType::UBIGINT, LocalIjToCellFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::BIGINT, LogicalType::INTEGER, LogicalType::INTEGER},
-      LogicalType::BIGINT, LocalIjToCellFunction));
+      LogicalType::BIGINT, LocalIjToCellFunction<int64_t>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::VARCHAR, LogicalType::INTEGER, LogicalType::INTEGER},
       LogicalType::VARCHAR, LocalIjToCellVarcharFunction));

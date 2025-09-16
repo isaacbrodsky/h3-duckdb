@@ -1,31 +1,24 @@
-#define DUCKDB_EXTENSION_MAIN
 #include "h3_extension.hpp"
 
-#include "duckdb/main/connection.hpp"
-#include "duckdb/main/database.hpp"
-#include "duckdb/main/extension_util.hpp"
+#include "duckdb/main/extension/extension_loader.hpp"
 #include "h3_functions.hpp"
 #include "h3api.h"
 
 namespace duckdb {
 
-void H3Extension::Load(DuckDB &db) {
+static void LoadInternal(ExtensionLoader &loader) {
   std::string description =
       StringUtil::Format("H3 hierarchical hexagonal indexing system for "
                          "geospatial data, v%d.%d.%d",
                          H3_VERSION_MAJOR, H3_VERSION_MINOR, H3_VERSION_PATCH);
-  ExtensionUtil::RegisterExtension(*db.instance, "h3", {description});
+  loader.SetDescription(description);
 
-  Connection con(db);
-  con.BeginTransaction();
-
-  auto &catalog = Catalog::GetSystemCatalog(*con.context);
   for (auto &fun : H3Functions::GetFunctions()) {
-    catalog.CreateFunction(*con.context, fun);
+    loader.RegisterFunction(fun);
   }
-
-  con.Commit();
 }
+
+void H3Extension::Load(ExtensionLoader &loader) { LoadInternal(loader); }
 
 std::string H3Extension::Name() { return "h3"; }
 
@@ -33,16 +26,5 @@ std::string H3Extension::Name() { return "h3"; }
 
 extern "C" {
 
-DUCKDB_EXTENSION_API void h3_init(duckdb::DatabaseInstance &db) {
-  duckdb::DuckDB db_wrapper(db);
-  db_wrapper.LoadExtension<duckdb::H3Extension>();
+DUCKDB_CPP_EXTENSION_ENTRY(h3, loader) { duckdb::LoadInternal(loader); }
 }
-
-DUCKDB_EXTENSION_API const char *h3_version() {
-  return duckdb::DuckDB::LibraryVersion();
-}
-}
-
-#ifndef DUCKDB_EXTENSION_MAIN
-#error DUCKDB_EXTENSION_MAIN not defined
-#endif

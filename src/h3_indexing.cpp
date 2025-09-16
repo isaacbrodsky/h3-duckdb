@@ -46,12 +46,12 @@ static void LatLngToCellVarcharFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+template <typename T>
 static void CellToLatFunction(DataChunk &args, ExpressionState &state,
                               Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<H3Index, double>(
-      inputs, result, args.size(),
-      [&](H3Index cell, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::ExecuteWithNulls<T, double>(
+      inputs, result, args.size(), [&](T cell, ValidityMask &mask, idx_t idx) {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = cellToLatLng(cell, &latLng);
         if (err) {
@@ -87,12 +87,12 @@ static void CellToLatVarcharFunction(DataChunk &args, ExpressionState &state,
       });
 }
 
+template <typename T>
 static void CellToLngFunction(DataChunk &args, ExpressionState &state,
                               Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<H3Index, double>(
-      inputs, result, args.size(),
-      [&](H3Index cell, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::ExecuteWithNulls<T, double>(
+      inputs, result, args.size(), [&](T cell, ValidityMask &mask, idx_t idx) {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = cellToLatLng(cell, &latLng);
         if (err) {
@@ -218,9 +218,10 @@ private:
   Vector &result;
 };
 
+template <typename T>
 static void CellToBoundaryWktFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
-  UnaryExecutor::ExecuteWithNulls<uint64_t, string_t>(
+  UnaryExecutor::ExecuteWithNulls<T, string_t>(
       args.data[0], result, args.size(), CellToBoundaryOperator{result});
 }
 
@@ -268,9 +269,9 @@ CreateScalarFunctionInfo H3Functions::GetCellToLatFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::DOUBLE,
                                    CellToLatVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
-                                   CellToLatFunction));
+                                   CellToLatFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
-                                   CellToLatFunction));
+                                   CellToLatFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -279,9 +280,9 @@ CreateScalarFunctionInfo H3Functions::GetCellToLngFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::DOUBLE,
                                    CellToLngVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
-                                   CellToLngFunction));
+                                   CellToLngFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
-                                   CellToLngFunction));
+                                   CellToLngFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -304,9 +305,9 @@ CreateScalarFunctionInfo H3Functions::GetCellToBoundaryWktFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
                                    CellToBoundaryWktVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
-                                   CellToBoundaryWktFunction));
+                                   CellToBoundaryWktFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
-                                   CellToBoundaryWktFunction));
+                                   CellToBoundaryWktFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 

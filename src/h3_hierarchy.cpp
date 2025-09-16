@@ -3,13 +3,14 @@
 
 namespace duckdb {
 
+template <typename T>
 static void CellToParentFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<uint64_t, int, H3Index>(
+  BinaryExecutor::ExecuteWithNulls<T, int, T>(
       inputs, inputs2, result, args.size(),
-      [&](uint64_t input, int res, ValidityMask &mask, idx_t idx) {
+      [&](T input, int res, ValidityMask &mask, idx_t idx) {
         H3Index parent;
         H3Error err = cellToParent(input, res, &parent);
         if (err) {
@@ -168,13 +169,14 @@ static void CellToCenterChildVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void CellToCenterChildFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<uint64_t, int, H3Index>(
+  BinaryExecutor::ExecuteWithNulls<T, int, T>(
       inputs, inputs2, result, args.size(),
-      [&](uint64_t input, int res, ValidityMask &mask, idx_t idx) {
+      [&](T input, int res, ValidityMask &mask, idx_t idx) {
         H3Index child;
         H3Error err = cellToCenterChild(input, res, &child);
         if (err) {
@@ -212,13 +214,14 @@ static void CellToChildPosVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void CellToChildPosFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<H3Index, int, int64_t>(
+  BinaryExecutor::ExecuteWithNulls<T, int, int64_t>(
       inputs, inputs2, result, args.size(),
-      [&](H3Index input, int res, ValidityMask &mask, idx_t idx) {
+      [&](T input, int res, ValidityMask &mask, idx_t idx) {
         int64_t child;
         H3Error err = cellToChildPos(input, res, &child);
         if (err) {
@@ -259,14 +262,15 @@ static void ChildPosToCellVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
 static void ChildPosToCellFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
-  TernaryExecutor::ExecuteWithNulls<int64_t, H3Index, int, H3Index>(
+  TernaryExecutor::ExecuteWithNulls<int64_t, T, int, T>(
       inputs, inputs2, inputs3, result, args.size(),
-      [&](int64_t pos, H3Index input, int res, ValidityMask &mask, idx_t idx) {
+      [&](int64_t pos, T input, int res, ValidityMask &mask, idx_t idx) {
         H3Index child;
         H3Error err = childPosToCell(pos, input, res, &child);
         if (err) {
@@ -653,9 +657,11 @@ CreateScalarFunctionInfo H3Functions::GetCellToParentFunction() {
                                    LogicalType::VARCHAR,
                                    CellToParentVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
-                                   LogicalType::UBIGINT, CellToParentFunction));
+                                   LogicalType::UBIGINT,
+                                   CellToParentFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
-                                   LogicalType::BIGINT, CellToParentFunction));
+                                   LogicalType::BIGINT,
+                                   CellToParentFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -680,10 +686,10 @@ CreateScalarFunctionInfo H3Functions::GetCellToCenterChildFunction() {
                                    CellToCenterChildVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::UBIGINT,
-                                   CellToCenterChildFunction));
+                                   CellToCenterChildFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::BIGINT,
-                                   CellToCenterChildFunction));
+                                   CellToCenterChildFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -695,10 +701,10 @@ CreateScalarFunctionInfo H3Functions::GetCellToChildPosFunction() {
                                    CellToChildPosVarcharFunction));
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
                                    LogicalType::BIGINT,
-                                   CellToChildPosFunction));
+                                   CellToChildPosFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::BIGINT,
-                                   CellToChildPosFunction));
+                                   CellToChildPosFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
@@ -709,10 +715,10 @@ CreateScalarFunctionInfo H3Functions::GetChildPosToCellFunction() {
       LogicalType::VARCHAR, ChildPosToCellVarcharFunction));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::BIGINT, LogicalType::UBIGINT, LogicalType::INTEGER},
-      LogicalType::UBIGINT, ChildPosToCellFunction));
+      LogicalType::UBIGINT, ChildPosToCellFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::BIGINT, LogicalType::BIGINT, LogicalType::INTEGER},
-      LogicalType::BIGINT, ChildPosToCellFunction));
+      LogicalType::BIGINT, ChildPosToCellFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
