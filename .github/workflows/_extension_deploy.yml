@@ -1,9 +1,9 @@
 #
-# Reusable workflow that deploys the artifacts produced by github.com/duckdb/duckdb/.github/workflows/_extension_distribution.yml
+# Reusable workflow that deploys the artifacts produced by .github/workflows/_extension_distribution.yml
 #
-# note: this workflow needs to be located in the extension repository, as it requires secrets to be passed to the
-# deploy script. However, it should generally not be necessary to modify this workflow in your extension repository, as
-# this workflow can be configured to use a custom deploy script.
+# Note: this workflow can be used to deploy an extension from a GH artifact. It is intended for Out-of-tree
+#       extensions that live the duckdb GitHub organisation (only repo's within the same organisation can share secrets
+#       through reusable workflows)
 
 
 name: Extension Deployment
@@ -18,6 +18,16 @@ on:
       duckdb_version:
         required: true
         type: string
+      # The version of the https://github.com/duckdb/extension-ci-tools submodule of the extension. In most cases will be identical to `duckdb_version`.
+      # Passing this explicitly is required because of https://github.com/actions/toolkit/issues/1264
+      ci_tools_version:
+        required: true
+        type: string
+      # Override the repo for the CI tools (for testing CI tools itself)
+      override_ci_tools_repository:
+        required: false
+        type: string
+        default: "duckdb/extension-ci-tools"
       # ';' separated list of architectures to exclude, for example: 'linux_amd64;osx_arm64'
       exclude_archs:
         required: false
@@ -47,7 +57,7 @@ on:
       matrix_parse_script:
         required: false
         type: string
-        default: "./duckdb/scripts/modify_distribution_matrix.py"
+        default: "./extension-ci-tools/scripts/modify_distribution_matrix.py"
 
 jobs:
   generate_matrix:
@@ -56,19 +66,16 @@ jobs:
     outputs:
       deploy_matrix: ${{ steps.parse-matrices.outputs.deploy_matrix }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        name: Checkout Extension CI tools
         with:
-          fetch-depth: 0
-          submodules: 'true'
-
-      - name: Checkout DuckDB to version
-        run: |
-          cd duckdb
-          git checkout ${{ inputs.duckdb_version }}
+          path: 'extension-ci-tools'
+          ref: ${{ inputs.ci_tools_version }}
+          repository: ${{ inputs.override_ci_tools_repository }}
 
       - id: parse-matrices
         run: |
-          python3 ${{ inputs.matrix_parse_script }} --input ./duckdb/.github/config/distribution_matrix.json --deploy_matrix --output deploy_matrix.json --exclude "${{ inputs.exclude_archs }}" --pretty
+          python3 ${{ inputs.matrix_parse_script }} --input extension-ci-tools/config/distribution_matrix.json --deploy_matrix --output deploy_matrix.json --exclude "${{ inputs.exclude_archs }}" --pretty
           deploy_matrix="`cat deploy_matrix.json`"
           echo deploy_matrix=$deploy_matrix >> $GITHUB_OUTPUT
           echo `cat $GITHUB_OUTPUT`
@@ -82,10 +89,10 @@ jobs:
       matrix: ${{fromJson(needs.generate_matrix.outputs.deploy_matrix)}}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: 'true'
+          submodules: 'recursive'
 
       - name: Checkout DuckDB to version
         run: |
@@ -108,9 +115,10 @@ jobs:
           BUCKET_NAME: ${{ secrets.S3_DUCKDB_ORG_BUCKET }}
           DUCKDB_EXTENSION_SIGNING_PK: ${{ secrets.S3_DUCKDB_ORG_EXTENSION_SIGNING_PK }}
           DUCKDB_DEPLOY_SCRIPT_MODE: for_real
+          PIP_BREAK_SYSTEM_PACKAGES: 1
         run: |
           pwd
-          python3 -m pip install pip awscli
+          python3 -m pip install awscli
           git config --global --add safe.directory '*'
           cd duckdb
           git fetch --tags
