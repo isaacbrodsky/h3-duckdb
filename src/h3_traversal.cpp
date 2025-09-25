@@ -89,8 +89,7 @@ static void GridDiskTmplVarcharFunction(DataChunk &args, ExpressionState &state,
           for (auto val : out) {
             if (val != H3_NULL) {
               auto str = StringUtil::Format("%llx", val);
-              string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-              ListVector::PushBack(result, strAsStr);
+              ListVector::PushBack(result, str);
               actual++;
             }
           }
@@ -214,8 +213,7 @@ static void GridDiskDistancesTmplVarcharFunction(DataChunk &args,
           for (idx_t j = 0; j < out.size(); j++) {
             if (out[j] != H3_NULL) {
               auto str = StringUtil::Format("%llx", out[j]);
-              string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-              results[distancesOut[j]].push_back(strAsStr);
+              results[distancesOut[j]].push_back(str);
             }
           }
 
@@ -308,8 +306,7 @@ static void GridRingVarcharFunction(DataChunk &args, ExpressionState &state,
           for (auto val : out) {
             if (val != H3_NULL) {
               auto str = StringUtil::Format("%llx", val);
-              string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-              ListVector::PushBack(result, strAsStr);
+              ListVector::PushBack(result, str);
               actual++;
             }
           }
@@ -388,8 +385,7 @@ static void GridRingUnsafeVarcharFunction(DataChunk &args,
         for (auto val : out) {
           if (val != H3_NULL) {
             auto str = StringUtil::Format("%llx", val);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            ListVector::PushBack(result, strAsStr);
+            ListVector::PushBack(result, str);
             actual++;
           }
         }
@@ -479,8 +475,7 @@ static void GridPathCellsVarcharFunction(DataChunk &args,
           for (auto val : out) {
             if (val != H3_NULL) {
               auto str = StringUtil::Format("%llx", val);
-              string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-              ListVector::PushBack(result, strAsStr);
+              ListVector::PushBack(result, str);
               actual++;
             }
           }
@@ -659,8 +654,7 @@ static void LocalIjToCellVarcharFunction(DataChunk &args,
             return StringVector::EmptyString(result, 0);
           } else {
             auto str = StringUtil::Format("%llx", out);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            return StringVector::AddString(result, strAsStr);
+            return StringVector::AddString(result, str);
           }
         }
       });

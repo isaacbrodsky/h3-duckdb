@@ -43,8 +43,7 @@ static void CellToVertexVarcharFunction(DataChunk &args, ExpressionState &state,
             return StringVector::EmptyString(result, 0);
           } else {
             auto str = StringUtil::Format("%llx", vertex);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            return StringVector::AddString(result, strAsStr);
+            return StringVector::AddString(result, str);
           }
         }
       });
@@ -119,8 +118,7 @@ static void CellToVertexesVarcharFunction(DataChunk &args,
         for (auto val : out) {
           if (val != H3_NULL) {
             auto str = StringUtil::Format("%llx", val);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            ListVector::PushBack(result, strAsStr);
+            ListVector::PushBack(result, str);
             actual++;
           }
         }
