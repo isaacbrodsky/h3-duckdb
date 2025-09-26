@@ -42,8 +42,7 @@ static void CellToParentVarcharFunction(DataChunk &args, ExpressionState &state,
             return StringVector::EmptyString(result, 0);
           } else {
             auto str = StringUtil::Format("%llx", parent);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            return StringVector::AddString(result, strAsStr);
+            return StringVector::AddString(result, str);
           }
         }
       });
@@ -124,8 +123,7 @@ static void CellToChildrenVarcharFunction(DataChunk &args,
           for (auto val : out) {
             if (val != H3_NULL) {
               auto str = StringUtil::Format("%llx", val);
-              string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-              ListVector::PushBack(result, strAsStr);
+              ListVector::PushBack(result, str);
               actual++;
             }
           }
@@ -162,8 +160,7 @@ static void CellToCenterChildVarcharFunction(DataChunk &args,
             return StringVector::EmptyString(result, 0);
           } else {
             auto str = StringUtil::Format("%llx", parent);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            return StringVector::AddString(result, strAsStr);
+            return StringVector::AddString(result, str);
           }
         }
       });
@@ -255,8 +252,7 @@ static void ChildPosToCellVarcharFunction(DataChunk &args,
             return StringVector::EmptyString(result, 0);
           } else {
             auto str = StringUtil::Format("%llx", child);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            return StringVector::AddString(result, strAsStr);
+            return StringVector::AddString(result, str);
           }
         }
       });
@@ -428,8 +424,7 @@ static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
           auto child_val = compacted[k];
           if (child_val != H3_NULL) {
             auto str = StringUtil::Format("%llx", child_val);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            ListVector::PushBack(result, strAsStr);
+            ListVector::PushBack(result, str);
             actual++;
           }
         }
@@ -633,8 +628,7 @@ static void UncompactCellsVarcharFunction(DataChunk &args,
           auto child_val = uncompacted[k];
           if (child_val != H3_NULL) {
             auto str = StringUtil::Format("%llx", child_val);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            ListVector::PushBack(result, strAsStr);
+            ListVector::PushBack(result, str);
             actual++;
           }
         }

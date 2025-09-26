@@ -40,8 +40,7 @@ static void LatLngToCellVarcharFunction(DataChunk &args, ExpressionState &state,
           return StringVector::EmptyString(result, 0);
         } else {
           auto str = StringUtil::Format("%llx", cell);
-          string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-          return StringVector::AddString(result, strAsStr);
+          return StringVector::AddString(result, str);
         }
       });
 }

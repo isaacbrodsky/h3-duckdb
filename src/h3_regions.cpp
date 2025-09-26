@@ -128,8 +128,7 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args,
         str += "EMPTY";
       }
 
-      string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-      result.SetValue(i, StringVector::AddString(result, strAsStr));
+      result.SetValue(i, StringVector::AddString(result, str));
 
       destroyLinkedMultiPolygon(&first_lgp);
     }
@@ -352,8 +351,7 @@ static void PolygonWktToCellsVarcharFunction(DataChunk &args,
               for (H3Index outCell : out) {
                 if (outCell != H3_NULL) {
                   auto str = StringUtil::Format("%llx", outCell);
-                  string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-                  ListVector::PushBack(result, strAsStr);
+                  ListVector::PushBack(result, str);
                   actual++;
                 }
               }
@@ -570,8 +568,7 @@ static list_entry_t PolygonWktToCellsExperimentalVarcharInnerFunction(
         for (H3Index outCell : out) {
           if (outCell != H3_NULL) {
             auto str = StringUtil::Format("%llx", outCell);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            ListVector::PushBack(result, strAsStr);
+            ListVector::PushBack(result, str);
             actual++;
           }
         }

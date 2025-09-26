@@ -208,8 +208,7 @@ static void GetRes0CellsVarcharFunction(DataChunk &args, ExpressionState &state,
       for (auto val : out) {
         if (val != H3_NULL) {
           auto str = StringUtil::Format("%llx", val);
-          string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-          ListVector::PushBack(result, strAsStr);
+          ListVector::PushBack(result, str);
           actual++;
         }
       }
@@ -280,8 +279,7 @@ static void GetPentagonsVarcharFunction(DataChunk &args, ExpressionState &state,
       for (auto val : out) {
         if (val != H3_NULL) {
           auto str = StringUtil::Format("%llx", val);
-          string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-          ListVector::PushBack(result, strAsStr);
+          ListVector::PushBack(result, str);
           actual++;
         }
       }

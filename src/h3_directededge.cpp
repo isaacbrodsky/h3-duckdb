@@ -51,11 +51,9 @@ static void DirectedEdgeToCellsVarcharFunction(DataChunk &args,
         result.SetValue(i, Value(LogicalType::SQLNULL));
       } else {
         auto str0 = StringUtil::Format("%llx", out[0]);
-        string_t strAsStr0 = string_t(strdup(str0.c_str()), str0.size());
-        ListVector::PushBack(result, strAsStr0);
+        ListVector::PushBack(result, str0);
         auto str1 = StringUtil::Format("%llx", out[1]);
-        string_t strAsStr1 = string_t(strdup(str1.c_str()), str1.size());
-        ListVector::PushBack(result, strAsStr1);
+        ListVector::PushBack(result, str1);
 
         result_data[i].length = 2;
       }
@@ -128,8 +126,7 @@ static void OriginToDirectedEdgesVarcharFunction(DataChunk &args,
         for (auto val : out) {
           if (val != H3_NULL) {
             auto str = StringUtil::Format("%llx", val);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            ListVector::PushBack(result, strAsStr);
+            ListVector::PushBack(result, str);
             actual++;
           }
         }
@@ -182,8 +179,7 @@ static void GetDirectedEdgeOriginVarcharFunction(DataChunk &args,
             return StringVector::EmptyString(result, 0);
           } else {
             auto str = StringUtil::Format("%llx", out);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            return StringVector::AddString(result, strAsStr);
+            return StringVector::AddString(result, str);
           }
         }
       });
@@ -227,8 +223,7 @@ static void GetDirectedEdgeDestinationVarcharFunction(DataChunk &args,
             return StringVector::EmptyString(result, 0);
           } else {
             auto str = StringUtil::Format("%llx", out);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            return StringVector::AddString(result, strAsStr);
+            return StringVector::AddString(result, str);
           }
         }
       });
@@ -276,8 +271,7 @@ static void CellsToDirectedEdgeVarcharFunction(DataChunk &args,
             return StringVector::EmptyString(result, 0);
           } else {
             auto str = StringUtil::Format("%llx", out);
-            string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-            return StringVector::AddString(result, strAsStr);
+            return StringVector::AddString(result, str);
           }
         }
       });

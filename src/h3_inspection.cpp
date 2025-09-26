@@ -77,8 +77,7 @@ struct H3ToStringOperator {
   template <class INPUT_TYPE, class RESULT_TYPE>
   static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
     auto str = StringUtil::Format("%llx", input);
-    string_t strAsStr = string_t(strdup(str.c_str()), str.size());
-    return StringVector::AddString(result, strAsStr);
+    return StringVector::AddString(result, str);
   }
 };
 
