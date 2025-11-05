@@ -60,9 +60,10 @@ set(EXTENSION_SOURCES
     src/h3_vertex.cpp
     src/h3_directededge.cpp
     src/h3_misc.cpp
-    src/h3_regions.cpp)
+    src/h3_regions.cpp
+    src/well_known.cpp)
 set(LIB_HEADER_FILES src/include/h3_common.hpp src/include/h3_functions.hpp
-                     src/include/h3_extension.hpp)
+                     src/include/h3_extension.hpp src/include/well_known.hpp)
 set(ALL_SOURCE_FILES ${EXTENSION_SOURCES} ${LIB_HEADER_FILES})
 
 add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})

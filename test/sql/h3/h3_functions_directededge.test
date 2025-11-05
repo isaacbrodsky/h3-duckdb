@@ -121,17 +121,47 @@ NULL
 query I
 SELECT h3_directed_edge_to_boundary_wkt(1608492358964346879::ubigint)
 ----
-LINESTRING ((-121.915080 37.271356, -121.862223 37.353926, -121.915080 37.271356))
+LINESTRING (-121.915080 37.271356, -121.862223 37.353926, -121.915080 37.271356)
 
 query I
 SELECT h3_directed_edge_to_boundary_wkt(1608492358964346879::bigint)
 ----
-LINESTRING ((-121.915080 37.271356, -121.862223 37.353926, -121.915080 37.271356))
+LINESTRING (-121.915080 37.271356, -121.862223 37.353926, -121.915080 37.271356)
 
 query I
 SELECT h3_directed_edge_to_boundary_wkt('115283473fffffff')
 ----
-LINESTRING ((-122.037735 37.420129, -122.090429 37.337556, -122.037735 37.420129))
+LINESTRING (-122.037735 37.420129, -122.090429 37.337556, -122.037735 37.420129)
+
+query I
+SELECT h3_directed_edge_to_boundary_wkb(0::ubigint)
+----
+NULL
+
+query I
+SELECT h3_directed_edge_to_boundary_wkb(0::bigint)
+----
+NULL
+
+query I
+SELECT h3_directed_edge_to_boundary_wkb('0')
+----
+NULL
+
+query I
+SELECT h3_directed_edge_to_boundary_wkb(1608492358964346879::ubigint)
+----
+\x01\x02\x00\x00\x00\x03\x00\x00\x00\xD8z\x13\xAD\x90z^\xC0{\x98\xFE\xC9\xBB\xA2B@\x8A\x0D\x97\xAA.w^\xC0\xC7\xCCAvM\xADB@\xD8z\x13\xAD\x90z^\xC0{\x98\xFE\xC9\xBB\xA2B@
+
+query I
+SELECT h3_directed_edge_to_boundary_wkb(1608492358964346879::bigint)
+----
+\x01\x02\x00\x00\x00\x03\x00\x00\x00\xD8z\x13\xAD\x90z^\xC0{\x98\xFE\xC9\xBB\xA2B@\x8A\x0D\x97\xAA.w^\xC0\xC7\xCCAvM\xADB@\xD8z\x13\xAD\x90z^\xC0{\x98\xFE\xC9\xBB\xA2B@
+
+query I
+SELECT h3_directed_edge_to_boundary_wkb('115283473fffffff')
+----
+\x01\x02\x00\x00\x00\x03\x00\x00\x008]\xE9?j\x82^\xC0q^\xC9\xC6\xC6\xB5B@\xCD6k\x96\xC9\x85^\xC0Sn\xAB\x095\xABB@8]\xE9?j\x82^\xC0q^\xC9\xC6\xC6\xB5B@
 
 query I
 SELECT h3_origin_to_directed_edges('85283473fffffff')

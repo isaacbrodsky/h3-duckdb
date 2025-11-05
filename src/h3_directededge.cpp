@@ -1,5 +1,6 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
+#include "well_known.hpp"
 
 namespace duckdb {
 
@@ -348,7 +349,7 @@ static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
   });
 }
 
-struct DirectedEdgeToBoundaryOperator {
+template <typename Encoder> struct DirectedEdgeToBoundaryOperator {
   explicit DirectedEdgeToBoundaryOperator(Vector &_result) : result(_result) {}
 
   string_t operator()(uint64_t input, ValidityMask &mask, idx_t idx) {
@@ -359,15 +360,15 @@ struct DirectedEdgeToBoundaryOperator {
       mask.SetInvalid(idx);
       return StringVector::EmptyString(result, 0);
     } else {
-      std::string str = "LINESTRING ((";
+      auto enc = Encoder();
+      enc.StartLineString();
       for (int i = 0; i <= boundary.numVerts; i++) {
-        std::string sep = (i == 0) ? "" : ", ";
         int vertIndex = (i == boundary.numVerts) ? 0 : i;
-        str += StringUtil::Format("%s%f %f", sep,
-                                  radsToDegs(boundary.verts[vertIndex].lng),
-                                  radsToDegs(boundary.verts[vertIndex].lat));
+        enc.Point(radsToDegs(boundary.verts[vertIndex].lng),
+                  radsToDegs(boundary.verts[vertIndex].lat));
       }
-      str += "))";
+      enc.EndLineString();
+      auto str = enc.Finish();
 
       return StringVector::AddString(result, str);
     }
@@ -377,16 +378,17 @@ private:
   Vector &result;
 };
 
-template <typename T>
-static void DirectedEdgeToBoundaryWktFunction(DataChunk &args,
-                                              ExpressionState &state,
-                                              Vector &result) {
-  UnaryExecutor::ExecuteWithNulls<T, string_t, DirectedEdgeToBoundaryOperator>(
+template <typename T, typename Encoder>
+static void DirectedEdgeToBoundaryFunction(DataChunk &args,
+                                           ExpressionState &state,
+                                           Vector &result) {
+  UnaryExecutor::ExecuteWithNulls<T, string_t,
+                                  DirectedEdgeToBoundaryOperator<Encoder>>(
       args.data[0], result, args.size(),
-      DirectedEdgeToBoundaryOperator{result});
+      DirectedEdgeToBoundaryOperator<Encoder>{result});
 }
 
-struct DirectedEdgeToBoundaryVarcharOperator {
+template <typename Encoder> struct DirectedEdgeToBoundaryVarcharOperator {
   explicit DirectedEdgeToBoundaryVarcharOperator(Vector &_result)
       : result(_result) {}
 
@@ -397,7 +399,7 @@ struct DirectedEdgeToBoundaryVarcharOperator {
       mask.SetInvalid(idx);
       return StringVector::EmptyString(result, 0);
     } else {
-      return DirectedEdgeToBoundaryOperator(result)(h, mask, idx);
+      return DirectedEdgeToBoundaryOperator<Encoder>(result)(h, mask, idx);
     }
   }
 
@@ -405,12 +407,13 @@ private:
   Vector &result;
 };
 
-static void DirectedEdgeToBoundaryWktVarcharFunction(DataChunk &args,
-                                                     ExpressionState &state,
-                                                     Vector &result) {
+template <typename Encoder>
+static void DirectedEdgeToBoundaryVarcharFunction(DataChunk &args,
+                                                  ExpressionState &state,
+                                                  Vector &result) {
   UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
       args.data[0], result, args.size(),
-      DirectedEdgeToBoundaryVarcharOperator{result});
+      DirectedEdgeToBoundaryVarcharOperator<Encoder>{result});
 }
 
 CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToCellsFunction() {
@@ -506,13 +509,29 @@ CreateScalarFunctionInfo H3Functions::GetIsValidDirectedEdgeFunctions() {
 
 CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToBoundaryWktFunction() {
   ScalarFunctionSet funcs("h3_directed_edge_to_boundary_wkt");
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
-                                   DirectedEdgeToBoundaryWktVarcharFunction));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
+                     DirectedEdgeToBoundaryVarcharFunction<WktEncoder>));
   funcs.AddFunction(
       ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
-                     DirectedEdgeToBoundaryWktFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
-                                   DirectedEdgeToBoundaryWktFunction<int64_t>));
+                     DirectedEdgeToBoundaryFunction<uint64_t, WktEncoder>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
+                     DirectedEdgeToBoundaryFunction<int64_t, WktEncoder>));
+  return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToBoundaryWkbFunction() {
+  ScalarFunctionSet funcs("h3_directed_edge_to_boundary_wkb");
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::VARCHAR}, LogicalType::BLOB,
+                     DirectedEdgeToBoundaryVarcharFunction<WkbEncoder>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::UBIGINT}, LogicalType::BLOB,
+                     DirectedEdgeToBoundaryFunction<uint64_t, WkbEncoder>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::BIGINT}, LogicalType::BLOB,
+                     DirectedEdgeToBoundaryFunction<int64_t, WkbEncoder>));
   return CreateScalarFunctionInfo(funcs);
 }
 
