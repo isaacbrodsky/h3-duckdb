@@ -40,9 +40,9 @@ std::string WkbEncoder::Finish() { return buffer; }
 void WktEncoder::StartLineString() { buffer = "LINESTRING ("; }
 
 void WktEncoder::Point(double lng, double lat) {
-  auto sep = first ? "" : ", ";
+  auto sep = firstPoint ? "" : ", ";
   buffer += StringUtil::Format("%s%f %f", sep, lng, lat);
-  first = false;
+  firstPoint = false;
 }
 
 void WktEncoder::EndLineString() { buffer += ")"; }
@@ -50,6 +50,44 @@ void WktEncoder::EndLineString() { buffer += ")"; }
 void WktEncoder::StartPolygon() { buffer = "POLYGON (("; }
 
 void WktEncoder::EndPolygon() { buffer += "))"; }
+
+void WktEncoder::StartMultiPolygon(uint32_t polygonCount) {
+  buffer = "MULTIPOLYGON ";
+}
+
+void WktEncoder::StartMultiPolygonPolygon() {
+  if (!firstPolygon) {
+    buffer += ", ";
+  } else {
+    buffer += "(";
+  }
+
+  buffer += "(";
+  firstPolygon = false;
+}
+
+void WktEncoder::StartMultiPolygonLoop() {
+  if (!firstLoop) {
+    buffer += ", ";
+  }
+
+  buffer += "(";
+  firstLoop = false;
+}
+
+void WktEncoder::MultiPolygonEmpty() { buffer += "EMPTY"; }
+
+void WktEncoder::EndMultiPolygonLoop() {
+  buffer += ")";
+  firstPoint = true;
+}
+
+void WktEncoder::EndMultiPolygonPolygon() {
+  buffer += ")";
+  firstLoop = true;
+}
+
+void WktEncoder::EndMultiPolygon() { buffer += ")"; }
 
 std::string WktEncoder::Finish() { return buffer; }
 

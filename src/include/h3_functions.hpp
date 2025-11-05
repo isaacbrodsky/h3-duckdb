@@ -91,6 +91,7 @@ public:
 
     // Regions
     functions.push_back(GetCellsToMultiPolygonWktFunction());
+    // functions.push_back(GetCellsToMultiPolygonWkbFunction());
     functions.push_back(GetPolygonWktToCellsFunction());
     functions.push_back(GetPolygonWktToCellsVarcharFunction());
     functions.push_back(GetPolygonWktToCellsExperimentalFunction());
@@ -174,6 +175,7 @@ private:
 
   // Regions
   static CreateScalarFunctionInfo GetCellsToMultiPolygonWktFunction();
+  // static CreateScalarFunctionInfo GetCellsToMultiPolygonWkbFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsVarcharFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsExperimentalFunction();

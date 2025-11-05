@@ -18,21 +18,38 @@ public:
   void EndLineString();
   void StartPolygon();
   void EndPolygon();
+  //   void StartMultiPolygon(uint32_t polygonCount);
+  //   void StartMultiPolygonPolygon();
+  //   void StartMultiPolygonLoop();
+  //   void MultiPolygonEmpty();
+  //   void EndMultiPolygonLoop();
+  //   void EndMultiPolygonPolygon();
+  //   void EndMultiPolygon();
   std::string Finish();
 };
 
 class WktEncoder {
 private:
   std::string buffer;
-  bool first;
+  bool firstPoint;
+  bool firstLoop;
+  bool firstPolygon;
 
 public:
-  WktEncoder() : buffer(), first(true){};
+  WktEncoder()
+      : buffer(), firstPoint(true), firstLoop(true), firstPolygon(true){};
   void Point(double lng, double lat);
   void StartLineString();
   void EndLineString();
   void StartPolygon();
   void EndPolygon();
+  void StartMultiPolygon(uint32_t polygonCount);
+  void StartMultiPolygonPolygon();
+  void StartMultiPolygonLoop();
+  void MultiPolygonEmpty();
+  void EndMultiPolygonLoop();
+  void EndMultiPolygonPolygon();
+  void EndMultiPolygon();
   std::string Finish();
 };
 

@@ -95,6 +95,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_get_pentagons_string` | Get all pentagons at a resolution (returns VARCHAR)
 | `h3_great_circle_distance` | Compute the great circle distance between two points (haversine)
 | `h3_cells_to_multi_polygon_wkt` | Convert a set of cells to multipolygon WKT
+| `h3_cells_to_multi_polygon_wkb` | Convert a set of cells to multipolygon WKB
 | `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells
 | `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells (returns VARCHAR)
 | `h3_polygon_wkt_to_cells_experimental` | Convert polygon WKT to a set of cells, new algorithm
