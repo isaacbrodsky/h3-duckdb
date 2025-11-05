@@ -9,13 +9,15 @@ namespace duckdb {
 class WkbEncoder {
 private:
   std::string buffer;
-  std::vector<std::pair<double, double>> lineStringPoints;
+  std::vector<std::pair<double, double>> points;
 
 public:
-  WkbEncoder() : buffer(), lineStringPoints() {}
-  void StartLineString();
+  WkbEncoder() : buffer(), points() {}
   void Point(double lng, double lat);
+  void StartLineString();
   void EndLineString();
+  void StartPolygon();
+  void EndPolygon();
   std::string Finish();
 };
 
@@ -26,9 +28,11 @@ private:
 
 public:
   WktEncoder() : buffer(), first(true){};
-  void StartLineString();
   void Point(double lng, double lat);
+  void StartLineString();
   void EndLineString();
+  void StartPolygon();
+  void EndPolygon();
   std::string Finish();
 };
 

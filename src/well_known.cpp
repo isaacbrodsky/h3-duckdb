@@ -11,21 +11,29 @@ void WkbEncoder::StartLineString() {
 }
 
 void WkbEncoder::Point(double lng, double lat) {
-  lineStringPoints.push_back(make_pair(lng, lat));
+  points.push_back(make_pair(lng, lat));
 }
 
 void WkbEncoder::EndLineString() {
-  uint32_t numLineStringPoints = lineStringPoints.size();
-  assert(numLineStringPoints == lineStringPoints.size());
+  uint32_t numLineStringPoints = points.size();
+  assert(numLineStringPoints == points.size());
   assert(sizeof(numLineStringPoints) == 4);
   // TODO: Is this actually little endian?
   buffer.append((char *)&numLineStringPoints, 4);
 
-  for (const auto &vec : lineStringPoints) {
+  for (const auto &vec : points) {
     buffer.append((char *)&vec.first, 8);
     buffer.append((char *)&vec.second, 8);
   }
+  points.clear();
 }
+
+void WkbEncoder::StartPolygon() {
+  // little endian + polygon + 1 linestring inside
+  buffer = std::string("\x01\x03\x00\x00\x00\x01\x00\x00\x00", 9);
+}
+
+void WkbEncoder::EndPolygon() { EndLineString(); }
 
 std::string WkbEncoder::Finish() { return buffer; }
 
@@ -38,6 +46,10 @@ void WktEncoder::Point(double lng, double lat) {
 }
 
 void WktEncoder::EndLineString() { buffer += ")"; }
+
+void WktEncoder::StartPolygon() { buffer = "POLYGON (("; }
+
+void WktEncoder::EndPolygon() { buffer += "))"; }
 
 std::string WktEncoder::Finish() { return buffer; }
 

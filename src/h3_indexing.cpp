@@ -1,6 +1,7 @@
 #include "fmt/format.h"
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
+#include "well_known.hpp"
 
 namespace duckdb {
 
@@ -188,7 +189,7 @@ static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state,
   result.Verify(args.size());
 }
 
-struct CellToBoundaryOperator {
+template <typename Encoder> struct CellToBoundaryOperator {
   explicit CellToBoundaryOperator(Vector &_result) : result(_result) {}
   string_t operator()(uint64_t input, ValidityMask &mask, idx_t idx) {
     CellBoundary boundary;
@@ -198,16 +199,16 @@ struct CellToBoundaryOperator {
       mask.SetInvalid(idx);
       return StringVector::EmptyString(result, 0);
     } else {
-      std::string str = "POLYGON ((";
+      auto enc = Encoder();
+      enc.StartPolygon();
       for (int i = 0; i <= boundary.numVerts; i++) {
-        std::string sep = (i == 0) ? "" : ", ";
         // Add an extra vertex onto the end to close the polygon
         int vertIndex = (i == boundary.numVerts) ? 0 : i;
-        str += StringUtil::Format("%s%f %f", sep,
-                                  radsToDegs(boundary.verts[vertIndex].lng),
-                                  radsToDegs(boundary.verts[vertIndex].lat));
+        enc.Point(radsToDegs(boundary.verts[vertIndex].lng),
+                  radsToDegs(boundary.verts[vertIndex].lat));
       }
-      str += "))";
+      enc.EndPolygon();
+      auto str = enc.Finish();
 
       return StringVector::AddString(result, str);
     }
@@ -217,14 +218,15 @@ private:
   Vector &result;
 };
 
-template <typename T>
-static void CellToBoundaryWktFunction(DataChunk &args, ExpressionState &state,
-                                      Vector &result) {
+template <typename T, typename Encoder>
+static void CellToBoundaryFunction(DataChunk &args, ExpressionState &state,
+                                   Vector &result) {
   UnaryExecutor::ExecuteWithNulls<T, string_t>(
-      args.data[0], result, args.size(), CellToBoundaryOperator{result});
+      args.data[0], result, args.size(),
+      CellToBoundaryOperator<Encoder>{result});
 }
 
-struct CellToBoundaryVarcharOperator {
+template <typename Encoder> struct CellToBoundaryVarcharOperator {
   explicit CellToBoundaryVarcharOperator(Vector &_result) : result(_result) {}
 
   string_t operator()(string_t input, ValidityMask &mask, idx_t idx) {
@@ -234,7 +236,7 @@ struct CellToBoundaryVarcharOperator {
       mask.SetInvalid(idx);
       return StringVector::EmptyString(result, 0);
     } else {
-      return CellToBoundaryOperator(result)(h, mask, idx);
+      return CellToBoundaryOperator<Encoder>(result)(h, mask, idx);
     }
   }
 
@@ -242,11 +244,13 @@ private:
   Vector &result;
 };
 
-static void CellToBoundaryWktVarcharFunction(DataChunk &args,
-                                             ExpressionState &state,
-                                             Vector &result) {
+template <typename Encoder>
+static void CellToBoundaryVarcharFunction(DataChunk &args,
+                                          ExpressionState &state,
+                                          Vector &result) {
   UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      args.data[0], result, args.size(), CellToBoundaryVarcharOperator{result});
+      args.data[0], result, args.size(),
+      CellToBoundaryVarcharOperator<Encoder>{result});
 }
 
 CreateScalarFunctionInfo H3Functions::GetLatLngToCellFunction() {
@@ -302,11 +306,26 @@ CreateScalarFunctionInfo H3Functions::GetCellToLatLngFunction() {
 CreateScalarFunctionInfo H3Functions::GetCellToBoundaryWktFunction() {
   ScalarFunctionSet funcs("h3_cell_to_boundary_wkt");
   funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
-                                   CellToBoundaryWktVarcharFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
-                                   CellToBoundaryWktFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
-                                   CellToBoundaryWktFunction<int64_t>));
+                                   CellToBoundaryVarcharFunction<WktEncoder>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
+                     CellToBoundaryFunction<uint64_t, WktEncoder>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
+                     CellToBoundaryFunction<int64_t, WktEncoder>));
+  return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetCellToBoundaryWkbFunction() {
+  ScalarFunctionSet funcs("h3_cell_to_boundary_wkb");
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BLOB,
+                                   CellToBoundaryVarcharFunction<WkbEncoder>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::UBIGINT}, LogicalType::BLOB,
+                     CellToBoundaryFunction<uint64_t, WkbEncoder>));
+  funcs.AddFunction(
+      ScalarFunction({LogicalType::BIGINT}, LogicalType::BLOB,
+                     CellToBoundaryFunction<int64_t, WkbEncoder>));
   return CreateScalarFunctionInfo(funcs);
 }
 

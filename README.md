@@ -41,7 +41,8 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_cell_to_lat` | Convert cell ID to latitude
 | `h3_cell_to_lng` | Convert cell ID to longitude
 | `h3_cell_to_latlng` | Convert cell ID to latitude/longitude
-| `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary
+| `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary WKT
+| `h3_cell_to_boundary_wkb` | Convert cell ID to cell boundary WKB
 | `h3_get_resolution` | Get resolution number of cell ID
 | `h3_get_base_cell_number` | Get base cell number of cell ID
 | `h3_string_to_h3` | Convert VARCHAR cell ID to UBIGINT
