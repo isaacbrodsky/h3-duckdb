@@ -44,9 +44,11 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary
 | `h3_get_resolution` | Get resolution number of cell ID
 | `h3_get_base_cell_number` | Get base cell number of cell ID
+| `h3_get_index_digit` | Get specified indexing digit of a cell
 | `h3_string_to_h3` | Convert VARCHAR cell ID to UBIGINT
 | `h3_h3_to_string` | Convert BIGINT or UBIGINT cell ID to VARCHAR
 | `h3_is_valid_cell` | True if this is a valid cell ID
+| `h3_is_valid_index` | True if this is a valid cell/edge/vertex ID
 | `h3_is_res_class_iii` | True if the cell's resolution is class III
 | `h3_is_pentagon` | True if the cell is a pentagon
 | `h3_get_icosahedron_faces` | List of icosahedron face IDs the cell is on

@@ -56,6 +56,49 @@ static void GetBaseCellNumberVarcharFunction(DataChunk &args,
       });
 }
 
+template <typename T>
+static void GetIndexDigitFunction(DataChunk &args, ExpressionState &state,
+                                      Vector &result) {
+  auto &inputs = args.data[0];
+  auto &inputs2 = args.data[1];
+  BinaryExecutor::ExecuteWithNulls<T, int, int>(inputs, inputs2, result, args.size(), [&](T cell, int res, ValidityMask &mask, idx_t idx) {
+          int out;
+          H3Error err0 = getIndexDigit(cell, res, &out);
+          if (err0) {
+            mask.SetInvalid(idx);
+            return 0;
+          } else {
+            return out;
+          }
+  });
+}
+
+static void GetIndexDigitVarcharFunction(DataChunk &args,
+                                             ExpressionState &state,
+                                             Vector &result) {
+  auto &inputs = args.data[0];
+  auto &inputs2 = args.data[1];
+  BinaryExecutor::ExecuteWithNulls<string_t, int, int>(
+      inputs, inputs2, result, args.size(),
+      [&](string_t cellAddress, int res, ValidityMask &mask, idx_t idx) {
+        H3Index cell;
+        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return 0;
+        } else {
+          int out;
+          H3Error err1 = getIndexDigit(cell, res, &out);
+          if (err1) {
+            mask.SetInvalid(idx);
+            return 0;
+          } else {
+            return out;
+          }
+        }
+      });
+}
+
 static void StringToH3Function(DataChunk &args, ExpressionState &state,
                                Vector &result) {
   auto &inputs = args.data[0];
@@ -86,6 +129,29 @@ static void H3ToStringFunction(DataChunk &args, ExpressionState &state,
                                Vector &result) {
   UnaryExecutor::ExecuteString<T, string_t, H3ToStringOperator>(
       args.data[0], result, args.size());
+}
+
+static void IsValidIndexVarcharFunction(DataChunk &args, ExpressionState &state,
+                                       Vector &result) {
+  auto &inputs = args.data[0];
+  UnaryExecutor::Execute<string_t, bool>(
+      inputs, result, args.size(), [&](string_t input) {
+        H3Index h;
+        H3Error err = stringToH3(input.GetString().c_str(), &h);
+        if (err) {
+          return false;
+        }
+        return bool(isValidIndex(h));
+      });
+}
+
+template <typename T>
+static void IsValidIndexFunction(DataChunk &args, ExpressionState &state,
+                                Vector &result) {
+  auto &inputs = args.data[0];
+  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
+    return bool(isValidIndex(input));
+  });
 }
 
 static void IsValidCellVarcharFunction(DataChunk &args, ExpressionState &state,
@@ -271,6 +337,17 @@ CreateScalarFunctionInfo H3Functions::GetGetBaseCellNumberFunction() {
   return CreateScalarFunctionInfo(funcs);
 }
 
+CreateScalarFunctionInfo H3Functions::GetGetIndexDigitFunction() {
+  ScalarFunctionSet funcs("h3_get_index_digit");
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER}, LogicalType::INTEGER,
+                                   GetIndexDigitFunction<uint64_t>));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER}, LogicalType::INTEGER,
+                                   GetIndexDigitFunction<int64_t>));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER}, LogicalType::INTEGER,
+                                   GetIndexDigitVarcharFunction));
+  return CreateScalarFunctionInfo(funcs);
+}
+
 CreateScalarFunctionInfo H3Functions::GetStringToH3Function() {
   return CreateScalarFunctionInfo(
       ScalarFunction("h3_string_to_h3", {LogicalType::VARCHAR},
@@ -283,6 +360,17 @@ CreateScalarFunctionInfo H3Functions::GetH3ToStringFunction() {
                                    H3ToStringFunction<uint64_t>));
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
                                    H3ToStringFunction<int64_t>));
+  return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetIsValidIndexFunctions() {
+  ScalarFunctionSet funcs("h3_is_valid_index");
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
+                                   IsValidIndexVarcharFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
+                                   IsValidIndexFunction<uint64_t>));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
+                                   IsValidIndexFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
