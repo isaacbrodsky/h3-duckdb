@@ -371,8 +371,9 @@ static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
 
     auto res =
         resVec.GetValue(i).DefaultCastAs(LogicalType::INTEGER).GetValue<int>();
-    auto baseCell =
-        baseCellVec.GetValue(i).DefaultCastAs(LogicalType::INTEGER).GetValue<int>();
+    auto baseCell = baseCellVec.GetValue(i)
+                        .DefaultCastAs(LogicalType::INTEGER)
+                        .GetValue<int>();
 
     if (list_entries[i].length != res) {
       result_validity.SetInvalid(i);
@@ -383,7 +384,9 @@ static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
     for (size_t j = 0; j < list_entries[i].length; j++) {
       if (child_data.validity.RowIsValid(
               child_data.sel->get_index(list_entries[i].offset + j))) {
-        digits[j] = ((int *)child_data.data)[child_data.sel->get_index(list_entries[i].offset + j)];
+        digits[j] =
+            ((int *)child_data
+                 .data)[child_data.sel->get_index(list_entries[i].offset + j)];
       }
     }
 
@@ -459,8 +462,9 @@ static void ConstructCellVarcharFunction(DataChunk &args,
 
     auto res =
         resVec.GetValue(i).DefaultCastAs(LogicalType::INTEGER).GetValue<int>();
-    auto baseCell =
-        baseCellVec.GetValue(i).DefaultCastAs(LogicalType::INTEGER).GetValue<int>();
+    auto baseCell = baseCellVec.GetValue(i)
+                        .DefaultCastAs(LogicalType::INTEGER)
+                        .GetValue<int>();
 
     if (list_entries[i].length != res) {
       result_validity.SetInvalid(i);
@@ -471,7 +475,9 @@ static void ConstructCellVarcharFunction(DataChunk &args,
     for (size_t j = 0; j < list_entries[i].length; j++) {
       if (child_data.validity.RowIsValid(
               child_data.sel->get_index(list_entries[i].offset + j))) {
-        digits[j] = ((int *)child_data.data)[child_data.sel->get_index(list_entries[i].offset + j)];
+        digits[j] =
+            ((int *)child_data
+                 .data)[child_data.sel->get_index(list_entries[i].offset + j)];
       }
     }
 
