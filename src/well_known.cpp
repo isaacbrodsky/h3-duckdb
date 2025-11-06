@@ -35,6 +35,32 @@ void WkbEncoder::StartPolygon() {
 
 void WkbEncoder::EndPolygon() { EndLineString(); }
 
+void WkbEncoder::StartMultiPolygon(uint32_t polygonCount) {
+  // little endian + multipolygon + how many polygons inside
+  buffer = std::string("\x01\x07\x00\x00\x00", 5);
+  buffer.append((char *)&polygonCount, 4);
+}
+
+void WkbEncoder::StartMultiPolygonPolygon(uint32_t loopCount) {
+  // little endian + polygon + number of loops
+  buffer.append("\x01\x03\x00\x00\x00", 5);
+  buffer.append((char *)&loopCount, 4);
+}
+
+void WkbEncoder::StartMultiPolygonLoop() { /* no-op */
+}
+
+void WkbEncoder::MultiPolygonEmpty() { /* no-op */
+}
+
+void WkbEncoder::EndMultiPolygonLoop() { EndLineString(); }
+
+void WkbEncoder::EndMultiPolygonPolygon() { /* no-op */
+}
+
+void WkbEncoder::EndMultiPolygon() { /* no-op */
+}
+
 std::string WkbEncoder::Finish() { return buffer; }
 
 void WktEncoder::StartLineString() { buffer = "LINESTRING ("; }
@@ -55,7 +81,7 @@ void WktEncoder::StartMultiPolygon(uint32_t polygonCount) {
   buffer = "MULTIPOLYGON ";
 }
 
-void WktEncoder::StartMultiPolygonPolygon() {
+void WktEncoder::StartMultiPolygonPolygon(uint32_t loopCount) {
   if (!firstPolygon) {
     buffer += ", ";
   } else {

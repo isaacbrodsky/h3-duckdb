@@ -370,7 +370,7 @@ template <typename Encoder> struct DirectedEdgeToBoundaryOperator {
       enc.EndLineString();
       auto str = enc.Finish();
 
-      return StringVector::AddString(result, str);
+      return StringVector::AddStringOrBlob(result, str);
     }
   }
 

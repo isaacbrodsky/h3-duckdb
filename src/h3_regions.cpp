@@ -36,13 +36,21 @@ struct CellsToMultiPolygonVarcharInputOperator {
 
 static uint32_t PolygonCount(const LinkedGeoPolygon *lgp) {
   uint32_t count = 0;
-  for (auto lgl = lgp ? lgp->first : nullptr; lgl; lgl = lgl->next) {
+  for (auto polygon = lgp; polygon && polygon->first; polygon = polygon->next) {
     count++;
   }
   return count;
 }
 
-template <typename InputType, class InputOperator, class Encoder>
+static uint32_t LoopCount(const LinkedGeoPolygon *lgp) {
+  uint32_t count = 0;
+  for (auto loop = lgp->first; loop && loop->first; loop = loop->next) {
+    count++;
+  }
+  return count;
+}
+
+template <typename InputType, class InputOperator, class Encoder, bool IsBlob>
 static void CellsToMultiPolygonFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   D_ASSERT(args.ColumnCount() == 1);
@@ -100,7 +108,8 @@ static void CellsToMultiPolygonFunction(DataChunk &args, ExpressionState &state,
       if (first_lgp.first) {
         LinkedGeoPolygon *lgp = &first_lgp;
         while (lgp) {
-          enc.StartMultiPolygonPolygon();
+          auto loop_count = LoopCount(lgp);
+          enc.StartMultiPolygonPolygon(loop_count);
           LinkedGeoLoop *loop = lgp->first;
           while (loop) {
             enc.StartMultiPolygonLoop();
@@ -131,7 +140,13 @@ static void CellsToMultiPolygonFunction(DataChunk &args, ExpressionState &state,
       }
 
       auto str = enc.Finish();
-      result.SetValue(i, StringVector::AddString(result, str));
+      if (IsBlob) {
+        auto added_str = StringVector::AddStringOrBlob(result, str);
+        result.SetValue(i, Value::BLOB(const_data_ptr_cast(added_str.GetData()),
+                                       added_str.GetSize()));
+      } else {
+        result.SetValue(i, StringVector::AddString(result, str));
+      }
 
       destroyLinkedMultiPolygon(&first_lgp);
     }
@@ -607,35 +622,37 @@ CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
   ScalarFunctionSet funcs("h3_cells_to_multi_polygon_wkt");
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::VARCHAR)}, LogicalType::VARCHAR,
-      CellsToMultiPolygonFunction<
-          string_t, CellsToMultiPolygonVarcharInputOperator, WktEncoder>));
+      CellsToMultiPolygonFunction<string_t,
+                                  CellsToMultiPolygonVarcharInputOperator,
+                                  WktEncoder, false>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::UBIGINT)}, LogicalType::VARCHAR,
       CellsToMultiPolygonFunction<uint64_t, CellsToMultiPolygonInputOperator,
-                                  WktEncoder>));
+                                  WktEncoder, false>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::BIGINT)}, LogicalType::VARCHAR,
       CellsToMultiPolygonFunction<int64_t, CellsToMultiPolygonInputOperator,
-                                  WktEncoder>));
+                                  WktEncoder, false>));
   return CreateScalarFunctionInfo(funcs);
 }
 
-// CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWkbFunction() {
-//   ScalarFunctionSet funcs("h3_cells_to_multi_polygon_wkb");
-//   funcs.AddFunction(ScalarFunction(
-//       {LogicalType::LIST(LogicalType::VARCHAR)}, LogicalType::BLOB,
-//       CellsToMultiPolygonFunction<
-//           string_t, CellsToMultiPolygonVarcharInputOperator, WkbEncoder>));
-//   funcs.AddFunction(ScalarFunction(
-//       {LogicalType::LIST(LogicalType::UBIGINT)}, LogicalType::BLOB,
-//       CellsToMultiPolygonFunction<uint64_t, CellsToMultiPolygonInputOperator,
-//                                   WkbEncoder>));
-//   funcs.AddFunction(ScalarFunction(
-//       {LogicalType::LIST(LogicalType::BIGINT)}, LogicalType::BLOB,
-//       CellsToMultiPolygonFunction<int64_t, CellsToMultiPolygonInputOperator,
-//                                   WkbEncoder>));
-//   return CreateScalarFunctionInfo(funcs);
-// }
+CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWkbFunction() {
+  ScalarFunctionSet funcs("h3_cells_to_multi_polygon_wkb");
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::LIST(LogicalType::VARCHAR)}, LogicalType::BLOB,
+      CellsToMultiPolygonFunction<string_t,
+                                  CellsToMultiPolygonVarcharInputOperator,
+                                  WkbEncoder, true>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::LIST(LogicalType::UBIGINT)}, LogicalType::BLOB,
+      CellsToMultiPolygonFunction<uint64_t, CellsToMultiPolygonInputOperator,
+                                  WkbEncoder, true>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::LIST(LogicalType::BIGINT)}, LogicalType::BLOB,
+      CellsToMultiPolygonFunction<int64_t, CellsToMultiPolygonInputOperator,
+                                  WkbEncoder, true>));
+  return CreateScalarFunctionInfo(funcs);
+}
 
 CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsFunction() {
   // TODO: Expose flags

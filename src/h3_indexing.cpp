@@ -210,7 +210,7 @@ template <typename Encoder> struct CellToBoundaryOperator {
       enc.EndPolygon();
       auto str = enc.Finish();
 
-      return StringVector::AddString(result, str);
+      return StringVector::AddStringOrBlob(result, str);
     }
   }
 
