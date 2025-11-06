@@ -52,6 +52,8 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_is_res_class_iii` | True if the cell's resolution is class III
 | `h3_is_pentagon` | True if the cell is a pentagon
 | `h3_get_icosahedron_faces` | List of icosahedron face IDs the cell is on
+| `h3_construct_cell` | Create cell index from component parts
+| `h3_construct_cell_string` | Create cell index string from component parts
 | `h3_cell_to_parent` | Get coarser cell for a cell
 | `h3_cell_to_children` | Get finer cells for a cell
 | `h3_cell_to_center_child` | Get the center finer cell for a cell

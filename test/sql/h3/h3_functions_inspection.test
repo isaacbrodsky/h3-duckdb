@@ -157,3 +157,88 @@ query I
 select h3_get_icosahedron_faces('7fffffffffffffff')
 ----
 NULL
+
+query I
+select h3_construct_cell(0, 0, [])
+----
+576495936675512319
+
+query I
+select h3_construct_cell(-1, 0, [])
+----
+NULL
+
+query I
+select h3_construct_cell(0, -1, [])
+----
+NULL
+
+query I
+select h3_construct_cell(1, 5, [])
+----
+NULL
+
+query I
+select h3_construct_cell(1, 5, [1, 2])
+----
+NULL
+
+query I
+select h3_construct_cell(1, 5, [1])
+----
+581149069884260351
+
+query I
+select h3_construct_cell(1, 4, [1])
+----
+NULL
+
+query I
+select h3_construct_cell_string(0, 0, [])
+----
+8001fffffffffff
+
+query I
+select h3_construct_cell_string(-1, 0, [])
+----
+NULL
+
+query I
+select h3_construct_cell_string(0, -1, [])
+----
+NULL
+
+query I
+select h3_construct_cell_string(1, 5, [])
+----
+NULL
+
+query I
+select h3_construct_cell_string(1, 5, [1, 2])
+----
+NULL
+
+query I
+select h3_construct_cell_string(1, 5, [1])
+----
+810a7ffffffffff
+
+query I
+select h3_construct_cell_string(1, 4, [1])
+----
+NULL
+
+query I
+select h3_construct_cell_string(7, 20, [1, 2, 3, 4, 5, 6])
+----
+NULL
+
+query I
+select h3_construct_cell_string(15, 100, [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3])
+----
+8fc8539714e5c53
+
+query I
+select h3_construct_cell_string(15, 100, [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4])
+----
+NULL

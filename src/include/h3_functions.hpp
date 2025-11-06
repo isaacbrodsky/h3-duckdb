@@ -36,6 +36,8 @@ public:
     functions.push_back(GetIsPentagonFunction());
     functions.push_back(GetGetIcosahedronFacesFunction());
     functions.push_back(GetGetIndexDigitFunction());
+    functions.push_back(GetConstructCellFunction());
+    functions.push_back(GetConstructCellVarcharFunction());
 
     // Hierarchy
     functions.push_back(GetCellToParentFunction());
@@ -119,6 +121,8 @@ private:
   static CreateScalarFunctionInfo GetIsPentagonFunction();
   static CreateScalarFunctionInfo GetGetIcosahedronFacesFunction();
   static CreateScalarFunctionInfo GetGetIndexDigitFunction();
+  static CreateScalarFunctionInfo GetConstructCellFunction();
+  static CreateScalarFunctionInfo GetConstructCellVarcharFunction();
 
   // Hierarchy
   static CreateScalarFunctionInfo GetCellToParentFunction();
