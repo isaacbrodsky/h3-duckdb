@@ -1,6 +1,6 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
 [![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.4.1&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.4.1)
-[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.3.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.3.0)
+[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.4.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.4.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 This is a [DuckDB](https://duckdb.org) extension that adds support for the [H3 discrete global grid system](https://github.com/uber/h3/), so you can index points and geometries to hexagons in SQL.
