@@ -30,10 +30,14 @@ public:
     functions.push_back(GetGetBaseCellNumberFunction());
     functions.push_back(GetStringToH3Function());
     functions.push_back(GetH3ToStringFunction());
+    functions.push_back(GetIsValidIndexFunctions());
     functions.push_back(GetIsValidCellFunctions());
     functions.push_back(GetIsResClassIIIFunction());
     functions.push_back(GetIsPentagonFunction());
     functions.push_back(GetGetIcosahedronFacesFunction());
+    functions.push_back(GetGetIndexDigitFunction());
+    functions.push_back(GetConstructCellFunction());
+    functions.push_back(GetConstructCellVarcharFunction());
 
     // Hierarchy
     functions.push_back(GetCellToParentFunction());
@@ -111,10 +115,14 @@ private:
   static CreateScalarFunctionInfo GetGetBaseCellNumberFunction();
   static CreateScalarFunctionInfo GetStringToH3Function();
   static CreateScalarFunctionInfo GetH3ToStringFunction();
+  static CreateScalarFunctionInfo GetIsValidIndexFunctions();
   static CreateScalarFunctionInfo GetIsValidCellFunctions();
   static CreateScalarFunctionInfo GetIsResClassIIIFunction();
   static CreateScalarFunctionInfo GetIsPentagonFunction();
   static CreateScalarFunctionInfo GetGetIcosahedronFacesFunction();
+  static CreateScalarFunctionInfo GetGetIndexDigitFunction();
+  static CreateScalarFunctionInfo GetConstructCellFunction();
+  static CreateScalarFunctionInfo GetConstructCellVarcharFunction();
 
   // Hierarchy
   static CreateScalarFunctionInfo GetCellToParentFunction();
