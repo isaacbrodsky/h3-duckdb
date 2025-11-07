@@ -19,6 +19,66 @@ SELECT h3_get_resolution('822d57fffffffff');
 2
 
 query I
+SELECT h3_get_index_digit('822d57fffffffff', 1);
+----
+5
+
+query I
+SELECT h3_get_index_digit('822d57fffffffff', 2);
+----
+2
+
+query I
+SELECT h3_get_index_digit('822d57fffffffff', -1);
+----
+NULL
+
+query I
+SELECT h3_get_index_digit('822d57fffffffff', 3);
+----
+7
+
+query I
+SELECT h3_get_index_digit('822d57fffffffff', 20);
+----
+NULL
+
+query I
+SELECT h3_is_valid_index(cast(586265647244115967 as ubigint));
+----
+true
+
+query I
+SELECT h3_is_valid_index(cast(586265647244115967 as bigint));
+----
+true
+
+query I
+SELECT h3_is_valid_index('85283473fffffff');
+----
+true
+
+query I
+SELECT h3_is_valid_index(cast(1234 as ubigint));
+----
+false
+
+query I
+SELECT h3_is_valid_index(cast(1234 as bigint));
+----
+false
+
+query I
+SELECT h3_is_valid_index('1234');
+----
+false
+
+query I
+SELECT h3_is_valid_index('115283473fffffff');
+----
+true
+
+query I
 SELECT h3_is_valid_cell(cast(586265647244115967 as ubigint));
 ----
 true
@@ -45,6 +105,11 @@ false
 
 query I
 SELECT h3_is_valid_cell('1234');
+----
+false
+
+query I
+SELECT h3_is_valid_cell('115283473fffffff');
 ----
 false
 
@@ -90,5 +155,90 @@ NULL
 
 query I
 select h3_get_icosahedron_faces('7fffffffffffffff')
+----
+NULL
+
+query I
+select h3_construct_cell(0, 0, [])
+----
+576495936675512319
+
+query I
+select h3_construct_cell(-1, 0, [])
+----
+NULL
+
+query I
+select h3_construct_cell(0, -1, [])
+----
+NULL
+
+query I
+select h3_construct_cell(1, 5, [])
+----
+NULL
+
+query I
+select h3_construct_cell(1, 5, [1, 2])
+----
+NULL
+
+query I
+select h3_construct_cell(1, 5, [1])
+----
+581149069884260351
+
+query I
+select h3_construct_cell(1, 4, [1])
+----
+NULL
+
+query I
+select h3_construct_cell_string(0, 0, [])
+----
+8001fffffffffff
+
+query I
+select h3_construct_cell_string(-1, 0, [])
+----
+NULL
+
+query I
+select h3_construct_cell_string(0, -1, [])
+----
+NULL
+
+query I
+select h3_construct_cell_string(1, 5, [])
+----
+NULL
+
+query I
+select h3_construct_cell_string(1, 5, [1, 2])
+----
+NULL
+
+query I
+select h3_construct_cell_string(1, 5, [1])
+----
+810a7ffffffffff
+
+query I
+select h3_construct_cell_string(1, 4, [1])
+----
+NULL
+
+query I
+select h3_construct_cell_string(7, 20, [1, 2, 3, 4, 5, 6])
+----
+NULL
+
+query I
+select h3_construct_cell_string(15, 100, [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3])
+----
+8fc8539714e5c53
+
+query I
+select h3_construct_cell_string(15, 100, [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4])
 ----
 NULL

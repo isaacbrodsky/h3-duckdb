@@ -1,6 +1,6 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
 [![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.4.1&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.4.1)
-[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.3.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.3.0)
+[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.4.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.4.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 This is a [DuckDB](https://duckdb.org) extension that adds support for the [H3 discrete global grid system](https://github.com/uber/h3/), so you can index points and geometries to hexagons in SQL.
@@ -45,12 +45,16 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_cell_to_boundary_wkb` | Convert cell ID to cell boundary WKB
 | `h3_get_resolution` | Get resolution number of cell ID
 | `h3_get_base_cell_number` | Get base cell number of cell ID
+| `h3_get_index_digit` | Get specified indexing digit of a cell
 | `h3_string_to_h3` | Convert VARCHAR cell ID to UBIGINT
 | `h3_h3_to_string` | Convert BIGINT or UBIGINT cell ID to VARCHAR
 | `h3_is_valid_cell` | True if this is a valid cell ID
+| `h3_is_valid_index` | True if this is a valid cell/edge/vertex ID
 | `h3_is_res_class_iii` | True if the cell's resolution is class III
 | `h3_is_pentagon` | True if the cell is a pentagon
 | `h3_get_icosahedron_faces` | List of icosahedron face IDs the cell is on
+| `h3_construct_cell` | Create cell index from component parts
+| `h3_construct_cell_string` | Create cell index string from component parts
 | `h3_cell_to_parent` | Get coarser cell for a cell
 | `h3_cell_to_children` | Get finer cells for a cell
 | `h3_cell_to_center_child` | Get the center finer cell for a cell
