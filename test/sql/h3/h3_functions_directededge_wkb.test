@@ -1,4 +1,4 @@
-# name: test/sql/h3/h3_functions_directededg_wkb.test
+# name: test/sql/h3/h3_functions_directededge_wkb.test
 # group: [h3]
 
 require h3
