@@ -1,0 +1,40 @@
+# name: test/sql/h3/h3_functions_directededge_wkb.test
+# group: [h3]
+
+require h3
+
+statement ok
+install spatial
+
+statement ok
+load spatial
+
+query I
+SELECT h3_directed_edge_to_boundary_wkb(0::ubigint)
+----
+NULL
+
+query I
+SELECT h3_directed_edge_to_boundary_wkb(0::bigint)
+----
+NULL
+
+query I
+SELECT h3_directed_edge_to_boundary_wkb('0')
+----
+NULL
+
+query I
+SELECT ST_ReducePrecision(st_geomfromwkb(h3_directed_edge_to_boundary_wkb(1608492358964346879::ubigint)), 0.0000000000001)
+----
+LINESTRING (-121.9150803270562 37.2713558667319, -121.8622232890249 37.3539264508523, -121.9150803270562 37.2713558667319)
+
+query I
+SELECT ST_ReducePrecision(st_geomfromwkb(h3_directed_edge_to_boundary_wkb(1608492358964346879::bigint)), 0.0000000000001)
+----
+LINESTRING (-121.9150803270562 37.2713558667319, -121.8622232890249 37.3539264508523, -121.9150803270562 37.2713558667319)
+
+query I
+SELECT ST_ReducePrecision(st_geomfromwkb(h3_directed_edge_to_boundary_wkb('115283473fffffff')), 0.0000000000001)
+----
+LINESTRING (-122.0377349642703 37.4201286776778, -122.090428929044 37.337556084353, -122.0377349642703 37.4201286776778)
