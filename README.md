@@ -41,7 +41,8 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_cell_to_lat` | Convert cell ID to latitude
 | `h3_cell_to_lng` | Convert cell ID to longitude
 | `h3_cell_to_latlng` | Convert cell ID to latitude/longitude
-| `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary
+| `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary WKT
+| `h3_cell_to_boundary_wkb` | Convert cell ID to cell boundary WKB
 | `h3_get_resolution` | Get resolution number of cell ID
 | `h3_get_base_cell_number` | Get base cell number of cell ID
 | `h3_get_index_digit` | Get specified indexing digit of a cell
@@ -86,6 +87,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_cells_to_directed_edge` | Convert an origin/destination pair to directed edge ID
 | `h3_are_neighbor_cells` | True if the two cell IDs are directly adjacent
 | `h3_directed_edge_to_boundary_wkt` | Convert directed edge ID to linestring WKT
+| `h3_directed_edge_to_boundary_wkb` | Convert directed edge ID to linestring WKB
 | `h3_get_hexagon_area_avg` | Get average area of a hexagon cell at resolution
 | `h3_cell_area` | Get the area of a cell ID
 | `h3_get_hexagon_edge_length_avg` | Average hexagon edge length at resolution
@@ -97,6 +99,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_get_pentagons_string` | Get all pentagons at a resolution (returns VARCHAR)
 | `h3_great_circle_distance` | Compute the great circle distance between two points (haversine)
 | `h3_cells_to_multi_polygon_wkt` | Convert a set of cells to multipolygon WKT
+| `h3_cells_to_multi_polygon_wkb` | Convert a set of cells to multipolygon WKB
 | `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells
 | `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells (returns VARCHAR)
 | `h3_polygon_wkt_to_cells_experimental` | Convert polygon WKT to a set of cells, new algorithm

@@ -24,6 +24,7 @@ public:
     functions.push_back(GetCellToLngFunction());
     functions.push_back(GetCellToLatLngFunction());
     functions.push_back(GetCellToBoundaryWktFunction());
+    functions.push_back(GetCellToBoundaryWkbFunction());
 
     // Inspection
     functions.push_back(GetGetResolutionFunction());
@@ -70,6 +71,7 @@ public:
     functions.push_back(GetDirectedEdgeToCellsFunction());
     functions.push_back(GetOriginToDirectedEdgesFunction());
     functions.push_back(GetDirectedEdgeToBoundaryWktFunction());
+    functions.push_back(GetDirectedEdgeToBoundaryWkbFunction());
 
     // Vertex
     functions.push_back(GetCellToVertexFunction());
@@ -93,6 +95,7 @@ public:
 
     // Regions
     functions.push_back(GetCellsToMultiPolygonWktFunction());
+    functions.push_back(GetCellsToMultiPolygonWkbFunction());
     functions.push_back(GetPolygonWktToCellsFunction());
     functions.push_back(GetPolygonWktToCellsVarcharFunction());
     functions.push_back(GetPolygonWktToCellsExperimentalFunction());
@@ -109,6 +112,7 @@ private:
   static CreateScalarFunctionInfo GetCellToLngFunction();
   static CreateScalarFunctionInfo GetCellToLatLngFunction();
   static CreateScalarFunctionInfo GetCellToBoundaryWktFunction();
+  static CreateScalarFunctionInfo GetCellToBoundaryWkbFunction();
 
   // Inspection
   static CreateScalarFunctionInfo GetGetResolutionFunction();
@@ -155,6 +159,7 @@ private:
   static CreateScalarFunctionInfo GetDirectedEdgeToCellsFunction();
   static CreateScalarFunctionInfo GetOriginToDirectedEdgesFunction();
   static CreateScalarFunctionInfo GetDirectedEdgeToBoundaryWktFunction();
+  static CreateScalarFunctionInfo GetDirectedEdgeToBoundaryWkbFunction();
 
   // Vertex
   static CreateScalarFunctionInfo GetCellToVertexFunction();
@@ -178,6 +183,7 @@ private:
 
   // Regions
   static CreateScalarFunctionInfo GetCellsToMultiPolygonWktFunction();
+  static CreateScalarFunctionInfo GetCellsToMultiPolygonWkbFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsVarcharFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsExperimentalFunction();

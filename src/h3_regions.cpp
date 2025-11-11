@@ -1,5 +1,6 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
+#include "well_known.hpp"
 
 #include "duckdb/common/helper.hpp"
 
@@ -11,14 +12,14 @@ static const std::string EMPTY = "EMPTY";
 // TODO: For convenience, 0 is returned instead of throwing. However, this may
 // actually be interpreted by cellsToMultiPolygon as the index referring to base
 // cell 0.
-struct CellsToMultiPolygonWktInputOperator {
+struct CellsToMultiPolygonInputOperator {
   static H3Index Get(const UnifiedVectorFormat &child_data,
                      const size_t offset) {
     return ((H3Index *)child_data.data)[child_data.sel->get_index(offset)];
   }
 };
 
-struct CellsToMultiPolygonWktVarcharInputOperator {
+struct CellsToMultiPolygonVarcharInputOperator {
   static H3Index Get(const UnifiedVectorFormat &child_data,
                      const size_t offset) {
     auto str = ((string_t *)child_data.data)[child_data.sel->get_index(offset)]
@@ -33,10 +34,25 @@ struct CellsToMultiPolygonWktVarcharInputOperator {
   }
 };
 
-template <typename InputType, class InputOperator>
-static void CellsToMultiPolygonWktFunction(DataChunk &args,
-                                           ExpressionState &state,
-                                           Vector &result) {
+static uint32_t PolygonCount(const LinkedGeoPolygon *lgp) {
+  uint32_t count = 0;
+  for (auto polygon = lgp; polygon && polygon->first; polygon = polygon->next) {
+    count++;
+  }
+  return count;
+}
+
+static uint32_t LoopCount(const LinkedGeoPolygon *lgp) {
+  uint32_t count = 0;
+  for (auto loop = lgp->first; loop && loop->first; loop = loop->next) {
+    count++;
+  }
+  return count;
+}
+
+template <typename InputType, class InputOperator, class Encoder, bool IsBlob>
+static void CellsToMultiPolygonFunction(DataChunk &args, ExpressionState &state,
+                                        Vector &result) {
   D_ASSERT(args.ColumnCount() == 1);
   auto count = args.size();
 
@@ -85,50 +101,52 @@ static void CellsToMultiPolygonWktFunction(DataChunk &args,
     if (err) {
       result_validity.SetInvalid(i);
     } else {
-      std::string str = "MULTIPOLYGON ";
+      auto enc = Encoder();
+      auto polygon_count = PolygonCount(&first_lgp);
+      enc.StartMultiPolygon(polygon_count);
 
       if (first_lgp.first) {
-        str += "(";
-        std::string lgp_sep = "";
         LinkedGeoPolygon *lgp = &first_lgp;
         while (lgp) {
+          auto loop_count = LoopCount(lgp);
+          enc.StartMultiPolygonPolygon(loop_count);
           LinkedGeoLoop *loop = lgp->first;
-          std::string loop_sep = "";
-          str += lgp_sep + "(";
           while (loop) {
+            enc.StartMultiPolygonLoop();
             LinkedLatLng *lat_lng = loop->first;
-            std::string lat_lng_sep = "";
-            str += loop_sep + "(";
             while (lat_lng) {
-              str += StringUtil::Format("%s%f %f", lat_lng_sep,
-                                        radsToDegs(lat_lng->vertex.lng),
-                                        radsToDegs(lat_lng->vertex.lat));
-
-              lat_lng_sep = ", ";
+              enc.Point(radsToDegs(lat_lng->vertex.lng),
+                        radsToDegs(lat_lng->vertex.lat));
               lat_lng = lat_lng->next;
             }
 
             if (loop->first) {
               // Duplicate first vertex, to close the polygon
-              str += StringUtil::Format(", %f %f",
-                                        radsToDegs(loop->first->vertex.lng),
-                                        radsToDegs(loop->first->vertex.lat));
+              enc.Point(radsToDegs(loop->first->vertex.lng),
+                        radsToDegs(loop->first->vertex.lat));
             }
 
-            str += ")";
-            loop_sep = ", ";
             loop = loop->next;
+            enc.EndMultiPolygonLoop();
           }
-          str += ")";
-          lgp_sep = ", ";
+
           lgp = lgp->next;
+          enc.EndMultiPolygonPolygon();
         }
-        str += ")";
+
+        enc.EndMultiPolygon();
       } else {
-        str += "EMPTY";
+        enc.MultiPolygonEmpty();
       }
 
-      result.SetValue(i, StringVector::AddString(result, str));
+      auto str = enc.Finish();
+      if (IsBlob) {
+        auto added_str = StringVector::AddStringOrBlob(result, str);
+        result.SetValue(i, Value::BLOB(const_data_ptr_cast(added_str.GetData()),
+                                       added_str.GetSize()));
+      } else {
+        result.SetValue(i, StringVector::AddString(result, str));
+      }
 
       destroyLinkedMultiPolygon(&first_lgp);
     }
@@ -604,16 +622,35 @@ CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
   ScalarFunctionSet funcs("h3_cells_to_multi_polygon_wkt");
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::VARCHAR)}, LogicalType::VARCHAR,
-      CellsToMultiPolygonWktFunction<
-          string_t, CellsToMultiPolygonWktVarcharInputOperator>));
+      CellsToMultiPolygonFunction<string_t,
+                                  CellsToMultiPolygonVarcharInputOperator,
+                                  WktEncoder, false>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::UBIGINT)}, LogicalType::VARCHAR,
-      CellsToMultiPolygonWktFunction<uint64_t,
-                                     CellsToMultiPolygonWktInputOperator>));
+      CellsToMultiPolygonFunction<uint64_t, CellsToMultiPolygonInputOperator,
+                                  WktEncoder, false>));
   funcs.AddFunction(ScalarFunction(
       {LogicalType::LIST(LogicalType::BIGINT)}, LogicalType::VARCHAR,
-      CellsToMultiPolygonWktFunction<int64_t,
-                                     CellsToMultiPolygonWktInputOperator>));
+      CellsToMultiPolygonFunction<int64_t, CellsToMultiPolygonInputOperator,
+                                  WktEncoder, false>));
+  return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWkbFunction() {
+  ScalarFunctionSet funcs("h3_cells_to_multi_polygon_wkb");
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::LIST(LogicalType::VARCHAR)}, LogicalType::BLOB,
+      CellsToMultiPolygonFunction<string_t,
+                                  CellsToMultiPolygonVarcharInputOperator,
+                                  WkbEncoder, true>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::LIST(LogicalType::UBIGINT)}, LogicalType::BLOB,
+      CellsToMultiPolygonFunction<uint64_t, CellsToMultiPolygonInputOperator,
+                                  WkbEncoder, true>));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::LIST(LogicalType::BIGINT)}, LogicalType::BLOB,
+      CellsToMultiPolygonFunction<int64_t, CellsToMultiPolygonInputOperator,
+                                  WkbEncoder, true>));
   return CreateScalarFunctionInfo(funcs);
 }
 
