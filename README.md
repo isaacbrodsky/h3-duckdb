@@ -57,6 +57,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_construct_cell_string` | Create cell index string from component parts
 | `h3_cell_to_parent` | Get coarser cell for a cell
 | `h3_cell_to_children` | Get finer cells for a cell
+| `h3_cell_to_children_size` | Number of finer cells for a cell
 | `h3_cell_to_center_child` | Get the center finer cell for a cell
 | `h3_cell_to_child_pos` | Get a sub-indexing number for a cell inside a parent
 | `h3_child_pos_to_cell` | Convert parent and sub-indexing number to a cell ID
@@ -69,6 +70,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_grid_disk_distances_safe` | Find cells within a grid distance, sorted by distance
 | `h3_grid_ring` | Find cells exactly a grid distance away
 | `h3_grid_ring_unsafe` | Find cells exactly a grid distance away, with no pentagon distortion
+| `h3_max_grid_disk_size` | Maximum number of cells for a grid disk for size K
 | `h3_grid_path_cells` | Find a grid path to connect two cells
 | `h3_grid_distance` | Find the grid distance between two cells
 | `h3_cell_to_local_ij` | Convert a cell ID to a local I,J coordinate space

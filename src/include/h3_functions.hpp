@@ -43,6 +43,7 @@ public:
     // Hierarchy
     functions.push_back(GetCellToParentFunction());
     functions.push_back(GetCellToChildrenFunction());
+    functions.push_back(GetCellToChildrenSizeFunction());
     functions.push_back(GetCellToCenterChildFunction());
     functions.push_back(GetCellToChildPosFunction());
     functions.push_back(GetChildPosToCellFunction());
@@ -59,6 +60,7 @@ public:
     functions.push_back(GetGridRingUnsafeFunction());
     functions.push_back(GetGridPathCellsFunction());
     functions.push_back(GetGridDistanceFunction());
+    functions.push_back(GetMaxGridDiskSizeFunction());
     functions.push_back(GetCellToLocalIjFunction());
     functions.push_back(GetLocalIjToCellFunction());
 
@@ -131,6 +133,7 @@ private:
   // Hierarchy
   static CreateScalarFunctionInfo GetCellToParentFunction();
   static CreateScalarFunctionInfo GetCellToChildrenFunction();
+  static CreateScalarFunctionInfo GetCellToChildrenSizeFunction();
   static CreateScalarFunctionInfo GetCellToCenterChildFunction();
   static CreateScalarFunctionInfo GetCellToChildPosFunction();
   static CreateScalarFunctionInfo GetChildPosToCellFunction();
@@ -147,6 +150,7 @@ private:
   static CreateScalarFunctionInfo GetGridRingUnsafeFunction();
   static CreateScalarFunctionInfo GetGridPathCellsFunction();
   static CreateScalarFunctionInfo GetGridDistanceFunction();
+  static CreateScalarFunctionInfo GetMaxGridDiskSizeFunction();
   static CreateScalarFunctionInfo GetCellToLocalIjFunction();
   static CreateScalarFunctionInfo GetLocalIjToCellFunction();
 

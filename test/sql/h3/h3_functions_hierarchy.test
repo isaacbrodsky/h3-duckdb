@@ -99,6 +99,41 @@ select h3_cell_to_children('822d57fffffffff', 30);
 NULL
 
 query I
+select h3_cell_to_children_size(586265647244115967::ubigint, 3);
+----
+7
+
+query I
+select h3_cell_to_children_size(586265647244115967::bigint, 3);
+----
+7
+
+query I
+select h3_cell_to_children_size('822d57fffffffff', 3);
+----
+7
+
+query I
+select h3_cell_to_children_size('822d57fffffffff', 4);
+----
+49
+
+query I
+select h3_cell_to_children_size(586265647244115967::ubigint, 30);
+----
+NULL
+
+query I
+select h3_cell_to_children_size(586265647244115967::bigint, 30);
+----
+NULL
+
+query I
+select h3_cell_to_children_size('822d57fffffffff', 30);
+----
+NULL
+
+query I
 select h3_cell_to_child_pos(597563343967879167::ubigint, 1);
 ----
 70
