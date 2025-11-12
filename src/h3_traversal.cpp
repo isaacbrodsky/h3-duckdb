@@ -660,6 +660,23 @@ static void LocalIjToCellVarcharFunction(DataChunk &args,
       });
 }
 
+static void MaxGridDiskSizeFunction(DataChunk &args, ExpressionState &state,
+                                    Vector &result) {
+  auto &inputs = args.data[0];
+  UnaryExecutor::ExecuteWithNulls<int32_t, int64_t>(
+      inputs, result, args.size(),
+      [&](int32_t k, ValidityMask &mask, idx_t idx) {
+        int64_t out;
+        H3Error err = maxGridDiskSize(k, &out);
+        if (err) {
+          mask.SetInvalid(idx);
+          return (int64_t)0;
+        } else {
+          return out;
+        }
+      });
+}
+
 CreateScalarFunctionInfo H3Functions::GetGridDiskFunction() {
   ScalarFunctionSet funcs("h3_grid_disk");
   funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
@@ -672,6 +689,13 @@ CreateScalarFunctionInfo H3Functions::GetGridDiskFunction() {
       ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
                      LogicalType::LIST(LogicalType::VARCHAR),
                      GridDiskTmplVarcharFunction<GridDiskOperator>));
+  return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetMaxGridDiskSizeFunction() {
+  ScalarFunctionSet funcs("h3_max_grid_disk_size");
+  funcs.AddFunction(ScalarFunction({LogicalType::INTEGER}, LogicalType::BIGINT,
+                                   MaxGridDiskSizeFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 

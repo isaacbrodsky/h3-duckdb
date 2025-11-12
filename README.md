@@ -1,5 +1,5 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
-[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.4.1&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.4.1)
+[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.4.2&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.4.2)
 [![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.4.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.4.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
@@ -57,6 +57,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_construct_cell_string` | Create cell index string from component parts
 | `h3_cell_to_parent` | Get coarser cell for a cell
 | `h3_cell_to_children` | Get finer cells for a cell
+| `h3_cell_to_children_size` | Number of finer cells for a cell
 | `h3_cell_to_center_child` | Get the center finer cell for a cell
 | `h3_cell_to_child_pos` | Get a sub-indexing number for a cell inside a parent
 | `h3_child_pos_to_cell` | Convert parent and sub-indexing number to a cell ID
@@ -69,6 +70,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_grid_disk_distances_safe` | Find cells within a grid distance, sorted by distance
 | `h3_grid_ring` | Find cells exactly a grid distance away
 | `h3_grid_ring_unsafe` | Find cells exactly a grid distance away, with no pentagon distortion
+| `h3_max_grid_disk_size` | Maximum number of cells for a grid disk for size K
 | `h3_grid_path_cells` | Find a grid path to connect two cells
 | `h3_grid_distance` | Find the grid distance between two cells
 | `h3_cell_to_local_ij` | Convert a cell ID to a local I,J coordinate space
@@ -118,7 +120,7 @@ INSTALL h3 FROM 'https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev';
 LOAD h3;
 ```
 
-If you want to directly download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/linux_amd64/h3.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/linux_amd64_gcc4/h3.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/linux_arm64/h3.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/osx_amd64/h3.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/osx_arm64/h3.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/wasm_eh/h3.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/wasm_mvp/h3.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/wasm_threads/h3.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/windows_amd64/h3.duckdb_extension.gz) [Windows AMD64 MinGW](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.1/windows_amd64_mingw/h3.duckdb_extension.gz)
+If you want to directly download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/linux_amd64/h3.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/linux_amd64_gcc4/h3.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/linux_arm64/h3.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/osx_amd64/h3.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/osx_arm64/h3.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/wasm_eh/h3.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/wasm_mvp/h3.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/wasm_threads/h3.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/windows_amd64/h3.duckdb_extension.gz) [Windows AMD64 MinGW](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.4.2/windows_amd64_mingw/h3.duckdb_extension.gz)
 
 # Development
 

@@ -139,6 +139,51 @@ static void CellToChildrenVarcharFunction(DataChunk &args,
   result.Verify(args.size());
 }
 
+template <typename T>
+static void CellToChildrenSizeFunction(DataChunk &args, ExpressionState &state,
+                                       Vector &result) {
+  auto &inputs = args.data[0];
+  auto &inputs2 = args.data[1];
+  BinaryExecutor::ExecuteWithNulls<T, int32_t, int64_t>(
+      inputs, inputs2, result, args.size(),
+      [&](T h, int32_t childRes, ValidityMask &mask, idx_t idx) {
+        int64_t out;
+        H3Error err = cellToChildrenSize(h, childRes, &out);
+        if (err) {
+          mask.SetInvalid(idx);
+          return (int64_t)0;
+        } else {
+          return out;
+        }
+      });
+}
+
+static void CellToChildrenSizeVarcharFunction(DataChunk &args,
+                                              ExpressionState &state,
+                                              Vector &result) {
+  auto &inputs = args.data[0];
+  auto &inputs2 = args.data[1];
+  BinaryExecutor::ExecuteWithNulls<string_t, int32_t, int64_t>(
+      inputs, inputs2, result, args.size(),
+      [&](string_t hStr, int32_t childRes, ValidityMask &mask, idx_t idx) {
+        int64_t out;
+        H3Index h;
+        H3Error err = stringToH3(hStr.GetString().c_str(), &h);
+        if (err) {
+          mask.SetInvalid(idx);
+          return (int64_t)0;
+        } else {
+          H3Error err = cellToChildrenSize(h, childRes, &out);
+          if (err) {
+            mask.SetInvalid(idx);
+            return (int64_t)0;
+          } else {
+            return out;
+          }
+        }
+      });
+}
+
 static void CellToCenterChildVarcharFunction(DataChunk &args,
                                              ExpressionState &state,
                                              Vector &result) {
@@ -670,6 +715,20 @@ CreateScalarFunctionInfo H3Functions::GetCellToChildrenFunction() {
   funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
                                    LogicalType::LIST(LogicalType::BIGINT),
                                    CellToChildrenFunction));
+  return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetCellToChildrenSizeFunction() {
+  ScalarFunctionSet funcs("h3_cell_to_children_size");
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
+                                   LogicalType::BIGINT,
+                                   CellToChildrenSizeVarcharFunction));
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
+                                   LogicalType::BIGINT,
+                                   CellToChildrenSizeFunction<uint64_t>));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
+                                   LogicalType::BIGINT,
+                                   CellToChildrenSizeFunction<int64_t>));
   return CreateScalarFunctionInfo(funcs);
 }
 
