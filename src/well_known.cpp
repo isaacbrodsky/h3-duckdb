@@ -2,6 +2,7 @@
 #include "well_known.hpp"
 #include "h3api.h"
 #include "duckdb/common/string_util.hpp"
+#include <cassert>
 
 namespace duckdb {
 
