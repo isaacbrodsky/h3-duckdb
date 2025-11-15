@@ -319,15 +319,22 @@ static void GetIcosahedronFacesVarcharFunction(DataChunk &args,
 
 static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
-  D_ASSERT(args.ColumnCount() == 3);
+  D_ASSERT(args.ColumnCount() == 3 || args.ColumnCount() == 2);
   auto count = args.size();
+  bool hasRes = args.ColumnCount() == 3;
+  bool resVecConstant = true;
 
-  Vector &resVec = args.data[0];
-  Vector &baseCellVec = args.data[1];
-  Vector &digitsVec = args.data[2];
-  if (resVec.GetType().id() == LogicalTypeId::SQLNULL) {
-    result.Reference(resVec);
-    return;
+  Vector &baseCellVec = args.data[0];
+  Vector &digitsVec = args.data[1];
+  UnifiedVectorFormat res_data;
+  if (hasRes) {
+    Vector &resVec = args.data[2];
+    if (resVec.GetType().id() == LogicalTypeId::SQLNULL) {
+      result.Reference(resVec);
+      return;
+    }
+    resVecConstant = resVec.GetVectorType() == VectorType::CONSTANT_VECTOR;
+    resVec.ToUnifiedFormat(count, res_data);
   }
   if (baseCellVec.GetType().id() == LogicalTypeId::SQLNULL) {
     result.Reference(baseCellVec);
@@ -348,9 +355,6 @@ static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
   UnifiedVectorFormat lists_data;
   digitsVec.ToUnifiedFormat(count, lists_data);
   auto list_entries = UnifiedVectorFormat::GetData<list_entry_t>(lists_data);
-
-  UnifiedVectorFormat res_data;
-  resVec.ToUnifiedFormat(count, res_data);
 
   UnifiedVectorFormat base_cell_data;
   baseCellVec.ToUnifiedFormat(count, base_cell_data);
@@ -363,22 +367,15 @@ static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
   for (idx_t i = 0; i < count; i++) {
     auto list_index = lists_data.sel->get_index(i);
     if (!lists_data.validity.RowIsValid(list_index) ||
-        !res_data.validity.RowIsValid(i) ||
+        (hasRes && !res_data.validity.RowIsValid(i)) ||
         !base_cell_data.validity.RowIsValid(i)) {
       result_validity.SetInvalid(i);
       continue;
     }
 
-    auto res =
-        resVec.GetValue(i).DefaultCastAs(LogicalType::INTEGER).GetValue<int>();
     auto baseCell = baseCellVec.GetValue(i)
                         .DefaultCastAs(LogicalType::INTEGER)
                         .GetValue<int>();
-
-    if (list_entries[i].length != res) {
-      result_validity.SetInvalid(i);
-      continue;
-    }
 
     vector<int> digits(list_entries[i].length);
     for (size_t j = 0; j < list_entries[i].length; j++) {
@@ -390,6 +387,17 @@ static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
       }
     }
 
+    auto res = hasRes ? args.data[2]
+                            .GetValue(i)
+                            .DefaultCastAs(LogicalType::INTEGER)
+                            .GetValue<int>()
+                      : digits.size();
+
+    if (list_entries[i].length != res) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+
     H3Index out;
     H3Error err = constructCell(res, baseCell, digits.data(), &out);
     if (err) {
@@ -399,7 +407,7 @@ static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
     }
   }
 
-  if (resVec.GetVectorType() == VectorType::CONSTANT_VECTOR &&
+  if (resVecConstant &&
       baseCellVec.GetVectorType() == VectorType::CONSTANT_VECTOR &&
       digitsVec.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
@@ -410,15 +418,22 @@ static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
 static void ConstructCellVarcharFunction(DataChunk &args,
                                          ExpressionState &state,
                                          Vector &result) {
-  D_ASSERT(args.ColumnCount() == 3);
+  D_ASSERT(args.ColumnCount() == 3 || args.ColumnCount() == 2);
   auto count = args.size();
+  bool hasRes = args.ColumnCount() == 3;
+  bool resVecConstant = true;
 
-  Vector &resVec = args.data[0];
-  Vector &baseCellVec = args.data[1];
-  Vector &digitsVec = args.data[2];
-  if (resVec.GetType().id() == LogicalTypeId::SQLNULL) {
-    result.Reference(resVec);
-    return;
+  Vector &baseCellVec = args.data[0];
+  Vector &digitsVec = args.data[1];
+  UnifiedVectorFormat res_data;
+  if (hasRes) {
+    Vector &resVec = args.data[2];
+    if (resVec.GetType().id() == LogicalTypeId::SQLNULL) {
+      result.Reference(resVec);
+      return;
+    }
+    resVecConstant = resVec.GetVectorType() == VectorType::CONSTANT_VECTOR;
+    resVec.ToUnifiedFormat(count, res_data);
   }
   if (baseCellVec.GetType().id() == LogicalTypeId::SQLNULL) {
     result.Reference(baseCellVec);
@@ -440,9 +455,6 @@ static void ConstructCellVarcharFunction(DataChunk &args,
   digitsVec.ToUnifiedFormat(count, lists_data);
   auto list_entries = UnifiedVectorFormat::GetData<list_entry_t>(lists_data);
 
-  UnifiedVectorFormat res_data;
-  resVec.ToUnifiedFormat(count, res_data);
-
   UnifiedVectorFormat base_cell_data;
   baseCellVec.ToUnifiedFormat(count, base_cell_data);
 
@@ -454,22 +466,15 @@ static void ConstructCellVarcharFunction(DataChunk &args,
   for (idx_t i = 0; i < count; i++) {
     auto list_index = lists_data.sel->get_index(i);
     if (!lists_data.validity.RowIsValid(list_index) ||
-        !res_data.validity.RowIsValid(i) ||
+        (hasRes && !res_data.validity.RowIsValid(i)) ||
         !base_cell_data.validity.RowIsValid(i)) {
       result_validity.SetInvalid(i);
       continue;
     }
 
-    auto res =
-        resVec.GetValue(i).DefaultCastAs(LogicalType::INTEGER).GetValue<int>();
     auto baseCell = baseCellVec.GetValue(i)
                         .DefaultCastAs(LogicalType::INTEGER)
                         .GetValue<int>();
-
-    if (list_entries[i].length != res) {
-      result_validity.SetInvalid(i);
-      continue;
-    }
 
     vector<int> digits(list_entries[i].length);
     for (size_t j = 0; j < list_entries[i].length; j++) {
@@ -479,6 +484,17 @@ static void ConstructCellVarcharFunction(DataChunk &args,
             ((int *)child_data
                  .data)[child_data.sel->get_index(list_entries[i].offset + j)];
       }
+    }
+
+    auto res = hasRes ? args.data[2]
+                            .GetValue(i)
+                            .DefaultCastAs(LogicalType::INTEGER)
+                            .GetValue<int>()
+                      : digits.size();
+
+    if (list_entries[i].length != res) {
+      result_validity.SetInvalid(i);
+      continue;
     }
 
     H3Index out;
@@ -491,7 +507,7 @@ static void ConstructCellVarcharFunction(DataChunk &args,
     }
   }
 
-  if (resVec.GetVectorType() == VectorType::CONSTANT_VECTOR &&
+  if (resVecConstant &&
       baseCellVec.GetVectorType() == VectorType::CONSTANT_VECTOR &&
       digitsVec.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
@@ -609,19 +625,31 @@ CreateScalarFunctionInfo H3Functions::GetGetIcosahedronFacesFunction() {
 }
 
 CreateScalarFunctionInfo H3Functions::GetConstructCellFunction() {
-  return CreateScalarFunctionInfo(
-      ScalarFunction("h3_construct_cell",
-                     {LogicalType::INTEGER, LogicalType::INTEGER,
-                      LogicalType::LIST(LogicalType::INTEGER)},
-                     LogicalType::UBIGINT, ConstructCellFunction));
+  ScalarFunctionSet funcs("h3_construct_cell");
+  funcs.AddFunction(ScalarFunction(
+      "h3_construct_cell",
+      {LogicalType::INTEGER, LogicalType::LIST(LogicalType::INTEGER)},
+      LogicalType::UBIGINT, ConstructCellFunction));
+  funcs.AddFunction(ScalarFunction(
+      "h3_construct_cell",
+      {LogicalType::INTEGER, LogicalType::LIST(LogicalType::INTEGER),
+       LogicalType::INTEGER},
+      LogicalType::UBIGINT, ConstructCellFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 CreateScalarFunctionInfo H3Functions::GetConstructCellVarcharFunction() {
-  return CreateScalarFunctionInfo(
-      ScalarFunction("h3_construct_cell_string",
-                     {LogicalType::INTEGER, LogicalType::INTEGER,
-                      LogicalType::LIST(LogicalType::INTEGER)},
-                     LogicalType::VARCHAR, ConstructCellVarcharFunction));
+  ScalarFunctionSet funcs("h3_construct_cell_string");
+  funcs.AddFunction(ScalarFunction(
+      "h3_construct_cell_string",
+      {LogicalType::INTEGER, LogicalType::LIST(LogicalType::INTEGER)},
+      LogicalType::VARCHAR, ConstructCellVarcharFunction));
+  funcs.AddFunction(ScalarFunction(
+      "h3_construct_cell_string",
+      {LogicalType::INTEGER, LogicalType::LIST(LogicalType::INTEGER),
+       LogicalType::INTEGER},
+      LogicalType::VARCHAR, ConstructCellVarcharFunction));
+  return CreateScalarFunctionInfo(funcs);
 }
 
 } // namespace duckdb
