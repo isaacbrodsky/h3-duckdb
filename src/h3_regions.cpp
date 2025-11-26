@@ -1,6 +1,7 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
 #include "well_known.hpp"
+#include "well_known_decoder.hpp"
 
 #include "duckdb/common/helper.hpp"
 
@@ -618,6 +619,77 @@ static void PolygonWktToCellsExperimentalVarcharFunctionSwapped(
       });
 }
 
+static list_entry_t
+PolygonWkbToCellsExperimentalInnerFunction(string_t input, int res,
+                                           string_t flagsStr, Vector &result) {
+  // TODO: Note this function is not fully noexcept -- some invalid WKT strings
+  // will throw, others will return empty lists.
+  int32_t flags = 0;
+
+  uint64_t offset = ListVector::GetListSize(result);
+
+  // TODO: Make flags easier to work with
+  if (flagsStr == "CONTAINMENT_CENTER" || flagsStr == "center") {
+    flags = 0;
+  } else if (flagsStr == "CONTAINMENT_FULL" || flagsStr == "full") {
+    flags = 1;
+  } else if (flagsStr == "CONTAINMENT_OVERLAPPING" || flagsStr == "overlap") {
+    flags = 2;
+  } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX" ||
+             flagsStr == "overlap_bbox") {
+    flags = 3;
+  } else {
+    // Invalid flags input
+    return list_entry_t(offset, 0);
+  }
+
+  auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+  std::vector<GeoLoop> holes;
+  std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
+  GeoPolygon polygon = {0};
+  DecodeWkbPolygon(input, polygon, outerVerts, holes, holesVerts);
+  printf("%u OUT\n", polygon.geoloop.numVerts);
+  if (polygon.geoloop.numVerts > 0) {
+    int64_t numCells = 0;
+    H3Error err =
+        maxPolygonToCellsSizeExperimental(&polygon, res, flags, &numCells);
+    printf("%llu estimate\n", numCells);
+    if (err) {
+      printf("%u ERR\n", err);
+      return list_entry_t(offset, 0);
+    } else {
+      std::vector<H3Index> out(numCells);
+      H3Error err2 = polygonToCellsExperimental(&polygon, res, flags, numCells,
+                                                out.data());
+      if (err2) {
+        printf("%u ERR2\n", err2);
+        return list_entry_t(offset, 0);
+      } else {
+        uint64_t actual = 0;
+        for (H3Index outCell : out) {
+          if (outCell != H3_NULL) {
+            ListVector::PushBack(result, Value::UBIGINT(outCell));
+            actual++;
+          }
+        }
+        return list_entry_t(offset, actual);
+      }
+    }
+  }
+  return list_entry_t(offset, 0);
+}
+
+static void PolygonWkbToCellsExperimentalFunction(DataChunk &args,
+                                                  ExpressionState &state,
+                                                  Vector &result) {
+  TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
+      args.data[0], args.data[1], args.data[2], result, args.size(),
+      [&](string_t input, int res, string_t flagsStr) {
+        return PolygonWkbToCellsExperimentalInnerFunction(input, res, flagsStr,
+                                                          result);
+      });
+}
+
 CreateScalarFunctionInfo H3Functions::GetCellsToMultiPolygonWktFunction() {
   ScalarFunctionSet funcs("h3_cells_to_multi_polygon_wkt");
   funcs.AddFunction(ScalarFunction(
@@ -681,6 +753,16 @@ H3Functions::GetPolygonWktToCellsExperimentalFunction() {
       {LogicalType::VARCHAR, LogicalType::VARCHAR, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::UBIGINT),
       PolygonWktToCellsExperimentalFunctionSwapped));
+  return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo
+H3Functions::GetPolygonWkbToCellsExperimentalFunction() {
+  ScalarFunctionSet funcs("h3_polygon_wkb_to_cells_experimental");
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::BLOB, LogicalType::INTEGER, LogicalType::VARCHAR},
+      LogicalType::LIST(LogicalType::UBIGINT),
+      PolygonWkbToCellsExperimentalFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
