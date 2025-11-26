@@ -1,6 +1,6 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
-#include "well_known.hpp"
+#include "well_known_encoder.hpp"
 #include "well_known_decoder.hpp"
 
 #include "duckdb/common/helper.hpp"
