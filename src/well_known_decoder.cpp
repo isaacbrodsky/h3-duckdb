@@ -78,4 +78,115 @@ void DecodeWkbPolygon(
   }
 }
 
+// *** WKT ***
+
+static const std::string POLYGON = "POLYGON";
+static const std::string EMPTY = "EMPTY";
+
+static size_t WktWhitespace(const std::string &str, size_t offset) {
+  while (str[offset] == ' ') {
+    offset++;
+  }
+  return offset;
+}
+
+static size_t ReadWktNumber(const std::string &str, size_t offset,
+                            double &num) {
+  size_t start = offset;
+  while (str[offset] != ' ' && str[offset] != ')' && str[offset] != ',') {
+    offset++;
+  }
+  std::string part = str.substr(start, offset - start);
+
+  try {
+    num = std::stod(part);
+    return offset;
+  } catch (std::invalid_argument const &ex) {
+    throw InvalidInputException(
+        StringUtil::Format("Invalid number around %lu, %lu", start, offset));
+  }
+}
+
+static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
+                             duckdb::shared_ptr<std::vector<LatLng>> verts,
+                             GeoLoop &loop) {
+  if (str[offset] != '(') {
+    throw InvalidInputException(
+        StringUtil::Format("Expected ( at pos %lu", offset));
+  }
+
+  offset++;
+  offset = WktWhitespace(str, offset);
+
+  while (str[offset] != ')') {
+    double x, y;
+    offset = ReadWktNumber(str, offset, x);
+    offset = WktWhitespace(str, offset);
+    offset = ReadWktNumber(str, offset, y);
+    offset = WktWhitespace(str, offset);
+    verts->push_back({.lat = degsToRads(y), .lng = degsToRads(x)});
+
+    if (str[offset] == ',') {
+      offset++;
+      offset = WktWhitespace(str, offset);
+    }
+  }
+  // Consume the )
+  offset++;
+
+  loop.numVerts = verts->size();
+  loop.verts = verts->data();
+
+  offset = WktWhitespace(str, offset);
+  return offset;
+}
+
+void DecodeWktPolygon(
+    std::string str, GeoPolygon &polygon,
+    duckdb::shared_ptr<std::vector<LatLng>> &outerVerts,
+    std::vector<GeoLoop> &holes,
+    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> &holesVerts) {
+  if (str.rfind(POLYGON, 0) != 0) {
+    return;
+  }
+
+  size_t strIndex = POLYGON.length();
+  strIndex = WktWhitespace(str, strIndex);
+
+  if (str.rfind(EMPTY, strIndex) == strIndex) {
+    return;
+  }
+
+  if (str[strIndex] == '(') {
+    strIndex++;
+    strIndex = WktWhitespace(str, strIndex);
+
+    strIndex = ReadWktGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
+
+    while (strIndex < str.length() && str[strIndex] == ',') {
+      strIndex++;
+      strIndex = WktWhitespace(str, strIndex);
+      if (str[strIndex] == '(') {
+        GeoLoop hole;
+        auto verts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+        strIndex = ReadWktGeoLoop(str, strIndex, verts, hole);
+        holes.push_back(hole);
+        holesVerts.push_back(verts);
+      } else {
+        throw InvalidInputException(StringUtil::Format(
+            "Invalid WKT: expected a hole loop '(' after ',' at pos %lu",
+            strIndex));
+      }
+    }
+    if (str[strIndex] != ')') {
+      throw InvalidInputException(StringUtil::Format(
+          "Invalid WKT: expected a hole loop ',' or final ')' at pos %lu",
+          strIndex));
+    }
+
+    polygon.numHoles = holes.size();
+    polygon.holes = holes.data();
+  }
+}
+
 } // namespace duckdb

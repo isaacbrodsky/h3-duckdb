@@ -12,4 +12,10 @@ void DecodeWkbPolygon(
     std::vector<GeoLoop> &holes,
     std::vector<duckdb::shared_ptr<std::vector<LatLng>>> &holesVerts);
 
+void DecodeWktPolygon(
+    std::string str, GeoPolygon &polygon,
+    duckdb::shared_ptr<std::vector<LatLng>> &outerVerts,
+    std::vector<GeoLoop> &holes,
+    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> &holesVerts);
+
 } // namespace duckdb

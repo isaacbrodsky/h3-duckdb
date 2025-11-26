@@ -7,9 +7,6 @@
 
 namespace duckdb {
 
-static const std::string POLYGON = "POLYGON";
-static const std::string EMPTY = "EMPTY";
-
 static int32_t StringToFlags(string_t flagsStr) {
   // TODO: Make flags easier to work with
   if (flagsStr == "CONTAINMENT_CENTER" || flagsStr == "center") {
@@ -176,63 +173,6 @@ static void CellsToMultiPolygonFunction(DataChunk &args, ExpressionState &state,
   result.Verify(args.size());
 }
 
-static size_t whitespace(const std::string &str, size_t offset) {
-  while (str[offset] == ' ') {
-    offset++;
-  }
-  return offset;
-}
-
-static size_t readNumber(const std::string &str, size_t offset, double &num) {
-  size_t start = offset;
-  while (str[offset] != ' ' && str[offset] != ')' && str[offset] != ',') {
-    offset++;
-  }
-  std::string part = str.substr(start, offset - start);
-
-  try {
-    num = std::stod(part);
-    return offset;
-  } catch (std::invalid_argument const &ex) {
-    throw InvalidInputException(
-        StringUtil::Format("Invalid number around %lu, %lu", start, offset));
-  }
-}
-
-static size_t readGeoLoop(const std::string &str, size_t offset,
-                          duckdb::shared_ptr<std::vector<LatLng>> verts,
-                          GeoLoop &loop) {
-  if (str[offset] != '(') {
-    throw InvalidInputException(
-        StringUtil::Format("Expected ( at pos %lu", offset));
-  }
-
-  offset++;
-  offset = whitespace(str, offset);
-
-  while (str[offset] != ')') {
-    double x, y;
-    offset = readNumber(str, offset, x);
-    offset = whitespace(str, offset);
-    offset = readNumber(str, offset, y);
-    offset = whitespace(str, offset);
-    verts->push_back({.lat = degsToRads(y), .lng = degsToRads(x)});
-
-    if (str[offset] == ',') {
-      offset++;
-      offset = whitespace(str, offset);
-    }
-  }
-  // Consume the )
-  offset++;
-
-  loop.numVerts = verts->size();
-  loop.verts = verts->data();
-
-  offset = whitespace(str, offset);
-  return offset;
-}
-
 static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   // TODO: Note this function is not fully noexcept -- some invalid WKT strings
@@ -240,56 +180,18 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state,
   BinaryExecutor::Execute<string_t, int, list_entry_t>(
       args.data[0], args.data[1], result, args.size(),
       [&](string_t input, int res) {
-        GeoPolygon polygon;
+        GeoPolygon polygon = {0};
         int32_t flags = 0;
 
+        uint64_t offset = ListVector::GetListSize(result);
         std::string str = input.GetString();
 
-        uint64_t offset = ListVector::GetListSize(result);
-        if (str.rfind(POLYGON, 0) != 0) {
-          return list_entry_t(offset, 0);
-        }
+        auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+        std::vector<GeoLoop> holes;
+        std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
+        DecodeWktPolygon(str, polygon, outerVerts, holes, holesVerts);
 
-        size_t strIndex = POLYGON.length();
-        strIndex = whitespace(str, strIndex);
-
-        if (str.rfind(EMPTY, strIndex) == strIndex) {
-          return list_entry_t(offset, 0);
-        }
-
-        if (str[strIndex] == '(') {
-          strIndex++;
-          strIndex = whitespace(str, strIndex);
-
-          auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-          strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
-
-          std::vector<GeoLoop> holes;
-          std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
-          while (strIndex < str.length() && str[strIndex] == ',') {
-            strIndex++;
-            strIndex = whitespace(str, strIndex);
-            if (str[strIndex] == '(') {
-              GeoLoop hole;
-              auto verts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-              strIndex = readGeoLoop(str, strIndex, verts, hole);
-              holes.push_back(hole);
-              holesVerts.push_back(verts);
-            } else {
-              throw InvalidInputException(StringUtil::Format(
-                  "Invalid WKT: expected a hole loop '(' after ',' at pos %lu",
-                  strIndex));
-            }
-          }
-          if (str[strIndex] != ')') {
-            throw InvalidInputException(StringUtil::Format(
-                "Invalid WKT: expected a hole loop ',' or final ')' at pos %lu",
-                strIndex));
-          }
-
-          polygon.numHoles = holes.size();
-          polygon.holes = holes.data();
-
+        if (polygon.geoloop.numVerts > 0) {
           int64_t numCells = 0;
           H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
           if (err) {
@@ -323,56 +225,18 @@ static void PolygonWktToCellsVarcharFunction(DataChunk &args,
   BinaryExecutor::Execute<string_t, int, list_entry_t>(
       args.data[0], args.data[1], result, args.size(),
       [&](string_t input, int res) {
-        GeoPolygon polygon;
+        GeoPolygon polygon = {0};
         int32_t flags = 0;
 
+        uint64_t offset = ListVector::GetListSize(result);
         std::string str = input.GetString();
 
-        uint64_t offset = ListVector::GetListSize(result);
-        if (str.rfind(POLYGON, 0) != 0) {
-          return list_entry_t(offset, 0);
-        }
+        auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+        std::vector<GeoLoop> holes;
+        std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
+        DecodeWktPolygon(str, polygon, outerVerts, holes, holesVerts);
 
-        size_t strIndex = POLYGON.length();
-        strIndex = whitespace(str, strIndex);
-
-        if (str.rfind(EMPTY, strIndex) == strIndex) {
-          return list_entry_t(offset, 0);
-        }
-
-        if (str[strIndex] == '(') {
-          strIndex++;
-          strIndex = whitespace(str, strIndex);
-
-          auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-          strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
-
-          std::vector<GeoLoop> holes;
-          std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
-          while (strIndex < str.length() && str[strIndex] == ',') {
-            strIndex++;
-            strIndex = whitespace(str, strIndex);
-            if (str[strIndex] == '(') {
-              GeoLoop hole;
-              auto verts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-              strIndex = readGeoLoop(str, strIndex, verts, hole);
-              holes.push_back(hole);
-              holesVerts.push_back(verts);
-            } else {
-              throw InvalidInputException(StringUtil::Format(
-                  "Invalid WKT: expected a hole loop '(' after ',' at pos %lu",
-                  strIndex));
-            }
-          }
-          if (str[strIndex] != ')') {
-            throw InvalidInputException(StringUtil::Format(
-                "Invalid WKT: expected a hole loop ',' or final ')' at pos %lu",
-                strIndex));
-          }
-
-          polygon.numHoles = holes.size();
-          polygon.holes = holes.data();
-
+        if (polygon.geoloop.numVerts > 0) {
           int64_t numCells = 0;
           H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
           if (err) {
@@ -404,62 +268,22 @@ PolygonWktToCellsExperimentalInnerFunction(string_t input, int res,
                                            string_t flagsStr, Vector &result) {
   // TODO: Note this function is not fully noexcept -- some invalid WKT strings
   // will throw, others will return empty lists.
-  GeoPolygon polygon;
-
-  std::string str = input.GetString();
+  GeoPolygon polygon = {0};
 
   uint64_t offset = ListVector::GetListSize(result);
-
+  std::string str = input.GetString();
   int32_t flags = StringToFlags(flagsStr);
   if (flags < 0) {
     // Invalid flags input
     return list_entry_t(offset, 0);
   }
 
-  if (str.rfind(POLYGON, 0) != 0) {
-    return list_entry_t(offset, 0);
-  }
+  auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+  std::vector<GeoLoop> holes;
+  std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
+  DecodeWktPolygon(str, polygon, outerVerts, holes, holesVerts);
 
-  size_t strIndex = POLYGON.length();
-  strIndex = whitespace(str, strIndex);
-
-  if (str.rfind(EMPTY, strIndex) == strIndex) {
-    return list_entry_t(offset, 0);
-  }
-
-  if (str[strIndex] == '(') {
-    strIndex++;
-    strIndex = whitespace(str, strIndex);
-
-    auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-    strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
-
-    std::vector<GeoLoop> holes;
-    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
-    while (strIndex < str.length() && str[strIndex] == ',') {
-      strIndex++;
-      strIndex = whitespace(str, strIndex);
-      if (str[strIndex] == '(') {
-        GeoLoop hole;
-        auto verts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-        strIndex = readGeoLoop(str, strIndex, verts, hole);
-        holes.push_back(hole);
-        holesVerts.push_back(verts);
-      } else {
-        throw InvalidInputException(StringUtil::Format(
-            "Invalid WKT: expected a hole loop '(' after ',' at pos %lu",
-            strIndex));
-      }
-    }
-    if (str[strIndex] != ')') {
-      throw InvalidInputException(StringUtil::Format(
-          "Invalid WKT: expected a hole loop ',' or final ')' at pos %lu",
-          strIndex));
-    }
-
-    polygon.numHoles = holes.size();
-    polygon.holes = holes.data();
-
+  if (polygon.geoloop.numVerts > 0) {
     int64_t numCells = 0;
     H3Error err =
         maxPolygonToCellsSizeExperimental(&polygon, res, flags, &numCells);
@@ -512,62 +336,22 @@ static list_entry_t PolygonWktToCellsExperimentalVarcharInnerFunction(
     string_t input, int res, string_t flagsStr, Vector &result) {
   // TODO: Note this function is not fully noexcept -- some invalid WKT strings
   // will throw, others will return empty lists.
-  GeoPolygon polygon;
-
-  std::string str = input.GetString();
+  GeoPolygon polygon = {0};
 
   uint64_t offset = ListVector::GetListSize(result);
-
+  std::string str = input.GetString();
   int32_t flags = StringToFlags(flagsStr);
   if (flags < 0) {
     // Invalid flags input
     return list_entry_t(offset, 0);
   }
 
-  if (str.rfind(POLYGON, 0) != 0) {
-    return list_entry_t(offset, 0);
-  }
+  auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+  std::vector<GeoLoop> holes;
+  std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
+  DecodeWktPolygon(str, polygon, outerVerts, holes, holesVerts);
 
-  size_t strIndex = POLYGON.length();
-  strIndex = whitespace(str, strIndex);
-
-  if (str.rfind(EMPTY, strIndex) == strIndex) {
-    return list_entry_t(offset, 0);
-  }
-
-  if (str[strIndex] == '(') {
-    strIndex++;
-    strIndex = whitespace(str, strIndex);
-
-    auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-    strIndex = readGeoLoop(str, strIndex, outerVerts, polygon.geoloop);
-
-    std::vector<GeoLoop> holes;
-    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
-    while (strIndex < str.length() && str[strIndex] == ',') {
-      strIndex++;
-      strIndex = whitespace(str, strIndex);
-      if (str[strIndex] == '(') {
-        GeoLoop hole;
-        auto verts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-        strIndex = readGeoLoop(str, strIndex, verts, hole);
-        holes.push_back(hole);
-        holesVerts.push_back(verts);
-      } else {
-        throw InvalidInputException(StringUtil::Format(
-            "Invalid WKT: expected a hole loop '(' after ',' at pos %lu",
-            strIndex));
-      }
-    }
-    if (str[strIndex] != ')') {
-      throw InvalidInputException(StringUtil::Format(
-          "Invalid WKT: expected a hole loop ',' or final ')' at pos %lu",
-          strIndex));
-    }
-
-    polygon.numHoles = holes.size();
-    polygon.holes = holes.data();
-
+  if (polygon.geoloop.numVerts > 0) {
     int64_t numCells = 0;
     H3Error err =
         maxPolygonToCellsSizeExperimental(&polygon, res, flags, &numCells);

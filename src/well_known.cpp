@@ -63,6 +63,8 @@ void WkbEncoder::EndMultiPolygon() { /* no-op */
 
 std::string WkbEncoder::Finish() { return buffer; }
 
+// *** WKT ***
+
 void WktEncoder::StartLineString() { buffer = "LINESTRING ("; }
 
 void WktEncoder::Point(double lng, double lat) {
