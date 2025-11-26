@@ -100,6 +100,8 @@ public:
     functions.push_back(GetCellsToMultiPolygonWkbFunction());
     functions.push_back(GetPolygonWktToCellsFunction());
     functions.push_back(GetPolygonWktToCellsVarcharFunction());
+    functions.push_back(GetPolygonWkbToCellsFunction());
+    functions.push_back(GetPolygonWkbToCellsVarcharFunction());
     functions.push_back(GetPolygonWktToCellsExperimentalFunction());
     functions.push_back(GetPolygonWktToCellsExperimentalVarcharFunction());
     functions.push_back(GetPolygonWkbToCellsExperimentalFunction());
@@ -192,6 +194,8 @@ private:
   static CreateScalarFunctionInfo GetCellsToMultiPolygonWkbFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsVarcharFunction();
+  static CreateScalarFunctionInfo GetPolygonWkbToCellsFunction();
+  static CreateScalarFunctionInfo GetPolygonWkbToCellsVarcharFunction();
   static CreateScalarFunctionInfo GetPolygonWktToCellsExperimentalFunction();
   static CreateScalarFunctionInfo
   GetPolygonWktToCellsExperimentalVarcharFunction();
