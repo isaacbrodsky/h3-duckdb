@@ -648,21 +648,17 @@ PolygonWkbToCellsExperimentalInnerFunction(string_t input, int res,
   std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
   GeoPolygon polygon = {0};
   DecodeWkbPolygon(input, polygon, outerVerts, holes, holesVerts);
-  printf("%u OUT\n", polygon.geoloop.numVerts);
   if (polygon.geoloop.numVerts > 0) {
     int64_t numCells = 0;
     H3Error err =
         maxPolygonToCellsSizeExperimental(&polygon, res, flags, &numCells);
-    printf("%llu estimate\n", numCells);
     if (err) {
-      printf("%u ERR\n", err);
       return list_entry_t(offset, 0);
     } else {
       std::vector<H3Index> out(numCells);
       H3Error err2 = polygonToCellsExperimental(&polygon, res, flags, numCells,
                                                 out.data());
       if (err2) {
-        printf("%u ERR2\n", err2);
         return list_entry_t(offset, 0);
       } else {
         uint64_t actual = 0;
@@ -685,6 +681,17 @@ static void PolygonWkbToCellsExperimentalFunction(DataChunk &args,
   TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
       args.data[0], args.data[1], args.data[2], result, args.size(),
       [&](string_t input, int res, string_t flagsStr) {
+        return PolygonWkbToCellsExperimentalInnerFunction(input, res, flagsStr,
+                                                          result);
+      });
+}
+
+static void PolygonWkbToCellsExperimentalFunctionSwapped(DataChunk &args,
+                                                         ExpressionState &state,
+                                                         Vector &result) {
+  TernaryExecutor::Execute<string_t, string_t, int, list_entry_t>(
+      args.data[0], args.data[1], args.data[2], result, args.size(),
+      [&](string_t input, string_t flagsStr, int res) {
         return PolygonWkbToCellsExperimentalInnerFunction(input, res, flagsStr,
                                                           result);
       });
@@ -763,6 +770,10 @@ H3Functions::GetPolygonWkbToCellsExperimentalFunction() {
       {LogicalType::BLOB, LogicalType::INTEGER, LogicalType::VARCHAR},
       LogicalType::LIST(LogicalType::UBIGINT),
       PolygonWkbToCellsExperimentalFunction));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::BLOB, LogicalType::VARCHAR, LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::UBIGINT),
+      PolygonWkbToCellsExperimentalFunctionSwapped));
   return CreateScalarFunctionInfo(funcs);
 }
 

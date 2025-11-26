@@ -19,15 +19,12 @@ void DecodeWkbGeoLoop(string_t input, size_t &inputIdx,
                       duckdb::shared_ptr<std::vector<LatLng>> &verts,
                       GeoLoop &loop) {
   uint32_t numVerts = ReadWkb<uint32_t>(input, inputIdx);
-  printf("READ V C: %u\n", numVerts);
 
   for (uint32_t vertIdx = 0; vertIdx < numVerts; vertIdx++) {
     double lng = ReadWkb<double>(input, inputIdx);
     double lat = ReadWkb<double>(input, inputIdx);
 
     LatLng ll = {.lat = degsToRads(lat), .lng = degsToRads(lng)};
-
-    printf("READ V: %f %f\n", lng, lat);
 
     verts->push_back(ll);
   }
@@ -51,7 +48,6 @@ void DecodeWkbPolygon(
   }
 
   uint32_t type = ReadWkb<uint32_t>(input, strIndex);
-  printf("READ T: %u\n", type);
 
   if (type == 0) {
     return; // EMPTY
@@ -65,8 +61,6 @@ void DecodeWkbPolygon(
   if (loopCount == 0) {
     return; // Empty
   }
-
-  printf("READ COUNT %u\n", loopCount);
 
   DecodeWkbGeoLoop(input, strIndex, outerVerts, polygon.geoloop);
 
