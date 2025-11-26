@@ -142,10 +142,11 @@ static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
 }
 
 void DecodeWktPolygon(
-    std::string str, GeoPolygon &polygon,
+    string_t input, GeoPolygon &polygon,
     duckdb::shared_ptr<std::vector<LatLng>> &outerVerts,
     std::vector<GeoLoop> &holes,
     std::vector<duckdb::shared_ptr<std::vector<LatLng>>> &holesVerts) {
+  std::string str = input.GetString();
   if (str.rfind(POLYGON, 0) != 0) {
     return;
   }
