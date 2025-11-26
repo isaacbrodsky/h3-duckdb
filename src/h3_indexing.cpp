@@ -1,7 +1,7 @@
 #include "fmt/format.h"
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
-#include "well_known.hpp"
+#include "well_known_encoder.hpp"
 
 namespace duckdb {
 

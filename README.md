@@ -23,7 +23,7 @@ Or, using the integer API, which generally has better performance:
 SELECT h3_cell_to_latlng(586265647244115967);
 ```
 
-# Implemented functions
+# Functions
 
 This extension implements the entire [H3 API](https://h3geo.org/docs/api/indexing). The full list of functions is below.
 
@@ -32,7 +32,7 @@ but the unsigned one is preferred and is returned when the extension can't detec
 one to use. The unsigned and signed APIs are identical. All functions also support
 `VARCHAR` H3 index input and output.
 
-### Full list of functions
+## Full list of functions
 
 | Function | Description
 | --: | ---
@@ -104,8 +104,12 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_cells_to_multi_polygon_wkb` | Convert a set of cells to multipolygon WKB
 | `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells
 | `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells (returns VARCHAR)
+| `h3_polygon_wkb_to_cells` | Convert polygon WKB to a set of cells
+| `h3_polygon_wkb_to_cells_string` | Convert polygon WKB to a set of cells (returns VARCHAR)
 | `h3_polygon_wkt_to_cells_experimental` | Convert polygon WKT to a set of cells, new algorithm
 | `h3_polygon_wkt_to_cells_experimental_string` | Convert polygon WKT to a set of cells, new algorithm (returns VARCHAR)
+| `h3_polygon_wkb_to_cells_experimental` | Convert polygon WKB to a set of cells, new algorithm
+| `h3_polygon_wkb_to_cells_experimental_string` | Convert polygon WKB to a set of cells, new algorithm (returns VARCHAR)
 
 # Alternative download / install
 

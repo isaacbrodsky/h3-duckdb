@@ -1,5 +1,5 @@
 
-#include "well_known.hpp"
+#include "well_known_encoder.hpp"
 #include "h3api.h"
 #include "duckdb/common/string_util.hpp"
 
@@ -62,6 +62,8 @@ void WkbEncoder::EndMultiPolygon() { /* no-op */
 }
 
 std::string WkbEncoder::Finish() { return buffer; }
+
+// *** WKT ***
 
 void WktEncoder::StartLineString() { buffer = "LINESTRING ("; }
 
