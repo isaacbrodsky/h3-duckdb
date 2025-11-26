@@ -106,6 +106,8 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells (returns VARCHAR)
 | `h3_polygon_wkt_to_cells_experimental` | Convert polygon WKT to a set of cells, new algorithm
 | `h3_polygon_wkt_to_cells_experimental_string` | Convert polygon WKT to a set of cells, new algorithm (returns VARCHAR)
+| `h3_polygon_wkb_to_cells_experimental` | Convert polygon WKB to a set of cells, new algorithm
+| `h3_polygon_wkb_to_cells_experimental_string` | Convert polygon WKB to a set of cells, new algorithm (returns VARCHAR)
 
 # Alternative download / install
 

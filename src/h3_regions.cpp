@@ -10,6 +10,23 @@ namespace duckdb {
 static const std::string POLYGON = "POLYGON";
 static const std::string EMPTY = "EMPTY";
 
+static int32_t StringToFlags(string_t flagsStr) {
+  // TODO: Make flags easier to work with
+  if (flagsStr == "CONTAINMENT_CENTER" || flagsStr == "center") {
+    return 0;
+  } else if (flagsStr == "CONTAINMENT_FULL" || flagsStr == "full") {
+    return 1;
+  } else if (flagsStr == "CONTAINMENT_OVERLAPPING" || flagsStr == "overlap") {
+    return 2;
+  } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX" ||
+             flagsStr == "overlap_bbox") {
+    return 3;
+  } else {
+    // Invalid flags input
+    return -1;
+  }
+}
+
 // TODO: For convenience, 0 is returned instead of throwing. However, this may
 // actually be interpreted by cellsToMultiPolygon as the index referring to base
 // cell 0.
@@ -388,23 +405,13 @@ PolygonWktToCellsExperimentalInnerFunction(string_t input, int res,
   // TODO: Note this function is not fully noexcept -- some invalid WKT strings
   // will throw, others will return empty lists.
   GeoPolygon polygon;
-  int32_t flags = 0;
 
   std::string str = input.GetString();
 
   uint64_t offset = ListVector::GetListSize(result);
 
-  // TODO: Make flags easier to work with
-  if (flagsStr == "CONTAINMENT_CENTER" || flagsStr == "center") {
-    flags = 0;
-  } else if (flagsStr == "CONTAINMENT_FULL" || flagsStr == "full") {
-    flags = 1;
-  } else if (flagsStr == "CONTAINMENT_OVERLAPPING" || flagsStr == "overlap") {
-    flags = 2;
-  } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX" ||
-             flagsStr == "overlap_bbox") {
-    flags = 3;
-  } else {
+  int32_t flags = StringToFlags(flagsStr);
+  if (flags < 0) {
     // Invalid flags input
     return list_entry_t(offset, 0);
   }
@@ -506,23 +513,13 @@ static list_entry_t PolygonWktToCellsExperimentalVarcharInnerFunction(
   // TODO: Note this function is not fully noexcept -- some invalid WKT strings
   // will throw, others will return empty lists.
   GeoPolygon polygon;
-  int32_t flags = 0;
 
   std::string str = input.GetString();
 
   uint64_t offset = ListVector::GetListSize(result);
 
-  // TODO: Make flags easier to work with
-  if (flagsStr == "CONTAINMENT_CENTER" || flagsStr == "center") {
-    flags = 0;
-  } else if (flagsStr == "CONTAINMENT_FULL" || flagsStr == "full") {
-    flags = 1;
-  } else if (flagsStr == "CONTAINMENT_OVERLAPPING" || flagsStr == "overlap") {
-    flags = 2;
-  } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX" ||
-             flagsStr == "overlap_bbox") {
-    flags = 3;
-  } else {
+  int32_t flags = StringToFlags(flagsStr);
+  if (flags < 0) {
     // Invalid flags input
     return list_entry_t(offset, 0);
   }
@@ -619,26 +616,83 @@ static void PolygonWktToCellsExperimentalVarcharFunctionSwapped(
       });
 }
 
-static list_entry_t
-PolygonWkbToCellsExperimentalInnerFunction(string_t input, int res,
-                                           string_t flagsStr, Vector &result) {
-  // TODO: Note this function is not fully noexcept -- some invalid WKT strings
+static list_entry_t PolygonWkbToCellsExperimentalVarcharInnerFunction(
+    string_t input, int res, string_t flagsStr, Vector &result) {
+  // TODO: Note this function is not fully noexcept -- some invalid WKB strings
   // will throw, others will return empty lists.
-  int32_t flags = 0;
 
   uint64_t offset = ListVector::GetListSize(result);
 
-  // TODO: Make flags easier to work with
-  if (flagsStr == "CONTAINMENT_CENTER" || flagsStr == "center") {
-    flags = 0;
-  } else if (flagsStr == "CONTAINMENT_FULL" || flagsStr == "full") {
-    flags = 1;
-  } else if (flagsStr == "CONTAINMENT_OVERLAPPING" || flagsStr == "overlap") {
-    flags = 2;
-  } else if (flagsStr == "CONTAINMENT_OVERLAPPING_BBOX" ||
-             flagsStr == "overlap_bbox") {
-    flags = 3;
-  } else {
+  int32_t flags = StringToFlags(flagsStr);
+  if (flags < 0) {
+    // Invalid flags input
+    return list_entry_t(offset, 0);
+  }
+
+  auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+  std::vector<GeoLoop> holes;
+  std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
+  GeoPolygon polygon = {0};
+  DecodeWkbPolygon(input, polygon, outerVerts, holes, holesVerts);
+  if (polygon.geoloop.numVerts > 0) {
+    int64_t numCells = 0;
+    H3Error err =
+        maxPolygonToCellsSizeExperimental(&polygon, res, flags, &numCells);
+    if (err) {
+      return list_entry_t(offset, 0);
+    } else {
+      std::vector<H3Index> out(numCells);
+      H3Error err2 = polygonToCellsExperimental(&polygon, res, flags, numCells,
+                                                out.data());
+      if (err2) {
+        return list_entry_t(offset, 0);
+      } else {
+        uint64_t actual = 0;
+        for (H3Index outCell : out) {
+          if (outCell != H3_NULL) {
+            auto str = StringUtil::Format("%llx", outCell);
+            ListVector::PushBack(result, str);
+            actual++;
+          }
+        }
+        return list_entry_t(offset, actual);
+      }
+    }
+  }
+  return list_entry_t(offset, 0);
+}
+
+static void PolygonWkbToCellsExperimentalVarcharFunction(DataChunk &args,
+                                                         ExpressionState &state,
+                                                         Vector &result) {
+  TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
+      args.data[0], args.data[1], args.data[2], result, args.size(),
+      [&](string_t input, int res, string_t flagsStr) {
+        return PolygonWkbToCellsExperimentalVarcharInnerFunction(
+            input, res, flagsStr, result);
+      });
+}
+
+static void PolygonWkbToCellsExperimentalVarcharFunctionSwapped(
+    DataChunk &args, ExpressionState &state, Vector &result) {
+  TernaryExecutor::Execute<string_t, string_t, int, list_entry_t>(
+      args.data[0], args.data[1], args.data[2], result, args.size(),
+      [&](string_t input, string_t flagsStr, int res) {
+        return PolygonWkbToCellsExperimentalVarcharInnerFunction(
+            input, res, flagsStr, result);
+      });
+}
+
+static list_entry_t
+PolygonWkbToCellsExperimentalInnerFunction(string_t input, int res,
+                                           string_t flagsStr, Vector &result) {
+  // TODO: Note this function is not fully noexcept -- some invalid WKB strings
+  // will throw, others will return empty lists.
+
+  uint64_t offset = ListVector::GetListSize(result);
+
+  int32_t flags = StringToFlags(flagsStr);
+  if (flags < 0) {
     // Invalid flags input
     return list_entry_t(offset, 0);
   }
@@ -788,6 +842,20 @@ H3Functions::GetPolygonWktToCellsExperimentalVarcharFunction() {
       {LogicalType::VARCHAR, LogicalType::VARCHAR, LogicalType::INTEGER},
       LogicalType::LIST(LogicalType::VARCHAR),
       PolygonWktToCellsExperimentalVarcharFunctionSwapped));
+  return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo
+H3Functions::GetPolygonWkbToCellsExperimentalVarcharFunction() {
+  ScalarFunctionSet funcs("h3_polygon_wkb_to_cells_experimental_string");
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::BLOB, LogicalType::INTEGER, LogicalType::VARCHAR},
+      LogicalType::LIST(LogicalType::VARCHAR),
+      PolygonWkbToCellsExperimentalVarcharFunction));
+  funcs.AddFunction(ScalarFunction(
+      {LogicalType::BLOB, LogicalType::VARCHAR, LogicalType::INTEGER},
+      LogicalType::LIST(LogicalType::VARCHAR),
+      PolygonWkbToCellsExperimentalVarcharFunctionSwapped));
   return CreateScalarFunctionInfo(funcs);
 }
 

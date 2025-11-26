@@ -103,6 +103,7 @@ public:
     functions.push_back(GetPolygonWktToCellsExperimentalFunction());
     functions.push_back(GetPolygonWktToCellsExperimentalVarcharFunction());
     functions.push_back(GetPolygonWkbToCellsExperimentalFunction());
+    functions.push_back(GetPolygonWkbToCellsExperimentalVarcharFunction());
 
     return functions;
   }
@@ -195,6 +196,8 @@ private:
   static CreateScalarFunctionInfo
   GetPolygonWktToCellsExperimentalVarcharFunction();
   static CreateScalarFunctionInfo GetPolygonWkbToCellsExperimentalFunction();
+  static CreateScalarFunctionInfo
+  GetPolygonWkbToCellsExperimentalVarcharFunction();
 
   static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
                          vector<CreateScalarFunctionInfo> &functions) {
