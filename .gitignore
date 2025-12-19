@@ -15,5 +15,6 @@ build/
 .*.swp
 .DS_Store
 data/
+!test/data/
 .env/
 env/
