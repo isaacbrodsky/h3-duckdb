@@ -1,0 +1,46 @@
+# name: test/sql/h3/h3_json.test
+# group: [h3]
+
+statement ok
+install json
+
+statement ok
+load json
+
+require h3
+
+statement ok
+create table cells as (
+    select unnest(cells) as cell
+    from 'test/data/cell_order.json'
+);
+
+query I
+select h3_cell_to_children(cell, 6) from cells where cell = '85283083fffffff';
+----
+[862830807ffffff, 86283080fffffff, 862830817ffffff, 86283081fffffff, 862830827ffffff, 86283082fffffff, 862830837ffffff]
+
+query I
+select h3_cell_to_children(cell, 6) from cells where cell = '85283097fffffff';
+----
+[862830947ffffff, 86283094fffffff, 862830957ffffff, 86283095fffffff, 862830967ffffff, 86283096fffffff, 862830977ffffff]
+
+query I
+SELECT list_transform(h3_cell_to_latlng(cell), x-> round(x, 12)) from cells where cell = '85283083fffffff';
+----
+[37.790261155804, -122.345478597884]
+
+query I
+SELECT list_transform(h3_cell_to_latlng(cell), x-> round(x, 12)) from cells where cell = '85283097fffffff';
+----
+[37.699065685397, -122.51211811448]
+
+query I
+select h3_get_icosahedron_faces(cell) from cells where cell = '85283083fffffff';
+----
+[7]
+
+query I
+select h3_get_icosahedron_faces(cell) from cells where cell = '85d02903fffffff';
+----
+[13]

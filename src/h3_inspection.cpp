@@ -272,11 +272,6 @@ static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState &state,
 static void GetIcosahedronFacesVarcharFunction(DataChunk &args,
                                                ExpressionState &state,
                                                Vector &result) {
-  UnifiedVectorFormat vdata;
-  args.data[0].ToUnifiedFormat(args.size(), vdata);
-
-  auto ldata = UnifiedVectorFormat::GetData<string_t>(vdata);
-
   result.SetVectorType(VectorType::FLAT_VECTOR);
   auto result_data = FlatVector::GetData<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
@@ -284,9 +279,11 @@ static void GetIcosahedronFacesVarcharFunction(DataChunk &args,
 
     int faceCount;
     int64_t actual = 0;
-    string_t cellAddress = ldata[i];
+    string cellAddress = args.GetValue(0, i)
+                             .DefaultCastAs(LogicalType::VARCHAR)
+                             .GetValue<string>();
     H3Index cell;
-    H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
+    H3Error err0 = stringToH3(cellAddress.c_str(), &cell);
     if (err0) {
       result.SetValue(i, Value(LogicalType::SQLNULL));
     } else {
