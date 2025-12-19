@@ -92,20 +92,18 @@ static void CellToChildrenFunction(DataChunk &args, ExpressionState &state,
 static void CellToChildrenVarcharFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
-  UnifiedVectorFormat vdata;
-  args.data[0].ToUnifiedFormat(args.size(), vdata);
-  auto ldata = UnifiedVectorFormat::GetData<string_t>(vdata);
-
   auto result_data = FlatVector::GetData<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
-    string_t parentStr = ldata[i];
+    string parentStr = args.GetValue(0, i)
+                           .DefaultCastAs(LogicalType::VARCHAR)
+                           .GetValue<string>();
     int32_t res = args.GetValue(1, i)
                       .DefaultCastAs(LogicalType::INTEGER)
                       .GetValue<int32_t>();
     H3Index parent;
-    H3Error err0 = stringToH3(parentStr.GetString().c_str(), &parent);
+    H3Error err0 = stringToH3(parentStr.c_str(), &parent);
     if (err0) {
       result.SetValue(i, Value(LogicalType::SQLNULL));
     } else {
