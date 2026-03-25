@@ -1,3 +1,4 @@
+#include "duckdb/common/types.hpp"
 #include "fmt/format.h"
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
