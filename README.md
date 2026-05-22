@@ -1,6 +1,6 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
-[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.5.2&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.5.2)
-[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.4.1&color=blue)](https://github.com/uber/h3/releases/tag/v4.4.1)
+[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.5.3&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.5.3)
+[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.5.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.5.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 This is a [DuckDB](https://duckdb.org) extension that adds support for the [H3 discrete global grid system](https://github.com/uber/h3/), so you can index points and geometries to hexagons in SQL.
@@ -90,6 +90,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_are_neighbor_cells` | True if the two cell IDs are directly adjacent
 | `h3_directed_edge_to_boundary_wkt` | Convert directed edge ID to linestring WKT
 | `h3_directed_edge_to_boundary_wkb` | Convert directed edge ID to linestring WKB
+| `h3_reverse_directed_edge` | Convert a directed edge to one where origin and destination are swapped
 | `h3_get_hexagon_area_avg` | Get average area of a hexagon cell at resolution
 | `h3_cell_area` | Get the area of a cell ID
 | `h3_get_hexagon_edge_length_avg` | Average hexagon edge length at resolution
@@ -113,18 +114,10 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 
 # Alternative download / install
 
-If you'd like to install the H3 extension from the version published here, rather than the community extension version, you will need to run DuckDB with the unsigned option:
+If you'd like to install the H3 extension from source, rather than the community extension version, you will need to run DuckDB with the unsigned option:
 ```sh
 duckdb -unsigned
 ```
-
-Load the extension:
-```SQL
-INSTALL h3 FROM 'https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev';
-LOAD h3;
-```
-
-If you want to directly download the latest version of the extension: [Linux AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/linux_amd64/h3.duckdb_extension.gz) [Linux AMD64 GCC4](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/linux_amd64_gcc4/h3.duckdb_extension.gz) [Linux Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/linux_arm64/h3.duckdb_extension.gz) [OSX AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/osx_amd64/h3.duckdb_extension.gz) [OSX Arm64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/osx_arm64/h3.duckdb_extension.gz) [wasm eh](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/wasm_eh/h3.duckdb_extension.wasm) [wasm mvp](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/wasm_mvp/h3.duckdb_extension.wasm) [wasm threads](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/wasm_threads/h3.duckdb_extension.wasm) [Windows AMD64](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/windows_amd64/h3.duckdb_extension.gz) [Windows AMD64 MinGW](https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v1.5.2/windows_amd64_mingw/h3.duckdb_extension.gz)
 
 # Development
 

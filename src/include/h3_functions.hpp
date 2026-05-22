@@ -74,6 +74,7 @@ public:
     functions.push_back(GetOriginToDirectedEdgesFunction());
     functions.push_back(GetDirectedEdgeToBoundaryWktFunction());
     functions.push_back(GetDirectedEdgeToBoundaryWkbFunction());
+    functions.push_back(GetReverseDirectedEdgeFunction());
 
     // Vertex
     functions.push_back(GetCellToVertexFunction());
@@ -168,6 +169,7 @@ private:
   static CreateScalarFunctionInfo GetOriginToDirectedEdgesFunction();
   static CreateScalarFunctionInfo GetDirectedEdgeToBoundaryWktFunction();
   static CreateScalarFunctionInfo GetDirectedEdgeToBoundaryWkbFunction();
+  static CreateScalarFunctionInfo GetReverseDirectedEdgeFunction();
 
   // Vertex
   static CreateScalarFunctionInfo GetCellToVertexFunction();

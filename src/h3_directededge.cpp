@@ -279,6 +279,51 @@ static void CellsToDirectedEdgeVarcharFunction(DataChunk &args,
 }
 
 template <typename T>
+static void ReverseDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
+                                        Vector &result) {
+  auto &inputs = args.data[0];
+  UnaryExecutor::ExecuteWithNulls<T, T>(
+      inputs, result, args.size(),
+      [&](T input, ValidityMask &mask, idx_t idx) {
+        H3Index out;
+        H3Error err = reverseDirectedEdge(input, &out);
+        if (err) {
+          mask.SetInvalid(idx);
+          return H3Index(H3_NULL);
+        } else {
+          return out;
+        }
+      });
+}
+
+static void ReverseDirectedEdgeVarcharFunction(DataChunk &args,
+                                               ExpressionState &state,
+                                               Vector &result) {
+  auto &inputs = args.data[0];
+  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
+      inputs, result, args.size(),
+      [&](string_t inputStr, ValidityMask &mask,
+          idx_t idx) {
+        H3Index input;
+        H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
+        if (err0) {
+          mask.SetInvalid(idx);
+          return StringVector::EmptyString(result, 0);
+        } else {
+          H3Index out;
+          H3Error err = reverseDirectedEdge(input, &out);
+          if (err) {
+            mask.SetInvalid(idx);
+            return StringVector::EmptyString(result, 0);
+          } else {
+            auto str = StringUtil::Format("%llx", out);
+            return StringVector::AddString(result, str);
+          }
+        }
+      });
+}
+
+template <typename T>
 static void AreNeighborCellsFunction(DataChunk &args, ExpressionState &state,
                                      Vector &result) {
   auto &inputs = args.data[0];
@@ -532,6 +577,20 @@ CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToBoundaryWkbFunction() {
   funcs.AddFunction(
       ScalarFunction({LogicalType::BIGINT}, LogicalType::BLOB,
                      DirectedEdgeToBoundaryFunction<int64_t, WkbEncoder>));
+  return CreateScalarFunctionInfo(funcs);
+}
+
+CreateScalarFunctionInfo H3Functions::GetReverseDirectedEdgeFunction() {
+  ScalarFunctionSet funcs("h3_reverse_directed_edge");
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
+                                   LogicalType::UBIGINT,
+                                   ReverseDirectedEdgeFunction<uint64_t>));
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
+                                   LogicalType::BIGINT,
+                                   ReverseDirectedEdgeFunction<int64_t>));
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
+                                   LogicalType::VARCHAR,
+                                   ReverseDirectedEdgeVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
 
