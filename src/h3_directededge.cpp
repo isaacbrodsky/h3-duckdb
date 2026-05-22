@@ -283,8 +283,7 @@ static void ReverseDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::ExecuteWithNulls<T, T>(
-      inputs, result, args.size(),
-      [&](T input, ValidityMask &mask, idx_t idx) {
+      inputs, result, args.size(), [&](T input, ValidityMask &mask, idx_t idx) {
         H3Index out;
         H3Error err = reverseDirectedEdge(input, &out);
         if (err) {
@@ -302,8 +301,7 @@ static void ReverseDirectedEdgeVarcharFunction(DataChunk &args,
   auto &inputs = args.data[0];
   UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
       inputs, result, args.size(),
-      [&](string_t inputStr, ValidityMask &mask,
-          idx_t idx) {
+      [&](string_t inputStr, ValidityMask &mask, idx_t idx) {
         H3Index input;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
         if (err0) {
@@ -582,14 +580,11 @@ CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToBoundaryWkbFunction() {
 
 CreateScalarFunctionInfo H3Functions::GetReverseDirectedEdgeFunction() {
   ScalarFunctionSet funcs("h3_reverse_directed_edge");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-                                   LogicalType::UBIGINT,
+  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::UBIGINT,
                                    ReverseDirectedEdgeFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-                                   LogicalType::BIGINT,
+  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BIGINT,
                                    ReverseDirectedEdgeFunction<int64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-                                   LogicalType::VARCHAR,
+  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
                                    ReverseDirectedEdgeVarcharFunction));
   return CreateScalarFunctionInfo(funcs);
 }
