@@ -172,3 +172,19 @@ query I
 SELECT h3_are_neighbor_cells('85283473fffffff', '85283443fffffff')
 ----
 false
+
+query I
+SELECT h3_reverse_directed_edge('165283473fffffff')
+----
+115283447fffffff
+
+query I
+SELECT h3_reverse_directed_edge(1608492358964346879::ubigint)
+----
+1248204376963547135
+
+query I
+SELECT h3_reverse_directed_edge(1608492358964346879::bigint)
+----
+1248204376963547135
+
