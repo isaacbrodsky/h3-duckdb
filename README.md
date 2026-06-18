@@ -1,5 +1,5 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
-[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.5.3&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.5.3)
+[![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.5.4&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.5.4)
 [![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.5.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.5.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
