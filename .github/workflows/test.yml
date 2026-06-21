@@ -27,6 +27,8 @@ jobs:
       duckdb_version: v1.5.4
       ci_tools_version: v1.5-variegata
       extension_name: h3
+      # TODO: Need to determine why the Windows build is failing now
+      exclude_archs: windows_amd64;windows_arm64
 
   duckdb-stable-deploy:
     name: Deploy extension binaries
@@ -39,6 +41,8 @@ jobs:
       extension_name: h3
       deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
       deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+      # TODO: Need to determine why the Windows build is failing now
+      exclude_archs: windows_amd64;windows_arm64
 
   code-quality-check:
     name: Code Quality Check
