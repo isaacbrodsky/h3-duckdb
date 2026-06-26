@@ -138,8 +138,7 @@ static void VertexToLatFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<T, double>(
-      inputs, result, args.size(),
-      [&](T vertex) -> optional<double> {
+      inputs, result, args.size(), [&](T vertex) -> optional<double> {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = vertexToLatLng(vertex, &latLng);
         if (err) {
@@ -177,8 +176,7 @@ static void VertexToLngFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<T, double>(
-      inputs, result, args.size(),
-      [&](T vertex) -> optional<double> {
+      inputs, result, args.size(), [&](T vertex) -> optional<double> {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = vertexToLatLng(vertex, &latLng);
         if (err) {
@@ -203,7 +201,7 @@ static void VertexToLngVarcharFunction(DataChunk &args, ExpressionState &state,
           LatLng latLng = {.lat = 0, .lng = 0};
           H3Error err1 = vertexToLatLng(vertex, &latLng);
           if (err1) {
-          return nullopt;
+            return nullopt;
           } else {
             return radsToDegs(latLng.lng);
           }
