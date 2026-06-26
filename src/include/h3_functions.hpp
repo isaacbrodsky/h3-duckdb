@@ -208,7 +208,7 @@ private:
   static void AddAliases(vector<string> names, CreateScalarFunctionInfo fun,
                          vector<CreateScalarFunctionInfo> &functions) {
     for (auto &name : names) {
-      fun.name = name;
+      fun.SetFunctionName(Identifier(name));
       functions.push_back(fun);
     }
   }
