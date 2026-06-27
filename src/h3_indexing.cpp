@@ -13,7 +13,7 @@ static void LatLngToCellFunction(DataChunk &args, ExpressionState &state,
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
   TernaryExecutor::Execute<double, double, int, H3Index>(
-      inputs, inputs2, inputs3, result, args.size(),
+      inputs, inputs2, inputs3, result,
       [&](double lat, double lng, int res) -> optional<H3Index> {
         H3Index cell;
         LatLng latLng = {.lat = degsToRads(lat), .lng = degsToRads(lng)};
@@ -32,7 +32,7 @@ static void LatLngToCellVarcharFunction(DataChunk &args, ExpressionState &state,
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
   TernaryExecutor::Execute<double, double, int, string_t>(
-      inputs, inputs2, inputs3, result, args.size(),
+      inputs, inputs2, inputs3, result,
       [&](double lat, double lng, int res) -> optional<string_t> {
         H3Index cell;
         LatLng latLng = {.lat = degsToRads(lat), .lng = degsToRads(lng)};
@@ -50,7 +50,7 @@ template <typename T>
 static void CellToLatFunction(DataChunk &args, ExpressionState &state,
                               Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, double>(inputs, result, args.size(),
+  UnaryExecutor::Execute<T, double>(inputs, result,
                                     [&](T cell) -> optional<double> {
                                       LatLng latLng = {.lat = 0, .lng = 0};
                                       H3Error err = cellToLatLng(cell, &latLng);
@@ -66,8 +66,7 @@ static void CellToLatVarcharFunction(DataChunk &args, ExpressionState &state,
                                      Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, double>(
-      inputs, result, args.size(),
-      [&](string_t cellAddress) -> optional<double> {
+      inputs, result, [&](string_t cellAddress) -> optional<double> {
         H3Index cell;
         H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
         if (err0) {
@@ -88,7 +87,7 @@ template <typename T>
 static void CellToLngFunction(DataChunk &args, ExpressionState &state,
                               Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, double>(inputs, result, args.size(),
+  UnaryExecutor::Execute<T, double>(inputs, result,
                                     [&](T cell) -> optional<double> {
                                       LatLng latLng = {.lat = 0, .lng = 0};
                                       H3Error err = cellToLatLng(cell, &latLng);
@@ -104,8 +103,7 @@ static void CellToLngVarcharFunction(DataChunk &args, ExpressionState &state,
                                      Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, double>(
-      inputs, result, args.size(),
-      [&](string_t cellAddress) -> optional<double> {
+      inputs, result, [&](string_t cellAddress) -> optional<double> {
         H3Index cell;
         H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
         if (err0) {
@@ -211,7 +209,7 @@ private:
 template <typename T, typename Encoder>
 static void CellToBoundaryFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
-  UnaryExecutor::Execute<T, string_t>(args.data[0], result, args.size(),
+  UnaryExecutor::Execute<T, string_t>(args.data[0], result,
                                       CellToBoundaryOperator<Encoder>{result});
 }
 
@@ -237,8 +235,7 @@ static void CellToBoundaryVarcharFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
   UnaryExecutor::Execute<string_t, string_t>(
-      args.data[0], result, args.size(),
-      CellToBoundaryVarcharOperator<Encoder>{result});
+      args.data[0], result, CellToBoundaryVarcharOperator<Encoder>{result});
 }
 
 CreateScalarFunctionInfo H3Functions::GetLatLngToCellFunction() {

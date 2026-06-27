@@ -9,7 +9,7 @@ template <typename T>
 static void GetResolutionFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, int>(inputs, result, args.size(),
+  UnaryExecutor::Execute<T, int>(inputs, result,
                                  [&](T cell) { return getResolution(cell); });
 }
 
@@ -18,7 +18,7 @@ static void GetResolutionVarcharFunction(DataChunk &args,
                                          Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, int>(
-      inputs, result, args.size(), [&](string_t cellAddress) -> optional<int> {
+      inputs, result, [&](string_t cellAddress) -> optional<int> {
         H3Index cell;
         H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
         if (err0) {
@@ -33,9 +33,8 @@ template <typename T>
 static void GetBaseCellNumberFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, int>(inputs, result, args.size(), [&](T cell) {
-    return getBaseCellNumber(cell);
-  });
+  UnaryExecutor::Execute<T, int>(
+      inputs, result, [&](T cell) { return getBaseCellNumber(cell); });
 }
 
 static void GetBaseCellNumberVarcharFunction(DataChunk &args,
@@ -43,7 +42,7 @@ static void GetBaseCellNumberVarcharFunction(DataChunk &args,
                                              Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, int>(
-      inputs, result, args.size(), [&](string_t cellAddress) -> optional<int> {
+      inputs, result, [&](string_t cellAddress) -> optional<int> {
         H3Index cell;
         H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
         if (err0) {
@@ -59,17 +58,16 @@ static void GetIndexDigitFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::Execute<T, int, int>(inputs, inputs2, result, args.size(),
-                                       [&](T cell, int res) -> optional<int> {
-                                         int out;
-                                         H3Error err0 =
-                                             getIndexDigit(cell, res, &out);
-                                         if (err0) {
-                                           return nullopt;
-                                         } else {
-                                           return out;
-                                         }
-                                       });
+  BinaryExecutor::Execute<T, int, int>(
+      inputs, inputs2, result, [&](T cell, int res) -> optional<int> {
+        int out;
+        H3Error err0 = getIndexDigit(cell, res, &out);
+        if (err0) {
+          return nullopt;
+        } else {
+          return out;
+        }
+      });
 }
 
 static void GetIndexDigitVarcharFunction(DataChunk &args,
@@ -78,7 +76,7 @@ static void GetIndexDigitVarcharFunction(DataChunk &args,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, int, int>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t cellAddress, int res) -> optional<int> {
         H3Index cell;
         H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
@@ -100,7 +98,7 @@ static void StringToH3Function(DataChunk &args, ExpressionState &state,
                                Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, uint64_t>(
-      inputs, result, args.size(), [&](string_t input) -> optional<uint64_t> {
+      inputs, result, [&](string_t input) -> optional<uint64_t> {
         H3Index h;
         H3Error err = stringToH3(input.GetString().c_str(), &h);
         if (err) {
@@ -129,56 +127,51 @@ static void H3ToStringFunction(DataChunk &args, ExpressionState &state,
 static void IsValidIndexVarcharFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t input) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          return false;
-        }
-        return bool(isValidIndex(h));
-      });
+  UnaryExecutor::Execute<string_t, bool>(inputs, result, [&](string_t input) {
+    H3Index h;
+    H3Error err = stringToH3(input.GetString().c_str(), &h);
+    if (err) {
+      return false;
+    }
+    return bool(isValidIndex(h));
+  });
 }
 
 template <typename T>
 static void IsValidIndexFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
-    return bool(isValidIndex(input));
-  });
+  UnaryExecutor::Execute<T, bool>(
+      inputs, result, [&](T input) { return bool(isValidIndex(input)); });
 }
 
 static void IsValidCellVarcharFunction(DataChunk &args, ExpressionState &state,
                                        Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t input) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          return false;
-        }
-        return bool(isValidCell(h));
-      });
+  UnaryExecutor::Execute<string_t, bool>(inputs, result, [&](string_t input) {
+    H3Index h;
+    H3Error err = stringToH3(input.GetString().c_str(), &h);
+    if (err) {
+      return false;
+    }
+    return bool(isValidCell(h));
+  });
 }
 
 template <typename T>
 static void IsValidCellFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
-    return bool(isValidCell(input));
-  });
+  UnaryExecutor::Execute<T, bool>(
+      inputs, result, [&](T input) { return bool(isValidCell(input)); });
 }
 
 template <typename T>
 static void IsResClassIIIFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T cell) {
-    return bool(isResClassIII(cell));
-  });
+  UnaryExecutor::Execute<T, bool>(
+      inputs, result, [&](T cell) { return bool(isResClassIII(cell)); });
 }
 
 static void IsResClassIIIVarcharFunction(DataChunk &args,
@@ -186,7 +179,7 @@ static void IsResClassIIIVarcharFunction(DataChunk &args,
                                          Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t cellAddress) -> optional<bool> {
+      inputs, result, [&](string_t cellAddress) -> optional<bool> {
         H3Index cell;
         H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
         if (err0) {
@@ -201,16 +194,15 @@ template <typename T>
 static void IsPentagonFunction(DataChunk &args, ExpressionState &state,
                                Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T cell) {
-    return bool(isPentagon(cell));
-  });
+  UnaryExecutor::Execute<T, bool>(
+      inputs, result, [&](T cell) { return bool(isPentagon(cell)); });
 }
 
 static void IsPentagonVarcharFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t cellAddress) -> optional<bool> {
+      inputs, result, [&](string_t cellAddress) -> optional<bool> {
         H3Index cell;
         H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
         if (err0) {
@@ -333,7 +325,7 @@ static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
 
   auto lists_size = ListVector::GetListSize(digitsVec);
   auto &child_vector = ListVector::GetEntry(digitsVec);
-  child_vector.Flatten(lists_size);
+  child_vector.Flatten();
 
   UnifiedVectorFormat child_data;
   child_vector.ToUnifiedFormat(child_data);
@@ -432,7 +424,7 @@ static void ConstructCellVarcharFunction(DataChunk &args,
 
   auto lists_size = ListVector::GetListSize(digitsVec);
   auto &child_vector = ListVector::GetEntry(digitsVec);
-  child_vector.Flatten(lists_size);
+  child_vector.Flatten();
 
   UnifiedVectorFormat child_data;
   child_vector.ToUnifiedFormat(child_data);

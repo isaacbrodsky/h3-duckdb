@@ -149,16 +149,15 @@ static void GetDirectedEdgeOriginFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, T>(
-      inputs, result, args.size(), [&](T input) -> optional<T> {
-        H3Index out;
-        H3Error err = getDirectedEdgeOrigin(input, &out);
-        if (err) {
-          return nullopt;
-        } else {
-          return out;
-        }
-      });
+  UnaryExecutor::Execute<T, T>(inputs, result, [&](T input) -> optional<T> {
+    H3Index out;
+    H3Error err = getDirectedEdgeOrigin(input, &out);
+    if (err) {
+      return nullopt;
+    } else {
+      return out;
+    }
+  });
 }
 
 static void GetDirectedEdgeOriginVarcharFunction(DataChunk &args,
@@ -166,8 +165,7 @@ static void GetDirectedEdgeOriginVarcharFunction(DataChunk &args,
                                                  Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t inputStr) -> optional<string_t> {
+      inputs, result, [&](string_t inputStr) -> optional<string_t> {
         H3Index input;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
         if (err0) {
@@ -190,16 +188,15 @@ static void GetDirectedEdgeDestinationFunction(DataChunk &args,
                                                ExpressionState &state,
                                                Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, T>(
-      inputs, result, args.size(), [&](T input) -> optional<T> {
-        H3Index out;
-        H3Error err = getDirectedEdgeDestination(input, &out);
-        if (err) {
-          return nullopt;
-        } else {
-          return out;
-        }
-      });
+  UnaryExecutor::Execute<T, T>(inputs, result, [&](T input) -> optional<T> {
+    H3Index out;
+    H3Error err = getDirectedEdgeDestination(input, &out);
+    if (err) {
+      return nullopt;
+    } else {
+      return out;
+    }
+  });
 }
 
 static void GetDirectedEdgeDestinationVarcharFunction(DataChunk &args,
@@ -207,8 +204,7 @@ static void GetDirectedEdgeDestinationVarcharFunction(DataChunk &args,
                                                       Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t inputStr) -> optional<string_t> {
+      inputs, result, [&](string_t inputStr) -> optional<string_t> {
         H3Index input;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
         if (err0) {
@@ -231,17 +227,16 @@ static void CellsToDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::Execute<T, T, T>(inputs, inputs2, result, args.size(),
-                                   [&](T input, T input2) -> optional<T> {
-                                     H3Index out;
-                                     H3Error err = cellsToDirectedEdge(
-                                         input, input2, &out);
-                                     if (err) {
-                                       return nullopt;
-                                     } else {
-                                       return out;
-                                     }
-                                   });
+  BinaryExecutor::Execute<T, T, T>(
+      inputs, inputs2, result, [&](T input, T input2) -> optional<T> {
+        H3Index out;
+        H3Error err = cellsToDirectedEdge(input, input2, &out);
+        if (err) {
+          return nullopt;
+        } else {
+          return out;
+        }
+      });
 }
 
 static void CellsToDirectedEdgeVarcharFunction(DataChunk &args,
@@ -250,7 +245,7 @@ static void CellsToDirectedEdgeVarcharFunction(DataChunk &args,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, string_t, string_t>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t inputStr, string_t inputStr2) -> optional<string_t> {
         H3Index input, input2;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
@@ -274,16 +269,15 @@ template <typename T>
 static void ReverseDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, T>(inputs, result, args.size(),
-                               [&](T input) -> optional<T> {
-                                 H3Index out;
-                                 H3Error err = reverseDirectedEdge(input, &out);
-                                 if (err) {
-                                   return nullopt;
-                                 } else {
-                                   return out;
-                                 }
-                               });
+  UnaryExecutor::Execute<T, T>(inputs, result, [&](T input) -> optional<T> {
+    H3Index out;
+    H3Error err = reverseDirectedEdge(input, &out);
+    if (err) {
+      return nullopt;
+    } else {
+      return out;
+    }
+  });
 }
 
 static void ReverseDirectedEdgeVarcharFunction(DataChunk &args,
@@ -291,8 +285,7 @@ static void ReverseDirectedEdgeVarcharFunction(DataChunk &args,
                                                Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t inputStr) -> optional<string_t> {
+      inputs, result, [&](string_t inputStr) -> optional<string_t> {
         H3Index input;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
         if (err0) {
@@ -315,17 +308,16 @@ static void AreNeighborCellsFunction(DataChunk &args, ExpressionState &state,
                                      Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::Execute<T, T, bool>(inputs, inputs2, result, args.size(),
-                                      [&](T input, T input2) -> optional<bool> {
-                                        int out;
-                                        H3Error err = areNeighborCells(
-                                            input, input2, &out);
-                                        if (err) {
-                                          return nullopt;
-                                        } else {
-                                          return bool(out);
-                                        }
-                                      });
+  BinaryExecutor::Execute<T, T, bool>(
+      inputs, inputs2, result, [&](T input, T input2) -> optional<bool> {
+        int out;
+        H3Error err = areNeighborCells(input, input2, &out);
+        if (err) {
+          return nullopt;
+        } else {
+          return bool(out);
+        }
+      });
 }
 
 static void AreNeighborCellsVarcharFunction(DataChunk &args,
@@ -334,7 +326,7 @@ static void AreNeighborCellsVarcharFunction(DataChunk &args,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, string_t, bool>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t inputStr, string_t inputStr2) -> optional<bool> {
         H3Index input, input2;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
@@ -357,22 +349,21 @@ static void IsValidDirectedEdgeVarcharFunction(DataChunk &args,
                                                ExpressionState &state,
                                                Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t input) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          return false;
-        }
-        return bool(isValidDirectedEdge(h));
-      });
+  UnaryExecutor::Execute<string_t, bool>(inputs, result, [&](string_t input) {
+    H3Index h;
+    H3Error err = stringToH3(input.GetString().c_str(), &h);
+    if (err) {
+      return false;
+    }
+    return bool(isValidDirectedEdge(h));
+  });
 }
 
 template <typename T>
 static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
+  UnaryExecutor::Execute<T, bool>(inputs, result, [&](T input) {
     return bool(isValidDirectedEdge(input));
   });
 }
@@ -410,8 +401,7 @@ static void DirectedEdgeToBoundaryFunction(DataChunk &args,
                                            ExpressionState &state,
                                            Vector &result) {
   UnaryExecutor::Execute<T, string_t, DirectedEdgeToBoundaryOperator<Encoder>>(
-      args.data[0], result, args.size(),
-      DirectedEdgeToBoundaryOperator<Encoder>{result});
+      args.data[0], result, DirectedEdgeToBoundaryOperator<Encoder>{result});
 }
 
 template <typename Encoder> struct DirectedEdgeToBoundaryVarcharOperator {
@@ -437,7 +427,7 @@ static void DirectedEdgeToBoundaryVarcharFunction(DataChunk &args,
                                                   ExpressionState &state,
                                                   Vector &result) {
   UnaryExecutor::Execute<string_t, string_t>(
-      args.data[0], result, args.size(),
+      args.data[0], result,
       DirectedEdgeToBoundaryVarcharOperator<Encoder>{result});
 }
 

@@ -81,7 +81,7 @@ static void CellsToMultiPolygonFunction(DataChunk &args, ExpressionState &state,
 
   auto lists_size = ListVector::GetListSize(lhs);
   auto &child_vector = ListVector::GetEntry(lhs);
-  child_vector.Flatten(lists_size);
+  child_vector.Flatten();
 
   UnifiedVectorFormat child_data;
   child_vector.ToUnifiedFormat(child_data);
@@ -300,8 +300,7 @@ static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState &state,
   // TODO: Note this function is not fully noexcept -- some invalid WKT strings
   // will throw, others will return empty lists.
   BinaryExecutor::Execute<string_t, int, list_entry_t>(
-      args.data[0], args.data[1], result, args.size(),
-      [&](string_t input, int res) {
+      args.data[0], args.data[1], result, [&](string_t input, int res) {
         GeoPolygon polygon = {0};
         int32_t flags = 0;
 
@@ -320,8 +319,7 @@ static void PolygonWktToCellsVarcharFunction(DataChunk &args,
   // TODO: Note this function is not fully noexcept -- some invalid WKT strings
   // will throw, others will return empty lists.
   BinaryExecutor::Execute<string_t, int, list_entry_t>(
-      args.data[0], args.data[1], result, args.size(),
-      [&](string_t input, int res) {
+      args.data[0], args.data[1], result, [&](string_t input, int res) {
         GeoPolygon polygon = {0};
         int32_t flags = 0;
 
@@ -341,8 +339,7 @@ static void PolygonWkbToCellsFunction(DataChunk &args, ExpressionState &state,
   // TODO: Note this function is not fully noexcept -- some invalid WKB strings
   // will throw, others will return empty lists.
   BinaryExecutor::Execute<string_t, int, list_entry_t>(
-      args.data[0], args.data[1], result, args.size(),
-      [&](string_t input, int res) {
+      args.data[0], args.data[1], result, [&](string_t input, int res) {
         GeoPolygon polygon = {0};
         int32_t flags = 0;
 
@@ -363,8 +360,7 @@ static void PolygonWkbToCellsVarcharFunction(DataChunk &args,
   // TODO: Note this function is not fully noexcept -- some invalid WKB strings
   // will throw, others will return empty lists.
   BinaryExecutor::Execute<string_t, int, list_entry_t>(
-      args.data[0], args.data[1], result, args.size(),
-      [&](string_t input, int res) {
+      args.data[0], args.data[1], result, [&](string_t input, int res) {
         GeoPolygon polygon = {0};
         int32_t flags = 0;
 
@@ -405,7 +401,7 @@ static void PolygonWktToCellsExperimentalFunction(DataChunk &args,
                                                   ExpressionState &state,
                                                   Vector &result) {
   TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
-      args.data[0], args.data[1], args.data[2], result, args.size(),
+      args.data[0], args.data[1], args.data[2], result,
       [&](string_t input, int res, string_t flagsStr) {
         return PolygonWktToCellsExperimentalInnerFunction(input, res, flagsStr,
                                                           result);
@@ -416,7 +412,7 @@ static void PolygonWktToCellsExperimentalFunctionSwapped(DataChunk &args,
                                                          ExpressionState &state,
                                                          Vector &result) {
   TernaryExecutor::Execute<string_t, string_t, int, list_entry_t>(
-      args.data[0], args.data[1], args.data[2], result, args.size(),
+      args.data[0], args.data[1], args.data[2], result,
       [&](string_t input, string_t flagsStr, int res) {
         return PolygonWktToCellsExperimentalInnerFunction(input, res, flagsStr,
                                                           result);
@@ -448,7 +444,7 @@ static void PolygonWktToCellsExperimentalVarcharFunction(DataChunk &args,
                                                          ExpressionState &state,
                                                          Vector &result) {
   TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
-      args.data[0], args.data[1], args.data[2], result, args.size(),
+      args.data[0], args.data[1], args.data[2], result,
       [&](string_t input, int res, string_t flagsStr) {
         return PolygonWktToCellsExperimentalVarcharInnerFunction(
             input, res, flagsStr, result);
@@ -458,7 +454,7 @@ static void PolygonWktToCellsExperimentalVarcharFunction(DataChunk &args,
 static void PolygonWktToCellsExperimentalVarcharFunctionSwapped(
     DataChunk &args, ExpressionState &state, Vector &result) {
   TernaryExecutor::Execute<string_t, string_t, int, list_entry_t>(
-      args.data[0], args.data[1], args.data[2], result, args.size(),
+      args.data[0], args.data[1], args.data[2], result,
       [&](string_t input, string_t flagsStr, int res) {
         return PolygonWktToCellsExperimentalVarcharInnerFunction(
             input, res, flagsStr, result);
@@ -490,7 +486,7 @@ static void PolygonWkbToCellsExperimentalVarcharFunction(DataChunk &args,
                                                          ExpressionState &state,
                                                          Vector &result) {
   TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
-      args.data[0], args.data[1], args.data[2], result, args.size(),
+      args.data[0], args.data[1], args.data[2], result,
       [&](string_t input, int res, string_t flagsStr) {
         return PolygonWkbToCellsExperimentalVarcharInnerFunction(
             input, res, flagsStr, result);
@@ -500,7 +496,7 @@ static void PolygonWkbToCellsExperimentalVarcharFunction(DataChunk &args,
 static void PolygonWkbToCellsExperimentalVarcharFunctionSwapped(
     DataChunk &args, ExpressionState &state, Vector &result) {
   TernaryExecutor::Execute<string_t, string_t, int, list_entry_t>(
-      args.data[0], args.data[1], args.data[2], result, args.size(),
+      args.data[0], args.data[1], args.data[2], result,
       [&](string_t input, string_t flagsStr, int res) {
         return PolygonWkbToCellsExperimentalVarcharInnerFunction(
             input, res, flagsStr, result);
@@ -533,7 +529,7 @@ static void PolygonWkbToCellsExperimentalFunction(DataChunk &args,
                                                   ExpressionState &state,
                                                   Vector &result) {
   TernaryExecutor::Execute<string_t, int, string_t, list_entry_t>(
-      args.data[0], args.data[1], args.data[2], result, args.size(),
+      args.data[0], args.data[1], args.data[2], result,
       [&](string_t input, int res, string_t flagsStr) {
         return PolygonWkbToCellsExperimentalInnerFunction(input, res, flagsStr,
                                                           result);
@@ -544,7 +540,7 @@ static void PolygonWkbToCellsExperimentalFunctionSwapped(DataChunk &args,
                                                          ExpressionState &state,
                                                          Vector &result) {
   TernaryExecutor::Execute<string_t, string_t, int, list_entry_t>(
-      args.data[0], args.data[1], args.data[2], result, args.size(),
+      args.data[0], args.data[1], args.data[2], result,
       [&](string_t input, string_t flagsStr, int res) {
         return PolygonWkbToCellsExperimentalInnerFunction(input, res, flagsStr,
                                                           result);

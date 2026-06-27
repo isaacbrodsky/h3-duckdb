@@ -13,8 +13,7 @@ static void GetHexagonAreaAvgFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<int, string_t, double>(
-      inputs, inputs2, result, args.size(),
-      [&](int res, string_t unit) -> optional<double> {
+      inputs, inputs2, result, [&](int res, string_t unit) -> optional<double> {
         double out;
         H3Error err = E_OPTION_INVALID;
         if (unit == "km^2") {
@@ -52,7 +51,7 @@ static void CellAreaVarcharFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, string_t, double>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t cell, string_t unit) -> optional<double> {
         H3Index h;
         H3Error err = stringToH3(cell.GetString().c_str(), &h);
@@ -68,8 +67,8 @@ static void CellAreaFunction(DataChunk &args, ExpressionState &state,
                              Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::Execute<T, string_t, double>(
-      inputs, inputs2, result, args.size(), CellAreaFunctionInternal);
+  BinaryExecutor::Execute<T, string_t, double>(inputs, inputs2, result,
+                                               CellAreaFunctionInternal);
 }
 
 static void GetHexagonEdgeLengthAvgFunction(DataChunk &args,
@@ -78,8 +77,7 @@ static void GetHexagonEdgeLengthAvgFunction(DataChunk &args,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<int, string_t, double>(
-      inputs, inputs2, result, args.size(),
-      [&](int res, string_t unit) -> optional<double> {
+      inputs, inputs2, result, [&](int res, string_t unit) -> optional<double> {
         double out;
         H3Error err = E_OPTION_INVALID;
         if (unit == "km") {
@@ -118,7 +116,7 @@ static void EdgeLengthVarcharFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, string_t, double>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t edge, string_t unit) -> optional<double> {
         H3Index h;
         H3Error err = stringToH3(edge.GetString().c_str(), &h);
@@ -134,14 +132,14 @@ static void EdgeLengthFunction(DataChunk &args, ExpressionState &state,
                                Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::Execute<T, string_t, double>(
-      inputs, inputs2, result, args.size(), EdgeLengthFunctionInternal);
+  BinaryExecutor::Execute<T, string_t, double>(inputs, inputs2, result,
+                                               EdgeLengthFunctionInternal);
 }
 
 static void GetNumCellsFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<int, int64_t>(inputs, result, args.size(),
+  UnaryExecutor::Execute<int, int64_t>(inputs, result,
                                        [&](int res) -> optional<int64_t> {
                                          int64_t out;
                                          H3Error err = getNumCells(res, &out);

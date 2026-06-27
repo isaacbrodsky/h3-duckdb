@@ -499,7 +499,7 @@ static void GridDistanceFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<T, T, int64_t>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](T origin, T destination) -> optional<int64_t> {
         int64_t distance;
         H3Error err = gridDistance(origin, destination, &distance);
@@ -516,7 +516,7 @@ static void GridDistanceVarcharFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, string_t, int64_t>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t originInput,
           string_t destinationInput) -> optional<int64_t> {
         H3Index origin, destination;
@@ -612,7 +612,7 @@ static void LocalIjToCellFunction(DataChunk &args, ExpressionState &state,
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
   TernaryExecutor::Execute<T, int32_t, int32_t, T>(
-      inputs, inputs2, inputs3, result, args.size(),
+      inputs, inputs2, inputs3, result,
       [&](T origin, int32_t i, int32_t j) -> optional<T> {
         uint32_t mode = 0; // TODO: Expose mode to the user when applicable
 
@@ -634,7 +634,7 @@ static void LocalIjToCellVarcharFunction(DataChunk &args,
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
   TernaryExecutor::Execute<string_t, int32_t, int32_t, string_t>(
-      inputs, inputs2, inputs3, result, args.size(),
+      inputs, inputs2, inputs3, result,
       [&](string_t input, int32_t i, int32_t j) -> optional<string_t> {
         H3Index origin;
         H3Error err0 = stringToH3(input.GetString().c_str(), &origin);
@@ -660,7 +660,7 @@ static void MaxGridDiskSizeFunction(DataChunk &args, ExpressionState &state,
                                     Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<int32_t, int64_t>(
-      inputs, result, args.size(), [&](int32_t k) -> optional<int64_t> {
+      inputs, result, [&](int32_t k) -> optional<int64_t> {
         int64_t out;
         H3Error err = maxGridDiskSize(k, &out);
         if (err) {

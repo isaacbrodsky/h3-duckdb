@@ -11,8 +11,7 @@ static void CellToVertexFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<T, int32_t, T>(
-      inputs, inputs2, result, args.size(),
-      [&](T cell, int32_t vertexNum) -> optional<T> {
+      inputs, inputs2, result, [&](T cell, int32_t vertexNum) -> optional<T> {
         H3Index vertex;
         H3Error err = cellToVertex(cell, vertexNum, &vertex);
         if (err) {
@@ -28,7 +27,7 @@ static void CellToVertexVarcharFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, int32_t, string_t>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t cellInput, int32_t vertexNum) -> optional<string_t> {
         H3Index cell;
         H3Error err0 = stringToH3(cellInput.GetString().c_str(), &cell);
@@ -138,7 +137,7 @@ static void VertexToLatFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<T, double>(
-      inputs, result, args.size(), [&](T vertex) -> optional<double> {
+      inputs, result, [&](T vertex) -> optional<double> {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = vertexToLatLng(vertex, &latLng);
         if (err) {
@@ -153,8 +152,7 @@ static void VertexToLatVarcharFunction(DataChunk &args, ExpressionState &state,
                                        Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, double>(
-      inputs, result, args.size(),
-      [&](string_t vertexInput) -> optional<double> {
+      inputs, result, [&](string_t vertexInput) -> optional<double> {
         H3Index vertex;
         H3Error err0 = stringToH3(vertexInput.GetString().c_str(), &vertex);
         if (err0) {
@@ -176,7 +174,7 @@ static void VertexToLngFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<T, double>(
-      inputs, result, args.size(), [&](T vertex) -> optional<double> {
+      inputs, result, [&](T vertex) -> optional<double> {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = vertexToLatLng(vertex, &latLng);
         if (err) {
@@ -191,8 +189,7 @@ static void VertexToLngVarcharFunction(DataChunk &args, ExpressionState &state,
                                        Vector &result) {
   auto &inputs = args.data[0];
   UnaryExecutor::Execute<string_t, double>(
-      inputs, result, args.size(),
-      [&](string_t vertexInput) -> optional<double> {
+      inputs, result, [&](string_t vertexInput) -> optional<double> {
         H3Index vertex;
         H3Error err0 = stringToH3(vertexInput.GetString().c_str(), &vertex);
         if (err0) {
@@ -268,24 +265,22 @@ static void IsValidVertexVarcharFunction(DataChunk &args,
                                          ExpressionState &state,
                                          Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t input) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          return false;
-        }
-        return bool(isValidVertex(h));
-      });
+  UnaryExecutor::Execute<string_t, bool>(inputs, result, [&](string_t input) {
+    H3Index h;
+    H3Error err = stringToH3(input.GetString().c_str(), &h);
+    if (err) {
+      return false;
+    }
+    return bool(isValidVertex(h));
+  });
 }
 
 template <typename T>
 static void IsValidVertexFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
-    return bool(isValidVertex(input));
-  });
+  UnaryExecutor::Execute<T, bool>(
+      inputs, result, [&](T input) { return bool(isValidVertex(input)); });
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToVertexFunction() {

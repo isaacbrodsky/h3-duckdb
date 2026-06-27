@@ -10,17 +10,16 @@ static void CellToParentFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::Execute<T, int, T>(inputs, inputs2, result, args.size(),
-                                     [&](T input, int res) -> optional<T> {
-                                       H3Index parent;
-                                       H3Error err =
-                                           cellToParent(input, res, &parent);
-                                       if (err) {
-                                         return nullopt;
-                                       } else {
-                                         return parent;
-                                       }
-                                     });
+  BinaryExecutor::Execute<T, int, T>(
+      inputs, inputs2, result, [&](T input, int res) -> optional<T> {
+        H3Index parent;
+        H3Error err = cellToParent(input, res, &parent);
+        if (err) {
+          return nullopt;
+        } else {
+          return parent;
+        }
+      });
 }
 
 static void CellToParentVarcharFunction(DataChunk &args, ExpressionState &state,
@@ -28,7 +27,7 @@ static void CellToParentVarcharFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, int, string_t>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t input, int res) -> optional<string_t> {
         H3Index h;
         H3Error err0 = stringToH3(input.GetString().c_str(), &h);
@@ -142,8 +141,7 @@ static void CellToChildrenSizeFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<T, int32_t, int64_t>(
-      inputs, inputs2, result, args.size(),
-      [&](T h, int32_t childRes) -> optional<int64_t> {
+      inputs, inputs2, result, [&](T h, int32_t childRes) -> optional<int64_t> {
         int64_t out;
         H3Error err = cellToChildrenSize(h, childRes, &out);
         if (err) {
@@ -160,7 +158,7 @@ static void CellToChildrenSizeVarcharFunction(DataChunk &args,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, int32_t, int64_t>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t hStr, int32_t childRes) -> optional<int64_t> {
         int64_t out;
         H3Index h;
@@ -184,7 +182,7 @@ static void CellToCenterChildVarcharFunction(DataChunk &args,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, int, string_t>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t input, int res) -> optional<string_t> {
         H3Index h;
         H3Error err0 = stringToH3(input.GetString().c_str(), &h);
@@ -208,17 +206,16 @@ static void CellToCenterChildFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::Execute<T, int, T>(inputs, inputs2, result, args.size(),
-                                     [&](T input, int res) -> optional<T> {
-                                       H3Index child;
-                                       H3Error err = cellToCenterChild(
-                                           input, res, &child);
-                                       if (err) {
-                                         return nullopt;
-                                       } else {
-                                         return child;
-                                       }
-                                     });
+  BinaryExecutor::Execute<T, int, T>(
+      inputs, inputs2, result, [&](T input, int res) -> optional<T> {
+        H3Index child;
+        H3Error err = cellToCenterChild(input, res, &child);
+        if (err) {
+          return nullopt;
+        } else {
+          return child;
+        }
+      });
 }
 
 static void CellToChildPosVarcharFunction(DataChunk &args,
@@ -227,7 +224,7 @@ static void CellToChildPosVarcharFunction(DataChunk &args,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<string_t, int, int64_t>(
-      inputs, inputs2, result, args.size(),
+      inputs, inputs2, result,
       [&](string_t input, int res) -> optional<int64_t> {
         H3Index h;
         H3Error err0 = stringToH3(input.GetString().c_str(), &h);
@@ -251,8 +248,7 @@ static void CellToChildPosFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   BinaryExecutor::Execute<T, int, int64_t>(
-      inputs, inputs2, result, args.size(),
-      [&](T input, int res) -> optional<int64_t> {
+      inputs, inputs2, result, [&](T input, int res) -> optional<int64_t> {
         int64_t child;
         H3Error err = cellToChildPos(input, res, &child);
         if (err) {
@@ -270,7 +266,7 @@ static void ChildPosToCellVarcharFunction(DataChunk &args,
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
   TernaryExecutor::Execute<int64_t, string_t, int, string_t>(
-      inputs, inputs2, inputs3, result, args.size(),
+      inputs, inputs2, inputs3, result,
       [&](int64_t pos, string_t input, int res) -> optional<string_t> {
         H3Index h;
         H3Error err0 = stringToH3(input.GetString().c_str(), &h);
@@ -296,7 +292,7 @@ static void ChildPosToCellFunction(DataChunk &args, ExpressionState &state,
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
   TernaryExecutor::Execute<int64_t, T, int, T>(
-      inputs, inputs2, inputs3, result, args.size(),
+      inputs, inputs2, inputs3, result,
       [&](int64_t pos, T input, int res) -> optional<T> {
         H3Index child;
         H3Error err = childPosToCell(pos, input, res, &child);
@@ -321,7 +317,7 @@ static void CompactCellsFunction(DataChunk &args, ExpressionState &state,
 
   auto lists_size = ListVector::GetListSize(lists);
   auto &child_vector = ListVector::GetEntry(lists);
-  child_vector.Flatten(lists_size);
+  child_vector.Flatten();
 
   UnifiedVectorFormat child_data;
   child_vector.ToUnifiedFormat(child_data);
@@ -394,7 +390,7 @@ static void CompactCellsVarcharFunction(DataChunk &args, ExpressionState &state,
 
   auto lists_size = ListVector::GetListSize(lists);
   auto &child_vector = ListVector::GetEntry(lists);
-  child_vector.Flatten(lists_size);
+  child_vector.Flatten();
 
   UnifiedVectorFormat child_data;
   child_vector.ToUnifiedFormat(child_data);
@@ -489,7 +485,7 @@ static void UncompactCellsFunction(DataChunk &args, ExpressionState &state,
 
   auto lists_size = ListVector::GetListSize(lhs);
   auto &child_vector = ListVector::GetEntry(lhs);
-  child_vector.Flatten(lists_size);
+  child_vector.Flatten();
 
   UnifiedVectorFormat child_data;
   child_vector.ToUnifiedFormat(child_data);
@@ -583,7 +579,7 @@ static void UncompactCellsVarcharFunction(DataChunk &args,
 
   auto lists_size = ListVector::GetListSize(lhs);
   auto &child_vector = ListVector::GetEntry(lhs);
-  child_vector.Flatten(lists_size);
+  child_vector.Flatten();
 
   UnifiedVectorFormat child_data;
   child_vector.ToUnifiedFormat(child_data);
