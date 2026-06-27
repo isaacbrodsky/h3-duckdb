@@ -5,6 +5,8 @@
 
 #include "duckdb/common/helper.hpp"
 
+#include "duckdb/common/vector/list_vector.hpp"
+
 namespace duckdb {
 
 static uint32_t StringToFlags(string_t flagsStr) {
@@ -82,15 +84,15 @@ static void CellsToMultiPolygonFunction(DataChunk &args, ExpressionState &state,
   child_vector.Flatten(lists_size);
 
   UnifiedVectorFormat child_data;
-  child_vector.ToUnifiedFormat(lists_size, child_data);
+  child_vector.ToUnifiedFormat(child_data);
 
   UnifiedVectorFormat lists_data;
-  lhs.ToUnifiedFormat(count, lists_data);
+  lhs.ToUnifiedFormat(lists_data);
   auto list_entries = UnifiedVectorFormat::GetData<list_entry_t>(lists_data);
 
   result.SetVectorType(VectorType::FLAT_VECTOR);
-  auto result_entries = FlatVector::GetData<string_t>(result);
-  auto &result_validity = FlatVector::Validity(result);
+  auto result_entries = FlatVector::GetDataMutable<string_t>(result);
+  auto &result_validity = FlatVector::ValidityMutable(result);
 
   idx_t offset = 0;
   for (idx_t i = 0; i < count; i++) {
@@ -170,7 +172,7 @@ static void CellsToMultiPolygonFunction(DataChunk &args, ExpressionState &state,
   if (lhs.GetVectorType() == VectorType::CONSTANT_VECTOR) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static list_entry_t PolygonToCells(Vector &result, GeoPolygon &polygon, int res,

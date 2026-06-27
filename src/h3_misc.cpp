@@ -1,6 +1,8 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
 
+#include "duckdb/common/vector/list_vector.hpp"
+
 namespace duckdb {
 
 // TODO: Consider using enums for (km, m, rads) here, instead of VARCHAR
@@ -10,9 +12,9 @@ static void GetHexagonAreaAvgFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<int, string_t, double>(
+  BinaryExecutor::Execute<int, string_t, double>(
       inputs, inputs2, result, args.size(),
-      [&](int res, string_t unit, ValidityMask &mask, idx_t idx) {
+      [&](int res, string_t unit) -> optional<double> {
         double out;
         H3Error err = E_OPTION_INVALID;
         if (unit == "km^2") {
@@ -21,16 +23,14 @@ static void GetHexagonAreaAvgFunction(DataChunk &args, ExpressionState &state,
           err = getHexagonAreaAvgM2(res, &out);
         }
         if (err) {
-          mask.SetInvalid(idx);
-          return 0.0;
+          return nullopt;
         } else {
           return out;
         }
       });
 }
 
-static double CellAreaFunctionInternal(H3Index cell, string_t unit,
-                                       ValidityMask &mask, idx_t idx) {
+static optional<double> CellAreaFunctionInternal(H3Index cell, string_t unit) {
   double out;
   H3Error err = E_OPTION_INVALID;
   if (unit == "rads^2") {
@@ -41,8 +41,7 @@ static double CellAreaFunctionInternal(H3Index cell, string_t unit,
     err = cellAreaM2(cell, &out);
   }
   if (err) {
-    mask.SetInvalid(idx);
-    return 0.0;
+    return nullopt;
   } else {
     return out;
   }
@@ -52,16 +51,15 @@ static void CellAreaVarcharFunction(DataChunk &args, ExpressionState &state,
                                     Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<string_t, string_t, double>(
+  BinaryExecutor::Execute<string_t, string_t, double>(
       inputs, inputs2, result, args.size(),
-      [&](string_t cell, string_t unit, ValidityMask &mask, idx_t idx) {
+      [&](string_t cell, string_t unit) -> optional<double> {
         H3Index h;
         H3Error err = stringToH3(cell.GetString().c_str(), &h);
         if (err) {
-          mask.SetInvalid(idx);
-          return 0.0;
+          return nullopt;
         }
-        return CellAreaFunctionInternal(h, unit, mask, idx);
+        return CellAreaFunctionInternal(h, unit);
       });
 }
 
@@ -70,7 +68,7 @@ static void CellAreaFunction(DataChunk &args, ExpressionState &state,
                              Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<T, string_t, double>(
+  BinaryExecutor::Execute<T, string_t, double>(
       inputs, inputs2, result, args.size(), CellAreaFunctionInternal);
 }
 
@@ -79,9 +77,9 @@ static void GetHexagonEdgeLengthAvgFunction(DataChunk &args,
                                             Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<int, string_t, double>(
+  BinaryExecutor::Execute<int, string_t, double>(
       inputs, inputs2, result, args.size(),
-      [&](int res, string_t unit, ValidityMask &mask, idx_t idx) {
+      [&](int res, string_t unit) -> optional<double> {
         double out;
         H3Error err = E_OPTION_INVALID;
         if (unit == "km") {
@@ -90,16 +88,15 @@ static void GetHexagonEdgeLengthAvgFunction(DataChunk &args,
           err = getHexagonEdgeLengthAvgM(res, &out);
         }
         if (err) {
-          mask.SetInvalid(idx);
-          return 0.0;
+          return nullopt;
         } else {
           return out;
         }
       });
 }
 
-static double EdgeLengthFunctionInternal(H3Index edge, string_t unit,
-                                         ValidityMask &mask, idx_t idx) {
+static optional<double> EdgeLengthFunctionInternal(H3Index edge,
+                                                   string_t unit) {
   double out;
   H3Error err = E_OPTION_INVALID;
   if (unit == "rads") {
@@ -110,8 +107,7 @@ static double EdgeLengthFunctionInternal(H3Index edge, string_t unit,
     err = edgeLengthM(edge, &out);
   }
   if (err) {
-    mask.SetInvalid(idx);
-    return 0.0;
+    return nullopt;
   } else {
     return out;
   }
@@ -121,16 +117,15 @@ static void EdgeLengthVarcharFunction(DataChunk &args, ExpressionState &state,
                                       Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<string_t, string_t, double>(
+  BinaryExecutor::Execute<string_t, string_t, double>(
       inputs, inputs2, result, args.size(),
-      [&](string_t edge, string_t unit, ValidityMask &mask, idx_t idx) {
+      [&](string_t edge, string_t unit) -> optional<double> {
         H3Index h;
         H3Error err = stringToH3(edge.GetString().c_str(), &h);
         if (err) {
-          mask.SetInvalid(idx);
-          return 0.0;
+          return nullopt;
         }
-        return EdgeLengthFunctionInternal(h, unit, mask, idx);
+        return EdgeLengthFunctionInternal(h, unit);
       });
 }
 
@@ -139,28 +134,27 @@ static void EdgeLengthFunction(DataChunk &args, ExpressionState &state,
                                Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<T, string_t, double>(
+  BinaryExecutor::Execute<T, string_t, double>(
       inputs, inputs2, result, args.size(), EdgeLengthFunctionInternal);
 }
 
 static void GetNumCellsFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<int, int64_t>(
-      inputs, result, args.size(), [&](int res, ValidityMask &mask, idx_t idx) {
-        int64_t out;
-        H3Error err = getNumCells(res, &out);
-        if (err) {
-          mask.SetInvalid(idx);
-          return int64_t(0);
-        }
-        return out;
-      });
+  UnaryExecutor::Execute<int, int64_t>(inputs, result, args.size(),
+                                       [&](int res) -> optional<int64_t> {
+                                         int64_t out;
+                                         H3Error err = getNumCells(res, &out);
+                                         if (err) {
+                                           return nullopt;
+                                         }
+                                         return out;
+                                       });
 }
 
 static void GetRes0CellsFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
 
   int sz = res0CellCount();
 
@@ -186,12 +180,12 @@ static void GetRes0CellsFunction(DataChunk &args, ExpressionState &state,
     }
   }
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GetRes0CellsVarcharFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
 
   int sz = res0CellCount();
 
@@ -218,12 +212,12 @@ static void GetRes0CellsVarcharFunction(DataChunk &args, ExpressionState &state,
     }
   }
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GetPentagonsFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
 
   int sz = pentagonCount();
 
@@ -254,12 +248,12 @@ static void GetPentagonsFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GetPentagonsVarcharFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
 
   int sz = pentagonCount();
 
@@ -291,14 +285,14 @@ static void GetPentagonsVarcharFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   UnifiedVectorFormat unitData;
 
-  args.data[4].ToUnifiedFormat(args.size(), unitData);
+  args.data[4].ToUnifiedFormat(unitData);
 
   for (idx_t i = 0; i < args.size(); i++) {
     double dist = 0.0;
@@ -344,7 +338,7 @@ static void GreatCircleDistanceFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 CreateScalarFunctionInfo H3Functions::GetGetHexagonAreaAvgFunction() {
