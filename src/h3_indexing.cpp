@@ -3,6 +3,8 @@
 #include "h3_functions.hpp"
 #include "well_known_encoder.hpp"
 
+#include "duckdb/common/vector/list_vector.hpp"
+
 namespace duckdb {
 
 static void LatLngToCellFunction(DataChunk &args, ExpressionState &state,
@@ -10,15 +12,14 @@ static void LatLngToCellFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
-  TernaryExecutor::ExecuteWithNulls<double, double, int, H3Index>(
+  TernaryExecutor::Execute<double, double, int, H3Index>(
       inputs, inputs2, inputs3, result, args.size(),
-      [&](double lat, double lng, int res, ValidityMask &mask, idx_t idx) {
+      [&](double lat, double lng, int res) -> optional<H3Index> {
         H3Index cell;
         LatLng latLng = {.lat = degsToRads(lat), .lng = degsToRads(lng)};
         H3Error err = latLngToCell(&latLng, res, &cell);
         if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
+          return nullopt;
         } else {
           return cell;
         }
@@ -30,15 +31,14 @@ static void LatLngToCellVarcharFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
-  TernaryExecutor::ExecuteWithNulls<double, double, int, string_t>(
+  TernaryExecutor::Execute<double, double, int, string_t>(
       inputs, inputs2, inputs3, result, args.size(),
-      [&](double lat, double lng, int res, ValidityMask &mask, idx_t idx) {
+      [&](double lat, double lng, int res) -> optional<string_t> {
         H3Index cell;
         LatLng latLng = {.lat = degsToRads(lat), .lng = degsToRads(lng)};
         H3Error err = latLngToCell(&latLng, res, &cell);
         if (err) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
+          return nullopt;
         } else {
           auto str = StringUtil::Format("%llx", cell);
           return StringVector::AddString(result, str);
@@ -50,36 +50,33 @@ template <typename T>
 static void CellToLatFunction(DataChunk &args, ExpressionState &state,
                               Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, double>(
-      inputs, result, args.size(), [&](T cell, ValidityMask &mask, idx_t idx) {
-        LatLng latLng = {.lat = 0, .lng = 0};
-        H3Error err = cellToLatLng(cell, &latLng);
-        if (err) {
-          mask.SetInvalid(idx);
-          return .0;
-        } else {
-          return radsToDegs(latLng.lat);
-        }
-      });
+  UnaryExecutor::Execute<T, double>(inputs, result, args.size(),
+                                    [&](T cell) -> optional<double> {
+                                      LatLng latLng = {.lat = 0, .lng = 0};
+                                      H3Error err = cellToLatLng(cell, &latLng);
+                                      if (err) {
+                                        return nullopt;
+                                      } else {
+                                        return radsToDegs(latLng.lat);
+                                      }
+                                    });
 }
 
 static void CellToLatVarcharFunction(DataChunk &args, ExpressionState &state,
                                      Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, double>(
+  UnaryExecutor::Execute<string_t, double>(
       inputs, result, args.size(),
-      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+      [&](string_t cellAddress) -> optional<double> {
         H3Index cell;
         H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
         if (err0) {
-          mask.SetInvalid(idx);
-          return .0;
+          return nullopt;
         } else {
           LatLng latLng = {.lat = 0, .lng = 0};
           H3Error err = cellToLatLng(cell, &latLng);
           if (err) {
-            mask.SetInvalid(idx);
-            return .0;
+            return nullopt;
           } else {
             return radsToDegs(latLng.lat);
           }
@@ -91,36 +88,33 @@ template <typename T>
 static void CellToLngFunction(DataChunk &args, ExpressionState &state,
                               Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, double>(
-      inputs, result, args.size(), [&](T cell, ValidityMask &mask, idx_t idx) {
-        LatLng latLng = {.lat = 0, .lng = 0};
-        H3Error err = cellToLatLng(cell, &latLng);
-        if (err) {
-          mask.SetInvalid(idx);
-          return .0;
-        } else {
-          return radsToDegs(latLng.lng);
-        }
-      });
+  UnaryExecutor::Execute<T, double>(inputs, result, args.size(),
+                                    [&](T cell) -> optional<double> {
+                                      LatLng latLng = {.lat = 0, .lng = 0};
+                                      H3Error err = cellToLatLng(cell, &latLng);
+                                      if (err) {
+                                        return nullopt;
+                                      } else {
+                                        return radsToDegs(latLng.lng);
+                                      }
+                                    });
 }
 
 static void CellToLngVarcharFunction(DataChunk &args, ExpressionState &state,
                                      Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, double>(
+  UnaryExecutor::Execute<string_t, double>(
       inputs, result, args.size(),
-      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
+      [&](string_t cellAddress) -> optional<double> {
         H3Index cell;
         H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
         if (err0) {
-          mask.SetInvalid(idx);
-          return .0;
+          return nullopt;
         } else {
           LatLng latLng = {.lat = 0, .lng = 0};
           H3Error err = cellToLatLng(cell, &latLng);
           if (err) {
-            mask.SetInvalid(idx);
-            return .0;
+            return nullopt;
           } else {
             return radsToDegs(latLng.lng);
           }
@@ -131,7 +125,7 @@ static void CellToLngVarcharFunction(DataChunk &args, ExpressionState &state,
 static void CellToLatLngFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   result.SetVectorType(VectorType::FLAT_VECTOR);
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -151,13 +145,13 @@ static void CellToLatLngFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   result.SetVectorType(VectorType::FLAT_VECTOR);
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -183,18 +177,17 @@ static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 template <typename Encoder> struct CellToBoundaryOperator {
   explicit CellToBoundaryOperator(Vector &_result) : result(_result) {}
-  string_t operator()(uint64_t input, ValidityMask &mask, idx_t idx) {
+  optional<string_t> operator()(uint64_t input) {
     CellBoundary boundary;
     H3Error err = cellToBoundary(input, &boundary);
 
     if (err) {
-      mask.SetInvalid(idx);
-      return StringVector::EmptyString(result, 0);
+      return nullopt;
     } else {
       auto enc = Encoder();
       enc.StartPolygon();
@@ -218,22 +211,20 @@ private:
 template <typename T, typename Encoder>
 static void CellToBoundaryFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
-  UnaryExecutor::ExecuteWithNulls<T, string_t>(
-      args.data[0], result, args.size(),
-      CellToBoundaryOperator<Encoder>{result});
+  UnaryExecutor::Execute<T, string_t>(args.data[0], result, args.size(),
+                                      CellToBoundaryOperator<Encoder>{result});
 }
 
 template <typename Encoder> struct CellToBoundaryVarcharOperator {
   explicit CellToBoundaryVarcharOperator(Vector &_result) : result(_result) {}
 
-  string_t operator()(string_t input, ValidityMask &mask, idx_t idx) {
+  optional<string_t> operator()(string_t input) {
     H3Index h;
     H3Error err = stringToH3(input.GetString().c_str(), &h);
     if (err) {
-      mask.SetInvalid(idx);
-      return StringVector::EmptyString(result, 0);
+      return nullopt;
     } else {
-      return CellToBoundaryOperator<Encoder>(result)(h, mask, idx);
+      return CellToBoundaryOperator<Encoder>(result)(h);
     }
   }
 
@@ -245,7 +236,7 @@ template <typename Encoder>
 static void CellToBoundaryVarcharFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
+  UnaryExecutor::Execute<string_t, string_t>(
       args.data[0], result, args.size(),
       CellToBoundaryVarcharOperator<Encoder>{result});
 }
