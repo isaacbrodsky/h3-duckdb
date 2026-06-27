@@ -74,12 +74,12 @@ SELECT h3_cell_to_vertex(cast(h3_string_to_h3('823d6ffffffffff') as bigint), -1)
 NULL
 
 query I
-SELECT list_transform(h3_vertex_to_latlng(h3_string_to_h3('2222597fffffffff')), x -> round(x, 12));
+SELECT list_transform(h3_vertex_to_latlng(h3_string_to_h3('2222597fffffffff')), lambda x: round(x, 12));
 ----
 [39.380842841818, 88.574962137855]
 
 query I
-SELECT list_transform(h3_vertex_to_latlng(cast(h3_string_to_h3('2222597fffffffff') as bigint)), x -> round(x, 12));
+SELECT list_transform(h3_vertex_to_latlng(cast(h3_string_to_h3('2222597fffffffff') as bigint)), lambda x: round(x, 12));
 ----
 [39.380842841818, 88.574962137855]
 
@@ -124,7 +124,7 @@ SELECT h3_cell_to_vertex('823d6ffffffffff', -1);
 NULL
 
 query I
-SELECT list_transform(h3_vertex_to_latlng('2222597fffffffff'), x -> round(x, 12));
+SELECT list_transform(h3_vertex_to_latlng('2222597fffffffff'), lambda x: round(x, 12));
 ----
 [39.380842841818, 88.574962137855]
 
