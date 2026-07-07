@@ -1,6 +1,8 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
 
+#include "duckdb/common/vector/list_vector.hpp"
+
 namespace duckdb {
 
 template <typename T>
@@ -8,14 +10,12 @@ static void CellToVertexFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<T, int32_t, T>(
-      inputs, inputs2, result, args.size(),
-      [&](T cell, int32_t vertexNum, ValidityMask &mask, idx_t idx) {
+  BinaryExecutor::Execute<T, int32_t, T>(
+      inputs, inputs2, result, [&](T cell, int32_t vertexNum) -> optional<T> {
         H3Index vertex;
         H3Error err = cellToVertex(cell, vertexNum, &vertex);
         if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
+          return nullopt;
         } else {
           return vertex;
         }
@@ -26,21 +26,18 @@ static void CellToVertexVarcharFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<string_t, int32_t, string_t>(
-      inputs, inputs2, result, args.size(),
-      [&](string_t cellInput, int32_t vertexNum, ValidityMask &mask,
-          idx_t idx) {
+  BinaryExecutor::Execute<string_t, int32_t, string_t>(
+      inputs, inputs2, result,
+      [&](string_t cellInput, int32_t vertexNum) -> optional<string_t> {
         H3Index cell;
         H3Error err0 = stringToH3(cellInput.GetString().c_str(), &cell);
         if (err0) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
+          return nullopt;
         } else {
           H3Index vertex;
           H3Error err1 = cellToVertex(cell, vertexNum, &vertex);
           if (err1) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
+            return nullopt;
           } else {
             auto str = StringUtil::Format("%llx", vertex);
             return StringVector::AddString(result, str);
@@ -52,8 +49,8 @@ static void CellToVertexVarcharFunction(DataChunk &args, ExpressionState &state,
 static void CellToVertexesFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
   result.SetVectorType(VectorType::FLAT_VECTOR);
-  auto &result_validity = FlatVector::Validity(result);
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto &result_validity = FlatVector::ValidityMutable(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   idx_t offset = 0;
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = offset;
@@ -85,15 +82,15 @@ static void CellToVertexesFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void CellToVertexesVarcharFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
   result.SetVectorType(VectorType::FLAT_VECTOR);
-  auto &result_validity = FlatVector::Validity(result);
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto &result_validity = FlatVector::ValidityMutable(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   idx_t offset = 0;
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = offset;
@@ -132,21 +129,19 @@ static void CellToVertexesVarcharFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 template <typename T>
 static void VertexToLatFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, double>(
-      inputs, result, args.size(),
-      [&](T vertex, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::Execute<T, double>(
+      inputs, result, [&](T vertex) -> optional<double> {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = vertexToLatLng(vertex, &latLng);
         if (err) {
-          mask.SetInvalid(idx);
-          return .0;
+          return nullopt;
         } else {
           return radsToDegs(latLng.lat);
         }
@@ -156,20 +151,17 @@ static void VertexToLatFunction(DataChunk &args, ExpressionState &state,
 static void VertexToLatVarcharFunction(DataChunk &args, ExpressionState &state,
                                        Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, double>(
-      inputs, result, args.size(),
-      [&](string_t vertexInput, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::Execute<string_t, double>(
+      inputs, result, [&](string_t vertexInput) -> optional<double> {
         H3Index vertex;
         H3Error err0 = stringToH3(vertexInput.GetString().c_str(), &vertex);
         if (err0) {
-          mask.SetInvalid(idx);
-          return .0;
+          return nullopt;
         } else {
           LatLng latLng = {.lat = 0, .lng = 0};
           H3Error err1 = vertexToLatLng(vertex, &latLng);
           if (err1) {
-            mask.SetInvalid(idx);
-            return .0;
+            return nullopt;
           } else {
             return radsToDegs(latLng.lat);
           }
@@ -181,14 +173,12 @@ template <typename T>
 static void VertexToLngFunction(DataChunk &args, ExpressionState &state,
                                 Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, double>(
-      inputs, result, args.size(),
-      [&](T vertex, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::Execute<T, double>(
+      inputs, result, [&](T vertex) -> optional<double> {
         LatLng latLng = {.lat = 0, .lng = 0};
         H3Error err = vertexToLatLng(vertex, &latLng);
         if (err) {
-          mask.SetInvalid(idx);
-          return .0;
+          return nullopt;
         } else {
           return radsToDegs(latLng.lng);
         }
@@ -198,20 +188,17 @@ static void VertexToLngFunction(DataChunk &args, ExpressionState &state,
 static void VertexToLngVarcharFunction(DataChunk &args, ExpressionState &state,
                                        Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, double>(
-      inputs, result, args.size(),
-      [&](string_t vertexInput, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::Execute<string_t, double>(
+      inputs, result, [&](string_t vertexInput) -> optional<double> {
         H3Index vertex;
         H3Error err0 = stringToH3(vertexInput.GetString().c_str(), &vertex);
         if (err0) {
-          mask.SetInvalid(idx);
-          return .0;
+          return nullopt;
         } else {
           LatLng latLng = {.lat = 0, .lng = 0};
           H3Error err1 = vertexToLatLng(vertex, &latLng);
           if (err1) {
-            mask.SetInvalid(idx);
-            return .0;
+            return nullopt;
           } else {
             return radsToDegs(latLng.lng);
           }
@@ -221,7 +208,7 @@ static void VertexToLngVarcharFunction(DataChunk &args, ExpressionState &state,
 
 static void VertexToLatLngFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -239,13 +226,13 @@ static void VertexToLatLngFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void VertexToLatLngVarcharFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -271,31 +258,29 @@ static void VertexToLatLngVarcharFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void IsValidVertexVarcharFunction(DataChunk &args,
                                          ExpressionState &state,
                                          Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t input) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          return false;
-        }
-        return bool(isValidVertex(h));
-      });
+  UnaryExecutor::Execute<string_t, bool>(inputs, result, [&](string_t input) {
+    H3Index h;
+    H3Error err = stringToH3(input.GetString().c_str(), &h);
+    if (err) {
+      return false;
+    }
+    return bool(isValidVertex(h));
+  });
 }
 
 template <typename T>
 static void IsValidVertexFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
-    return bool(isValidVertex(input));
-  });
+  UnaryExecutor::Execute<T, bool>(
+      inputs, result, [&](T input) { return bool(isValidVertex(input)); });
 }
 
 CreateScalarFunctionInfo H3Functions::GetCellToVertexFunction() {

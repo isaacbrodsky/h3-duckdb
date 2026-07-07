@@ -293,7 +293,7 @@ SELECT h3_child_id, h3_uncompact_cells(polyfilled, 7) FROM h3_child_cells_polyfi
 603927296734134271	[608430896294395903, 608430896327950335, 608430896244064255, 608430896277618687, 608430896311173119, 608430896344727551, 608430896260841471]
 
 query II
-SELECT h3_child_id, h3_compact_cells(array_apply(polyfilled, (x) -> h3_h3_to_string(x))) FROM h3_child_cells_polyfilled;
+SELECT h3_child_id, h3_compact_cells(array_apply(polyfilled, lambda x: h3_h3_to_string(x))) FROM h3_child_cells_polyfilled;
 ----
 603927295928827903	[86194ad07ffffff]
 603927296063045631	[86194ad0fffffff]
@@ -304,7 +304,7 @@ SELECT h3_child_id, h3_compact_cells(array_apply(polyfilled, (x) -> h3_h3_to_str
 603927296734134271	[86194ad37ffffff]
 
 query II
-SELECT h3_child_id, h3_uncompact_cells(array_apply(polyfilled, (x) -> h3_h3_to_string(x)), 7) FROM h3_child_cells_polyfilled;
+SELECT h3_child_id, h3_uncompact_cells(array_apply(polyfilled, lambda x: h3_h3_to_string(x)), 7) FROM h3_child_cells_polyfilled;
 ----
 603927295928827903	[87194ad00ffffff, 87194ad02ffffff, 87194ad04ffffff, 87194ad06ffffff, 87194ad01ffffff, 87194ad03ffffff, 87194ad05ffffff]
 603927296063045631	[87194ad09ffffff, 87194ad0bffffff, 87194ad0dffffff, 87194ad08ffffff, 87194ad0affffff, 87194ad0cffffff, 87194ad0effffff]

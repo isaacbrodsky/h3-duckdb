@@ -1,6 +1,8 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
 
+#include "duckdb/common/vector/list_vector.hpp"
+
 namespace duckdb {
 
 struct GridDiskOperator {
@@ -18,7 +20,7 @@ struct GridDiskUnsafeOperator {
 template <class Fn>
 static void GridDiskTmplFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -53,13 +55,13 @@ static void GridDiskTmplFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 template <class Fn>
 static void GridDiskTmplVarcharFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -102,7 +104,7 @@ static void GridDiskTmplVarcharFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 struct GridDiskDistancesOperator {
@@ -130,7 +132,7 @@ template <class Fn>
 static void GridDiskDistancesTmplFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -173,14 +175,14 @@ static void GridDiskDistancesTmplFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 template <class Fn>
 static void GridDiskDistancesTmplVarcharFunction(DataChunk &args,
                                                  ExpressionState &state,
                                                  Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -232,12 +234,12 @@ static void GridDiskDistancesTmplVarcharFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GridRingFunction(DataChunk &args, ExpressionState &state,
                              Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -272,12 +274,12 @@ static void GridRingFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GridRingVarcharFunction(DataChunk &args, ExpressionState &state,
                                     Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -319,12 +321,12 @@ static void GridRingVarcharFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state,
                                    Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -354,13 +356,13 @@ static void GridRingUnsafeFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GridRingUnsafeVarcharFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -397,12 +399,12 @@ static void GridRingUnsafeVarcharFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GridPathCellsFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -438,13 +440,13 @@ static void GridPathCellsFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void GridPathCellsVarcharFunction(DataChunk &args,
                                          ExpressionState &state,
                                          Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -488,7 +490,7 @@ static void GridPathCellsVarcharFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 template <typename T>
@@ -496,14 +498,13 @@ static void GridDistanceFunction(DataChunk &args, ExpressionState &state,
                                  Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<T, T, int64_t>(
-      inputs, inputs2, result, args.size(),
-      [&](T origin, T destination, ValidityMask &mask, idx_t idx) {
+  BinaryExecutor::Execute<T, T, int64_t>(
+      inputs, inputs2, result,
+      [&](T origin, T destination) -> optional<int64_t> {
         int64_t distance;
         H3Error err = gridDistance(origin, destination, &distance);
         if (err) {
-          mask.SetInvalid(idx);
-          return int64_t(0);
+          return nullopt;
         } else {
           return distance;
         }
@@ -514,23 +515,21 @@ static void GridDistanceVarcharFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<string_t, string_t, int64_t>(
-      inputs, inputs2, result, args.size(),
-      [&](string_t originInput, string_t destinationInput, ValidityMask &mask,
-          idx_t idx) {
+  BinaryExecutor::Execute<string_t, string_t, int64_t>(
+      inputs, inputs2, result,
+      [&](string_t originInput,
+          string_t destinationInput) -> optional<int64_t> {
         H3Index origin, destination;
         H3Error err0 = stringToH3(originInput.GetString().c_str(), &origin);
         H3Error err1 =
             stringToH3(destinationInput.GetString().c_str(), &destination);
         if (err0 || err1) {
-          mask.SetInvalid(idx);
-          return int64_t(0);
+          return nullopt;
         } else {
           int64_t distance;
           H3Error err = gridDistance(origin, destination, &distance);
           if (err) {
-            mask.SetInvalid(idx);
-            return int64_t(0);
+            return nullopt;
           } else {
             return distance;
           }
@@ -540,7 +539,7 @@ static void GridDistanceVarcharFunction(DataChunk &args, ExpressionState &state,
 
 static void CellToLocalIjFunction(DataChunk &args, ExpressionState &state,
                                   Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -565,13 +564,13 @@ static void CellToLocalIjFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void CellToLocalIjVarcharFunction(DataChunk &args,
                                          ExpressionState &state,
                                          Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -603,7 +602,7 @@ static void CellToLocalIjVarcharFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 template <typename T>
@@ -612,17 +611,16 @@ static void LocalIjToCellFunction(DataChunk &args, ExpressionState &state,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
-  TernaryExecutor::ExecuteWithNulls<T, int32_t, int32_t, T>(
-      inputs, inputs2, inputs3, result, args.size(),
-      [&](T origin, int32_t i, int32_t j, ValidityMask &mask, idx_t idx) {
+  TernaryExecutor::Execute<T, int32_t, int32_t, T>(
+      inputs, inputs2, inputs3, result,
+      [&](T origin, int32_t i, int32_t j) -> optional<T> {
         uint32_t mode = 0; // TODO: Expose mode to the user when applicable
 
         CoordIJ coordIJ{.i = i, .j = j};
         H3Index out;
         H3Error err = localIjToCell(origin, &coordIJ, mode, &out);
         if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
+          return nullopt;
         } else {
           return out;
         }
@@ -635,14 +633,13 @@ static void LocalIjToCellVarcharFunction(DataChunk &args,
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
   auto &inputs3 = args.data[2];
-  TernaryExecutor::ExecuteWithNulls<string_t, int32_t, int32_t, string_t>(
-      inputs, inputs2, inputs3, result, args.size(),
-      [&](string_t input, int32_t i, int32_t j, ValidityMask &mask, idx_t idx) {
+  TernaryExecutor::Execute<string_t, int32_t, int32_t, string_t>(
+      inputs, inputs2, inputs3, result,
+      [&](string_t input, int32_t i, int32_t j) -> optional<string_t> {
         H3Index origin;
         H3Error err0 = stringToH3(input.GetString().c_str(), &origin);
         if (err0) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
+          return nullopt;
         } else {
           uint32_t mode = 0; // TODO: Expose mode to the user when applicable
 
@@ -650,8 +647,7 @@ static void LocalIjToCellVarcharFunction(DataChunk &args,
           H3Index out;
           H3Error err1 = localIjToCell(origin, &coordIJ, mode, &out);
           if (err1) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
+            return nullopt;
           } else {
             auto str = StringUtil::Format("%llx", out);
             return StringVector::AddString(result, str);
@@ -663,14 +659,12 @@ static void LocalIjToCellVarcharFunction(DataChunk &args,
 static void MaxGridDiskSizeFunction(DataChunk &args, ExpressionState &state,
                                     Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<int32_t, int64_t>(
-      inputs, result, args.size(),
-      [&](int32_t k, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::Execute<int32_t, int64_t>(
+      inputs, result, [&](int32_t k) -> optional<int64_t> {
         int64_t out;
         H3Error err = maxGridDiskSize(k, &out);
         if (err) {
-          mask.SetInvalid(idx);
-          return (int64_t)0;
+          return nullopt;
         } else {
           return out;
         }

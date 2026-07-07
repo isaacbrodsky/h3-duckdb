@@ -2,11 +2,13 @@
 #include "h3_functions.hpp"
 #include "well_known_encoder.hpp"
 
+#include "duckdb/common/vector/list_vector.hpp"
+
 namespace duckdb {
 
 static void DirectedEdgeToCellsFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -27,13 +29,13 @@ static void DirectedEdgeToCellsFunction(DataChunk &args, ExpressionState &state,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void DirectedEdgeToCellsVarcharFunction(DataChunk &args,
                                                ExpressionState &state,
                                                Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -63,7 +65,7 @@ static void DirectedEdgeToCellsVarcharFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void OriginToDirectedEdgesFunction(DataChunk &args,
@@ -71,7 +73,7 @@ static void OriginToDirectedEdgesFunction(DataChunk &args,
                                           Vector &result) {
   D_ASSERT(result.GetType().id() == LogicalTypeId::LIST);
 
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -97,7 +99,7 @@ static void OriginToDirectedEdgesFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 static void OriginToDirectedEdgesVarcharFunction(DataChunk &args,
@@ -105,7 +107,7 @@ static void OriginToDirectedEdgesVarcharFunction(DataChunk &args,
                                                  Vector &result) {
   D_ASSERT(result.GetType().id() == LogicalTypeId::LIST);
 
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
+  auto result_data = FlatVector::GetDataMutable<list_entry_t>(result);
   for (idx_t i = 0; i < args.size(); i++) {
     result_data[i].offset = ListVector::GetListSize(result);
 
@@ -139,7 +141,7 @@ static void OriginToDirectedEdgesVarcharFunction(DataChunk &args,
   if (args.AllConstant()) {
     result.SetVectorType(VectorType::CONSTANT_VECTOR);
   }
-  result.Verify(args.size());
+  result.Verify();
 }
 
 template <typename T>
@@ -147,37 +149,32 @@ static void GetDirectedEdgeOriginFunction(DataChunk &args,
                                           ExpressionState &state,
                                           Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, T>(
-      inputs, result, args.size(), [&](T input, ValidityMask &mask, idx_t idx) {
-        H3Index out;
-        H3Error err = getDirectedEdgeOrigin(input, &out);
-        if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
-        } else {
-          return out;
-        }
-      });
+  UnaryExecutor::Execute<T, T>(inputs, result, [&](T input) -> optional<T> {
+    H3Index out;
+    H3Error err = getDirectedEdgeOrigin(input, &out);
+    if (err) {
+      return nullopt;
+    } else {
+      return out;
+    }
+  });
 }
 
 static void GetDirectedEdgeOriginVarcharFunction(DataChunk &args,
                                                  ExpressionState &state,
                                                  Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t inputStr, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::Execute<string_t, string_t>(
+      inputs, result, [&](string_t inputStr) -> optional<string_t> {
         H3Index input;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
         if (err0) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
+          return nullopt;
         } else {
           H3Index out;
           H3Error err1 = getDirectedEdgeOrigin(input, &out);
           if (err1) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
+            return nullopt;
           } else {
             auto str = StringUtil::Format("%llx", out);
             return StringVector::AddString(result, str);
@@ -191,37 +188,32 @@ static void GetDirectedEdgeDestinationFunction(DataChunk &args,
                                                ExpressionState &state,
                                                Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, T>(
-      inputs, result, args.size(), [&](T input, ValidityMask &mask, idx_t idx) {
-        H3Index out;
-        H3Error err = getDirectedEdgeDestination(input, &out);
-        if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
-        } else {
-          return out;
-        }
-      });
+  UnaryExecutor::Execute<T, T>(inputs, result, [&](T input) -> optional<T> {
+    H3Index out;
+    H3Error err = getDirectedEdgeDestination(input, &out);
+    if (err) {
+      return nullopt;
+    } else {
+      return out;
+    }
+  });
 }
 
 static void GetDirectedEdgeDestinationVarcharFunction(DataChunk &args,
                                                       ExpressionState &state,
                                                       Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t inputStr, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::Execute<string_t, string_t>(
+      inputs, result, [&](string_t inputStr) -> optional<string_t> {
         H3Index input;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
         if (err0) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
+          return nullopt;
         } else {
           H3Index out;
           H3Error err1 = getDirectedEdgeDestination(input, &out);
           if (err1) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
+            return nullopt;
           } else {
             auto str = StringUtil::Format("%llx", out);
             return StringVector::AddString(result, str);
@@ -235,14 +227,12 @@ static void CellsToDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<T, T, T>(
-      inputs, inputs2, result, args.size(),
-      [&](T input, T input2, ValidityMask &mask, idx_t idx) {
+  BinaryExecutor::Execute<T, T, T>(
+      inputs, inputs2, result, [&](T input, T input2) -> optional<T> {
         H3Index out;
         H3Error err = cellsToDirectedEdge(input, input2, &out);
         if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
+          return nullopt;
         } else {
           return out;
         }
@@ -254,22 +244,19 @@ static void CellsToDirectedEdgeVarcharFunction(DataChunk &args,
                                                Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<string_t, string_t, string_t>(
-      inputs, inputs2, result, args.size(),
-      [&](string_t inputStr, string_t inputStr2, ValidityMask &mask,
-          idx_t idx) {
+  BinaryExecutor::Execute<string_t, string_t, string_t>(
+      inputs, inputs2, result,
+      [&](string_t inputStr, string_t inputStr2) -> optional<string_t> {
         H3Index input, input2;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
         H3Error err1 = stringToH3(inputStr2.GetString().c_str(), &input2);
         if (err0 || err1) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
+          return nullopt;
         } else {
           H3Index out;
           H3Error err = cellsToDirectedEdge(input, input2, &out);
           if (err) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
+            return nullopt;
           } else {
             auto str = StringUtil::Format("%llx", out);
             return StringVector::AddString(result, str);
@@ -282,37 +269,32 @@ template <typename T>
 static void ReverseDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, T>(
-      inputs, result, args.size(), [&](T input, ValidityMask &mask, idx_t idx) {
-        H3Index out;
-        H3Error err = reverseDirectedEdge(input, &out);
-        if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
-        } else {
-          return out;
-        }
-      });
+  UnaryExecutor::Execute<T, T>(inputs, result, [&](T input) -> optional<T> {
+    H3Index out;
+    H3Error err = reverseDirectedEdge(input, &out);
+    if (err) {
+      return nullopt;
+    } else {
+      return out;
+    }
+  });
 }
 
 static void ReverseDirectedEdgeVarcharFunction(DataChunk &args,
                                                ExpressionState &state,
                                                Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t inputStr, ValidityMask &mask, idx_t idx) {
+  UnaryExecutor::Execute<string_t, string_t>(
+      inputs, result, [&](string_t inputStr) -> optional<string_t> {
         H3Index input;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
         if (err0) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
+          return nullopt;
         } else {
           H3Index out;
           H3Error err = reverseDirectedEdge(input, &out);
           if (err) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
+            return nullopt;
           } else {
             auto str = StringUtil::Format("%llx", out);
             return StringVector::AddString(result, str);
@@ -326,14 +308,12 @@ static void AreNeighborCellsFunction(DataChunk &args, ExpressionState &state,
                                      Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<T, T, bool>(
-      inputs, inputs2, result, args.size(),
-      [&](T input, T input2, ValidityMask &mask, idx_t idx) {
+  BinaryExecutor::Execute<T, T, bool>(
+      inputs, inputs2, result, [&](T input, T input2) -> optional<bool> {
         int out;
         H3Error err = areNeighborCells(input, input2, &out);
         if (err) {
-          mask.SetInvalid(idx);
-          return bool(false);
+          return nullopt;
         } else {
           return bool(out);
         }
@@ -345,22 +325,19 @@ static void AreNeighborCellsVarcharFunction(DataChunk &args,
                                             Vector &result) {
   auto &inputs = args.data[0];
   auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<string_t, string_t, bool>(
-      inputs, inputs2, result, args.size(),
-      [&](string_t inputStr, string_t inputStr2, ValidityMask &mask,
-          idx_t idx) {
+  BinaryExecutor::Execute<string_t, string_t, bool>(
+      inputs, inputs2, result,
+      [&](string_t inputStr, string_t inputStr2) -> optional<bool> {
         H3Index input, input2;
         H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
         H3Error err1 = stringToH3(inputStr2.GetString().c_str(), &input2);
         if (err0 || err1) {
-          mask.SetInvalid(idx);
-          return bool(false);
+          return nullopt;
         } else {
           int out;
           H3Error err2 = areNeighborCells(input, input2, &out);
           if (err2) {
-            mask.SetInvalid(idx);
-            return bool(false);
+            return nullopt;
           } else {
             return bool(out);
           }
@@ -372,22 +349,21 @@ static void IsValidDirectedEdgeVarcharFunction(DataChunk &args,
                                                ExpressionState &state,
                                                Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t input) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          return false;
-        }
-        return bool(isValidDirectedEdge(h));
-      });
+  UnaryExecutor::Execute<string_t, bool>(inputs, result, [&](string_t input) {
+    H3Index h;
+    H3Error err = stringToH3(input.GetString().c_str(), &h);
+    if (err) {
+      return false;
+    }
+    return bool(isValidDirectedEdge(h));
+  });
 }
 
 template <typename T>
 static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
                                         Vector &result) {
   auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
+  UnaryExecutor::Execute<T, bool>(inputs, result, [&](T input) {
     return bool(isValidDirectedEdge(input));
   });
 }
@@ -395,13 +371,12 @@ static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
 template <typename Encoder> struct DirectedEdgeToBoundaryOperator {
   explicit DirectedEdgeToBoundaryOperator(Vector &_result) : result(_result) {}
 
-  string_t operator()(uint64_t input, ValidityMask &mask, idx_t idx) {
+  optional<string_t> operator()(uint64_t input) {
     CellBoundary boundary;
     H3Error err = directedEdgeToBoundary(input, &boundary);
 
     if (err) {
-      mask.SetInvalid(idx);
-      return StringVector::EmptyString(result, 0);
+      return nullopt;
     } else {
       auto enc = Encoder();
       enc.StartLineString();
@@ -425,24 +400,21 @@ template <typename T, typename Encoder>
 static void DirectedEdgeToBoundaryFunction(DataChunk &args,
                                            ExpressionState &state,
                                            Vector &result) {
-  UnaryExecutor::ExecuteWithNulls<T, string_t,
-                                  DirectedEdgeToBoundaryOperator<Encoder>>(
-      args.data[0], result, args.size(),
-      DirectedEdgeToBoundaryOperator<Encoder>{result});
+  UnaryExecutor::Execute<T, string_t, DirectedEdgeToBoundaryOperator<Encoder>>(
+      args.data[0], result, DirectedEdgeToBoundaryOperator<Encoder>{result});
 }
 
 template <typename Encoder> struct DirectedEdgeToBoundaryVarcharOperator {
   explicit DirectedEdgeToBoundaryVarcharOperator(Vector &_result)
       : result(_result) {}
 
-  string_t operator()(string_t input, ValidityMask &mask, idx_t idx) {
+  optional<string_t> operator()(string_t input) {
     H3Index h;
     H3Error err = stringToH3(input.GetString().c_str(), &h);
     if (err) {
-      mask.SetInvalid(idx);
-      return StringVector::EmptyString(result, 0);
+      return nullopt;
     } else {
-      return DirectedEdgeToBoundaryOperator<Encoder>(result)(h, mask, idx);
+      return DirectedEdgeToBoundaryOperator<Encoder>(result)(h);
     }
   }
 
@@ -454,8 +426,8 @@ template <typename Encoder>
 static void DirectedEdgeToBoundaryVarcharFunction(DataChunk &args,
                                                   ExpressionState &state,
                                                   Vector &result) {
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      args.data[0], result, args.size(),
+  UnaryExecutor::Execute<string_t, string_t>(
+      args.data[0], result,
       DirectedEdgeToBoundaryVarcharOperator<Encoder>{result});
 }
 
