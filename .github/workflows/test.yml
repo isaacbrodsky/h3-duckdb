@@ -19,6 +19,7 @@ jobs:
       duckdb_version: main
       ci_tools_version: main
       extension_name: h3
+      extra_toolchains: python3
 
   duckdb-stable-build:
     name: Build extension binaries (stable)
@@ -27,18 +28,19 @@ jobs:
       duckdb_version: v1.5.4
       ci_tools_version: v1.5-variegata
       extension_name: h3
+      extra_toolchains: python3
 
-  duckdb-stable-deploy:
-    name: Deploy extension binaries
-    needs: duckdb-stable-build
-    uses: ./.github/workflows/_extension_deploy.yml
-    secrets: inherit
-    with:
-      duckdb_version: v1.5.4
-      ci_tools_version: v1.5-variegata
-      extension_name: h3
-      deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
-      deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+#  duckdb-stable-deploy:
+#    name: Deploy extension binaries
+#    needs: duckdb-stable-build
+#    uses: ./.github/workflows/_extension_deploy.yml
+#    secrets: inherit
+#    with:
+#      duckdb_version: v1.5.4
+#      ci_tools_version: v1.5-variegata
+#      extension_name: h3
+#      deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+#      deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
 
   code-quality-check:
     name: Code Quality Check
