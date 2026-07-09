@@ -89,91 +89,56 @@ void LatLngToCellVarcharFunction(duckdb_function_info info,
     }
   }
 }
-//
-// template <typename T>
-// static void CellToLatFunction(DataChunk &args, ExpressionState &state,
-//                              Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::ExecuteWithNulls<T, double>(
-//      inputs, result, args.size(), [&](T cell, ValidityMask &mask, idx_t idx)
-//      {
-//        LatLng latLng = {.lat = 0, .lng = 0};
-//        H3Error err = cellToLatLng(cell, &latLng);
-//        if (err) {
-//          mask.SetInvalid(idx);
-//          return .0;
-//        } else {
-//          return radsToDegs(latLng.lat);
-//        }
-//      });
-//}
-//
-// static void CellToLatVarcharFunction(DataChunk &args, ExpressionState &state,
-//                                     Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::ExecuteWithNulls<string_t, double>(
-//      inputs, result, args.size(),
-//      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
-//        H3Index cell;
-//        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
-//        if (err0) {
-//          mask.SetInvalid(idx);
-//          return .0;
-//        } else {
-//          LatLng latLng = {.lat = 0, .lng = 0};
-//          H3Error err = cellToLatLng(cell, &latLng);
-//          if (err) {
-//            mask.SetInvalid(idx);
-//            return .0;
-//          } else {
-//            return radsToDegs(latLng.lat);
-//          }
-//        }
-//      });
-//}
-//
-// template <typename T>
-// static void CellToLngFunction(DataChunk &args, ExpressionState &state,
-//                              Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::ExecuteWithNulls<T, double>(
-//      inputs, result, args.size(), [&](T cell, ValidityMask &mask, idx_t idx)
-//      {
-//        LatLng latLng = {.lat = 0, .lng = 0};
-//        H3Error err = cellToLatLng(cell, &latLng);
-//        if (err) {
-//          mask.SetInvalid(idx);
-//          return .0;
-//        } else {
-//          return radsToDegs(latLng.lng);
-//        }
-//      });
-//}
-//
-// static void CellToLngVarcharFunction(DataChunk &args, ExpressionState &state,
-//                                     Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::ExecuteWithNulls<string_t, double>(
-//      inputs, result, args.size(),
-//      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
-//        H3Index cell;
-//        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
-//        if (err0) {
-//          mask.SetInvalid(idx);
-//          return .0;
-//        } else {
-//          LatLng latLng = {.lat = 0, .lng = 0};
-//          H3Error err = cellToLatLng(cell, &latLng);
-//          if (err) {
-//            mask.SetInvalid(idx);
-//            return .0;
-//          } else {
-//            return radsToDegs(latLng.lng);
-//          }
-//        }
-//      });
-//}
-//
+
+template <typename T, bool IsLng>
+void CellToLatOrLngFunction(duckdb_function_info info, duckdb_data_chunk input,
+                            duckdb_vector output) {
+  static_assert(std::is_same<T, duckdb_string_t>::value ||
+                    std::is_same<T, uint64_t>::value ||
+                    std::is_same<T, int64_t>::value,
+                "T must be an acceptable type");
+  constexpr auto IsStringT = std::is_same<T, duckdb_string_t>::value;
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  double *resultData = (double *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell;
+      if (IsStringT) {
+        auto str = (duckdb_string_t *)&indexVecData[row];
+        H3Error err = stringToH3(duckdb_string_t_data(str), &cell);
+        if (err) {
+          cell = 0;
+        }
+      } else {
+        cell = ((uint64_t *)indexVecData)[row];
+      }
+
+      if (cell) {
+        LatLng latLng;
+        H3Error err = cellToLatLng(cell, &latLng);
+        if (!err) {
+          resultData[row] = radsToDegs(IsLng ? latLng.lng : latLng.lat);
+          wasValid = true;
+        }
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
 // static void CellToLatLngFunction(DataChunk &args, ExpressionState &state,
 //                                 Vector &result) {
 //  result.SetVectorType(VectorType::FLAT_VECTOR);
@@ -333,6 +298,114 @@ duckdb_scalar_function H3Functions::GetLatLngToCellVarcharFunction() {
   duckdb_destroy_logical_type(&stringType);
   duckdb_scalar_function_set_function(function, LatLngToCellVarcharFunction);
   return function;
+}
+
+duckdb_scalar_function_set H3Functions::GetCellToLatFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_cell_to_lat");
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type doubleType =
+      duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_cell_to_lat");
+    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_set_return_type(function, doubleType);
+    duckdb_scalar_function_set_function(function,
+                                        CellToLatOrLngFunction<int64_t, false>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_cell_to_lat");
+    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_set_return_type(function, doubleType);
+    duckdb_scalar_function_set_function(
+        function, CellToLatOrLngFunction<uint64_t, false>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_cell_to_lat");
+    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_set_return_type(function, doubleType);
+    duckdb_scalar_function_set_function(
+        function, CellToLatOrLngFunction<duckdb_string_t, false>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&ubigintType);
+  duckdb_destroy_logical_type(&doubleType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetCellToLngFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_cell_to_lng");
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type doubleType =
+      duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_cell_to_lng");
+    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_set_return_type(function, doubleType);
+    duckdb_scalar_function_set_function(function,
+                                        CellToLatOrLngFunction<int64_t, true>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_cell_to_lng");
+    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_set_return_type(function, doubleType);
+    duckdb_scalar_function_set_function(function,
+                                        CellToLatOrLngFunction<uint64_t, true>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_cell_to_lng");
+    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_set_return_type(function, doubleType);
+    duckdb_scalar_function_set_function(
+        function, CellToLatOrLngFunction<duckdb_string_t, true>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&ubigintType);
+  duckdb_destroy_logical_type(&doubleType);
+
+  return functionSet;
 }
 
 // CreateScalarFunctionInfo H3Functions::GetCellToLatFunction() {
