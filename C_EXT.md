@@ -8,6 +8,7 @@
 | `h3_latlng_to_cell_string` | Convert latitude/longitude coordinate to cell ID (returns VARCHAR)
 | `h3_cell_to_lat` | Convert cell ID to latitude
 | `h3_cell_to_lng` | Convert cell ID to longitude
+| `h3_cell_to_latlng` | Convert cell ID to latitude/longitude
 | `h3_string_to_h3` | Convert VARCHAR cell ID to UBIGINT
 | `h3_h3_to_string` | Convert BIGINT or UBIGINT cell ID to VARCHAR
 
@@ -15,7 +16,6 @@
 
 | Function | Description
 | --: | ---
-| `h3_cell_to_latlng` | Convert cell ID to latitude/longitude
 | `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary WKT
 | `h3_cell_to_boundary_wkb` | Convert cell ID to cell boundary WKB
 | `h3_get_resolution` | Get resolution number of cell ID

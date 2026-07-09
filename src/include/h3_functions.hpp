@@ -26,7 +26,7 @@ public:
     functions.push_back(GetLatLngToCellVarcharFunction());
     functionSets.push_back(GetCellToLatFunction());
     functionSets.push_back(GetCellToLngFunction());
-    //    functions.push_back(GetCellToLatLngFunction());
+    functionSets.push_back(GetCellToLatLngFunction());
     //    functions.push_back(GetCellToBoundaryWktFunction());
     //    functions.push_back(GetCellToBoundaryWkbFunction());
 
@@ -121,7 +121,7 @@ private:
   static duckdb_scalar_function GetLatLngToCellVarcharFunction();
   static duckdb_scalar_function_set GetCellToLatFunction();
   static duckdb_scalar_function_set GetCellToLngFunction();
-  //  static CreateScalarFunctionInfo GetCellToLatLngFunction();
+  static duckdb_scalar_function_set GetCellToLatLngFunction();
   //  static CreateScalarFunctionInfo GetCellToBoundaryWktFunction();
   //  static CreateScalarFunctionInfo GetCellToBoundaryWkbFunction();
 
