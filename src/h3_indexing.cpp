@@ -142,11 +142,6 @@ void CellToLatOrLngFunction(duckdb_function_info info, duckdb_data_chunk input,
 template <typename T>
 void CellToLatLngFunction(duckdb_function_info info, duckdb_data_chunk input,
                           duckdb_vector output) {
-  static_assert(std::is_same<T, duckdb_string_t>::value ||
-                    std::is_same<T, uint64_t>::value ||
-                    std::is_same<T, int64_t>::value,
-                "T must be an acceptable type");
-  constexpr auto IsStringT = std::is_same<T, duckdb_string_t>::value;
   idx_t inputSize = duckdb_data_chunk_get_size(input);
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
@@ -169,16 +164,7 @@ void CellToLatLngFunction(duckdb_function_info info, duckdb_data_chunk input,
     bool wasValid = false;
 
     if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
-      H3Index cell;
-      if (IsStringT) {
-        auto str = (duckdb_string_t *)&indexVecData[row];
-        H3Error err = stringToH3(duckdb_string_t_data(str), &cell);
-        if (err) {
-          cell = 0;
-        }
-      } else {
-        cell = ((uint64_t *)indexVecData)[row];
-      }
+      H3Index cell = IndexFromVector(indexVecData, row);
 
       if (cell) {
         LatLng latLng;
