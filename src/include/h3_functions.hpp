@@ -15,8 +15,11 @@ namespace h3duckdb {
 
 class H3Functions {
 public:
-  static std::vector<duckdb_scalar_function> GetFunctions() {
+  static std::pair<std::vector<duckdb_scalar_function>,
+                   std::vector<duckdb_scalar_function_set>>
+  GetFunctions() {
     std::vector<duckdb_scalar_function> functions;
+    std::vector<duckdb_scalar_function_set> functionSets;
 
     // Indexing
     functions.push_back(GetLatLngToCellFunction());
@@ -27,11 +30,11 @@ public:
     //    functions.push_back(GetCellToBoundaryWktFunction());
     //    functions.push_back(GetCellToBoundaryWkbFunction());
 
-    //    // Inspection
+    // Inspection
     //    functions.push_back(GetGetResolutionFunction());
     //    functions.push_back(GetGetBaseCellNumberFunction());
-    //    functions.push_back(GetStringToH3Function());
-    //    functions.push_back(GetH3ToStringFunction());
+    functions.push_back(GetStringToH3Function());
+    functionSets.push_back(GetH3ToStringFunction());
     //    functions.push_back(GetIsValidIndexFunctions());
     //    functions.push_back(GetIsValidCellFunctions());
     //    functions.push_back(GetIsResClassIIIFunction());
@@ -109,7 +112,7 @@ public:
     //    functions.push_back(GetPolygonWkbToCellsExperimentalFunction());
     //    functions.push_back(GetPolygonWkbToCellsExperimentalVarcharFunction());
 
-    return functions;
+    return std::make_pair(functions, functionSets);
   }
 
 private:
@@ -122,11 +125,11 @@ private:
   //  static CreateScalarFunctionInfo GetCellToBoundaryWktFunction();
   //  static CreateScalarFunctionInfo GetCellToBoundaryWkbFunction();
 
-  //  // Inspection
+  // Inspection
   //  static CreateScalarFunctionInfo GetGetResolutionFunction();
   //  static CreateScalarFunctionInfo GetGetBaseCellNumberFunction();
-  //  static CreateScalarFunctionInfo GetStringToH3Function();
-  //  static CreateScalarFunctionInfo GetH3ToStringFunction();
+  static duckdb_scalar_function GetStringToH3Function();
+  static duckdb_scalar_function_set GetH3ToStringFunction();
   //  static CreateScalarFunctionInfo GetIsValidIndexFunctions();
   //  static CreateScalarFunctionInfo GetIsValidCellFunctions();
   //  static CreateScalarFunctionInfo GetIsResClassIIIFunction();

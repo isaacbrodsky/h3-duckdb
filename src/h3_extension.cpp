@@ -16,9 +16,14 @@ DUCKDB_EXTENSION_ENTRYPOINT(duckdb_connection connection,
   // loader.SetDescription("Lua embedded scripting language, " LUA_RELEASE);
   // TODO: Set extension version
 
-  for (auto &fun : h3duckdb::H3Functions::GetFunctions()) {
-    duckdb_register_scalar_function(connection, fun);
-    duckdb_destroy_scalar_function(&fun);
+  auto functionsAndFunctionSets = h3duckdb::H3Functions::GetFunctions();
+  for (auto &function : functionsAndFunctionSets.first) {
+    duckdb_register_scalar_function(connection, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+  for (auto &functionSet : functionsAndFunctionSets.second) {
+    duckdb_register_scalar_function_set(connection, functionSet);
+    duckdb_destroy_scalar_function_set(&functionSet);
   }
 
   // Return true to indicate succesful initialization

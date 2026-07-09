@@ -1,8 +1,8 @@
-//#include "h3_common.hpp"
-//#include "h3_functions.hpp"
-//
-// namespace duckdb {
-//
+#include "h3_common.hpp"
+#include "h3_functions.hpp"
+
+namespace h3duckdb {
+
 // template <typename T>
 // static void GetResolutionFunction(DataChunk &args, ExpressionState &state,
 //                                  Vector &result) {
@@ -101,39 +101,63 @@
 //        }
 //      });
 //}
-//
-// static void StringToH3Function(DataChunk &args, ExpressionState &state,
-//                               Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::ExecuteWithNulls<string_t, uint64_t>(
-//      inputs, result, args.size(),
-//      [&](string_t input, ValidityMask &mask, idx_t idx) {
-//        H3Index h;
-//        H3Error err = stringToH3(input.GetString().c_str(), &h);
-//        if (err) {
-//          mask.SetInvalid(idx);
-//          return H3Index(H3_NULL);
-//        } else {
-//          return h;
-//        }
-//      });
-//}
-//
-// struct H3ToStringOperator {
-//  template <class INPUT_TYPE, class RESULT_TYPE>
-//  static RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {
-//    auto str = StringUtil::Format("%llx", input);
-//    return StringVector::AddString(result, str);
-//  }
-//};
-//
-// template <typename T>
-// static void H3ToStringFunction(DataChunk &args, ExpressionState &state,
-//                               Vector &result) {
-//  UnaryExecutor::ExecuteString<T, string_t, H3ToStringOperator>(
-//      args.data[0], result, args.size());
-//}
-//
+
+void StringToH3Function(duckdb_function_info info, duckdb_data_chunk input,
+                        duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  duckdb_string_t *indexVecData =
+      (duckdb_string_t *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  uint64_t *resultData = (uint64_t *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      auto index = &indexVecData[row];
+      H3Index cell;
+
+      H3Error err = stringToH3(duckdb_string_t_data(index), &cell);
+      if (!err) {
+        resultData[row] = cell;
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
+template <typename T>
+void H3ToStringFunction(duckdb_function_info info, duckdb_data_chunk input,
+                        duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      auto str = ToHexString(indexVecData[row]);
+      duckdb_vector_assign_string_element_len(output, row, str.c_str(),
+                                              str.size());
+    } else {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
 // static void IsValidIndexVarcharFunction(DataChunk &args, ExpressionState
 // &state,
 //                                        Vector &result) {
@@ -563,24 +587,60 @@
 //                                   GetIndexDigitVarcharFunction));
 //  return CreateScalarFunctionInfo(funcs);
 //}
-//
-// CreateScalarFunctionInfo H3Functions::GetStringToH3Function() {
-//  return CreateScalarFunctionInfo(
-//      ScalarFunction("h3_string_to_h3", {LogicalType::VARCHAR},
-//                     LogicalType::UBIGINT, StringToH3Function));
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetH3ToStringFunction() {
-//  ScalarFunctionSet funcs("h3_h3_to_string");
-//  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-//  LogicalType::VARCHAR,
-//                                   H3ToStringFunction<uint64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-//  LogicalType::VARCHAR,
-//                                   H3ToStringFunction<int64_t>));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
+
+duckdb_scalar_function H3Functions::GetStringToH3Function() {
+  duckdb_scalar_function function = duckdb_create_scalar_function();
+  duckdb_scalar_function_set_name(function, "h3_string_to_h3");
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_scalar_function_add_parameter(function, varcharType);
+  duckdb_scalar_function_set_return_type(function, ubigintType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&ubigintType);
+  duckdb_scalar_function_set_function(function, StringToH3Function);
+  return function;
+}
+
+duckdb_scalar_function_set H3Functions::GetH3ToStringFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_h3_to_string");
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_h3_to_string");
+    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_set_return_type(function, varcharType);
+    duckdb_scalar_function_set_function(function, H3ToStringFunction<int64_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_h3_to_string");
+    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_set_return_type(function, varcharType);
+    duckdb_scalar_function_set_function(function, H3ToStringFunction<uint64_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&ubigintType);
+
+  return functionSet;
+}
+
 // CreateScalarFunctionInfo H3Functions::GetIsValidIndexFunctions() {
 //  ScalarFunctionSet funcs("h3_is_valid_index");
 //  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
@@ -678,5 +738,5 @@
 //      LogicalType::VARCHAR, ConstructCellVarcharFunction));
 //  return CreateScalarFunctionInfo(funcs);
 //}
-//
-//} // namespace duckdb
+
+} // namespace h3duckdb

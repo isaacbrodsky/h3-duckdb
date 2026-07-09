@@ -19,7 +19,7 @@ void LatLngToCellFunction(duckdb_function_info info, duckdb_data_chunk input,
   uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   duckdb_vector_ensure_validity_writable(output);
-  int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
+  uint64_t *resultData = (uint64_t *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
@@ -78,7 +78,8 @@ void LatLngToCellVarcharFunction(duckdb_function_info info,
       H3Error err = latLngToCell(&latLng, res, &cell);
       if (!err) {
         std::string resultStr = ToHexString(cell);
-        duckdb_vector_assign_string_element(output, row, resultStr.c_str());
+        duckdb_vector_assign_string_element_len(output, row, resultStr.c_str(),
+                                                resultStr.size());
         wasValid = true;
       }
     }

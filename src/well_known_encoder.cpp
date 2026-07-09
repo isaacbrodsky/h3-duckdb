@@ -3,18 +3,18 @@
 #include "h3api.h"
 #include <cassert>
 
- namespace h3duckdb {
+namespace h3duckdb {
 
- void WkbEncoder::StartLineString() {
+void WkbEncoder::StartLineString() {
   // little endian + linestring
   buffer = std::string("\x01\x02\x00\x00\x00", 5);
 }
 
- void WkbEncoder::Point(double lng, double lat) {
+void WkbEncoder::Point(double lng, double lat) {
   points.push_back(std::make_pair(lng, lat));
 }
 
- void WkbEncoder::EndLineString() {
+void WkbEncoder::EndLineString() {
   uint32_t numLineStringPoints = points.size();
   assert(numLineStringPoints == points.size());
   assert(sizeof(numLineStringPoints) == 4);
@@ -28,62 +28,62 @@
   points.clear();
 }
 
- void WkbEncoder::StartPolygon() {
+void WkbEncoder::StartPolygon() {
   // little endian + polygon + 1 linestring inside
   buffer = std::string("\x01\x03\x00\x00\x00\x01\x00\x00\x00", 9);
 }
 
- void WkbEncoder::EndPolygon() { EndLineString(); }
+void WkbEncoder::EndPolygon() { EndLineString(); }
 
- void WkbEncoder::StartMultiPolygon(uint32_t polygonCount) {
+void WkbEncoder::StartMultiPolygon(uint32_t polygonCount) {
   // little endian + multipolygon + how many polygons inside
   buffer = std::string("\x01\x07\x00\x00\x00", 5);
   buffer.append((char *)&polygonCount, 4);
 }
 
- void WkbEncoder::StartMultiPolygonPolygon(uint32_t loopCount) {
+void WkbEncoder::StartMultiPolygonPolygon(uint32_t loopCount) {
   // little endian + polygon + number of loops
   buffer.append("\x01\x03\x00\x00\x00", 5);
   buffer.append((char *)&loopCount, 4);
 }
 
- void WkbEncoder::StartMultiPolygonLoop() { /* no-op */
+void WkbEncoder::StartMultiPolygonLoop() { /* no-op */
 }
 
- void WkbEncoder::MultiPolygonEmpty() { /* no-op */
+void WkbEncoder::MultiPolygonEmpty() { /* no-op */
 }
 
- void WkbEncoder::EndMultiPolygonLoop() { EndLineString(); }
+void WkbEncoder::EndMultiPolygonLoop() { EndLineString(); }
 
- void WkbEncoder::EndMultiPolygonPolygon() { /* no-op */
+void WkbEncoder::EndMultiPolygonPolygon() { /* no-op */
 }
 
- void WkbEncoder::EndMultiPolygon() { /* no-op */
+void WkbEncoder::EndMultiPolygon() { /* no-op */
 }
 
- std::string WkbEncoder::Finish() { return buffer; }
+std::string WkbEncoder::Finish() { return buffer; }
 
 // *** WKT ***
 
- void WktEncoder::StartLineString() { buffer = "LINESTRING ("; }
+void WktEncoder::StartLineString() { buffer = "LINESTRING ("; }
 
- void WktEncoder::Point(double lng, double lat) {
+void WktEncoder::Point(double lng, double lat) {
   auto sep = firstPoint ? "" : ", ";
   buffer += sep + std::to_string(lng) + " " + std::to_string(lat);
   firstPoint = false;
 }
 
- void WktEncoder::EndLineString() { buffer += ")"; }
+void WktEncoder::EndLineString() { buffer += ")"; }
 
- void WktEncoder::StartPolygon() { buffer = "POLYGON (("; }
+void WktEncoder::StartPolygon() { buffer = "POLYGON (("; }
 
- void WktEncoder::EndPolygon() { buffer += "))"; }
+void WktEncoder::EndPolygon() { buffer += "))"; }
 
- void WktEncoder::StartMultiPolygon(uint32_t polygonCount) {
+void WktEncoder::StartMultiPolygon(uint32_t polygonCount) {
   buffer = "MULTIPOLYGON ";
 }
 
- void WktEncoder::StartMultiPolygonPolygon(uint32_t loopCount) {
+void WktEncoder::StartMultiPolygonPolygon(uint32_t loopCount) {
   if (!firstPolygon) {
     buffer += ", ";
   } else {
@@ -94,7 +94,7 @@
   firstPolygon = false;
 }
 
- void WktEncoder::StartMultiPolygonLoop() {
+void WktEncoder::StartMultiPolygonLoop() {
   if (!firstLoop) {
     buffer += ", ";
   }
@@ -103,20 +103,20 @@
   firstLoop = false;
 }
 
- void WktEncoder::MultiPolygonEmpty() { buffer += "EMPTY"; }
+void WktEncoder::MultiPolygonEmpty() { buffer += "EMPTY"; }
 
- void WktEncoder::EndMultiPolygonLoop() {
+void WktEncoder::EndMultiPolygonLoop() {
   buffer += ")";
   firstPoint = true;
 }
 
- void WktEncoder::EndMultiPolygonPolygon() {
+void WktEncoder::EndMultiPolygonPolygon() {
   buffer += ")";
   firstLoop = true;
 }
 
- void WktEncoder::EndMultiPolygon() { buffer += ")"; }
+void WktEncoder::EndMultiPolygon() { buffer += ")"; }
 
- std::string WktEncoder::Finish() { return buffer; }
+std::string WktEncoder::Finish() { return buffer; }
 
 } // namespace h3duckdb
