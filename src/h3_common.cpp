@@ -1,14 +1,20 @@
 #include "h3_common.hpp"
 
-#include "duckdb/common/exception.hpp"
-#include "duckdb/common/string_util.hpp"
+#include <sstream>
 
-namespace duckdb {
+namespace h3duckdb {
+
+std::string ToHexString(H3Index index) {
+  // TODO: Optimize this
+  std::stringstream ss;
+  ss << std::hex << index;
+  return ss.str();
+}
 
 void ThrowH3Error(H3Error err) {
   if (err) {
-    throw InvalidInputException(StringUtil::Format("H3 error: '%d'", err));
+    throw H3Exception(std::string("H3 error: ") + std::to_string(err));
   }
 }
 
-} // namespace duckdb
+} // namespace h3duckdb
