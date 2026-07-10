@@ -12,39 +12,29 @@ void GetHexagonAreaAvgFunction(duckdb_function_info info,
 
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 0);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
-  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
   duckdb_vector unitVec = duckdb_data_chunk_get_vector(input, 1);
   duckdb_string_t *unitVecData =
       (duckdb_string_t *)duckdb_vector_get_data(unitVec);
-  uint64_t *unitVecValidity = duckdb_vector_get_validity(unitVec);
 
   duckdb_vector_ensure_validity_writable(output);
   double *resultData = (double *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
+    int res = resVecData[row];
+    auto unit = &unitVecData[row];
 
-    if (duckdb_validity_row_is_valid(resVecValidity, row) &&
-        duckdb_validity_row_is_valid(unitVecValidity, row)) {
-      int res = resVecData[row];
-      auto unit = &unitVecData[row];
-
-      double out;
-      H3Error err = E_OPTION_INVALID;
-      if (strcmp(duckdb_string_t_data(unit), "km^2") == 0) {
-        err = getHexagonAreaAvgKm2(res, &out);
-      } else if (strcmp(duckdb_string_t_data(unit), "m^2") == 0) {
-        err = getHexagonAreaAvgM2(res, &out);
-      }
-
-      if (!err) {
-        resultData[row] = out;
-        wasValid = true;
-      }
+    double out;
+    H3Error err = E_OPTION_INVALID;
+    if (strcmp(duckdb_string_t_data(unit), "km^2") == 0) {
+      err = getHexagonAreaAvgKm2(res, &out);
+    } else if (strcmp(duckdb_string_t_data(unit), "m^2") == 0) {
+      err = getHexagonAreaAvgM2(res, &out);
     }
 
-    if (!wasValid) {
+    if (!err) {
+      resultData[row] = out;
+    } else {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -57,41 +47,31 @@ template <typename T> struct CellAreaOperator {
 
     duckdb_vector cellVec = duckdb_data_chunk_get_vector(input, 0);
     T *cellVecData = (T *)duckdb_vector_get_data(cellVec);
-    uint64_t *cellVecValidity = duckdb_vector_get_validity(cellVec);
     duckdb_vector unitVec = duckdb_data_chunk_get_vector(input, 1);
     duckdb_string_t *unitVecData =
         (duckdb_string_t *)duckdb_vector_get_data(unitVec);
-    uint64_t *unitVecValidity = duckdb_vector_get_validity(unitVec);
 
     duckdb_vector_ensure_validity_writable(output);
     double *resultData = (double *)duckdb_vector_get_data(output);
     uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
     for (idx_t row = 0; row < inputSize; ++row) {
-      bool wasValid = false;
+      H3Index cell = IndexFromVector(cellVecData, row);
+      auto unit = &unitVecData[row];
 
-      if (duckdb_validity_row_is_valid(cellVecValidity, row) &&
-          duckdb_validity_row_is_valid(unitVecValidity, row)) {
-        H3Index cell = IndexFromVector(cellVecData, row);
-        auto unit = &unitVecData[row];
-
-        double out;
-        H3Error err = E_OPTION_INVALID;
-        if (strcmp(duckdb_string_t_data(unit), "rads^2") == 0) {
-          err = cellAreaRads2(cell, &out);
-        } else if (strcmp(duckdb_string_t_data(unit), "km^2") == 0) {
-          err = cellAreaKm2(cell, &out);
-        } else if (strcmp(duckdb_string_t_data(unit), "m^2") == 0) {
-          err = cellAreaM2(cell, &out);
-        }
-
-        if (!err) {
-          resultData[row] = out;
-          wasValid = true;
-        }
+      double out;
+      H3Error err = E_OPTION_INVALID;
+      if (strcmp(duckdb_string_t_data(unit), "rads^2") == 0) {
+        err = cellAreaRads2(cell, &out);
+      } else if (strcmp(duckdb_string_t_data(unit), "km^2") == 0) {
+        err = cellAreaKm2(cell, &out);
+      } else if (strcmp(duckdb_string_t_data(unit), "m^2") == 0) {
+        err = cellAreaM2(cell, &out);
       }
 
-      if (!wasValid) {
+      if (!err) {
+        resultData[row] = out;
+      } else {
         duckdb_validity_set_row_invalid(resultValidity, row);
       }
     }
@@ -105,39 +85,29 @@ void GetHexagonEdgeLengthAvgFunction(duckdb_function_info info,
 
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 0);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
-  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
   duckdb_vector unitVec = duckdb_data_chunk_get_vector(input, 1);
   duckdb_string_t *unitVecData =
       (duckdb_string_t *)duckdb_vector_get_data(unitVec);
-  uint64_t *unitVecValidity = duckdb_vector_get_validity(unitVec);
 
   duckdb_vector_ensure_validity_writable(output);
   double *resultData = (double *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
+    int res = resVecData[row];
+    auto unit = &unitVecData[row];
 
-    if (duckdb_validity_row_is_valid(resVecValidity, row) &&
-        duckdb_validity_row_is_valid(unitVecValidity, row)) {
-      int res = resVecData[row];
-      auto unit = &unitVecData[row];
-
-      double out;
-      H3Error err = E_OPTION_INVALID;
-      if (strcmp(duckdb_string_t_data(unit), "km") == 0) {
-        err = getHexagonEdgeLengthAvgKm(res, &out);
-      } else if (strcmp(duckdb_string_t_data(unit), "m") == 0) {
-        err = getHexagonEdgeLengthAvgM(res, &out);
-      }
-
-      if (!err) {
-        resultData[row] = out;
-        wasValid = true;
-      }
+    double out;
+    H3Error err = E_OPTION_INVALID;
+    if (strcmp(duckdb_string_t_data(unit), "km") == 0) {
+      err = getHexagonEdgeLengthAvgKm(res, &out);
+    } else if (strcmp(duckdb_string_t_data(unit), "m") == 0) {
+      err = getHexagonEdgeLengthAvgM(res, &out);
     }
 
-    if (!wasValid) {
+    if (!err) {
+      resultData[row] = out;
+    } else {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -150,41 +120,31 @@ template <typename T> struct EdgeLengthOperator {
 
     duckdb_vector cellVec = duckdb_data_chunk_get_vector(input, 0);
     T *cellVecData = (T *)duckdb_vector_get_data(cellVec);
-    uint64_t *cellVecValidity = duckdb_vector_get_validity(cellVec);
     duckdb_vector unitVec = duckdb_data_chunk_get_vector(input, 1);
     duckdb_string_t *unitVecData =
         (duckdb_string_t *)duckdb_vector_get_data(unitVec);
-    uint64_t *unitVecValidity = duckdb_vector_get_validity(unitVec);
 
     duckdb_vector_ensure_validity_writable(output);
     double *resultData = (double *)duckdb_vector_get_data(output);
     uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
     for (idx_t row = 0; row < inputSize; ++row) {
-      bool wasValid = false;
+      H3Index edge = IndexFromVector(cellVecData, row);
+      auto unit = &unitVecData[row];
 
-      if (duckdb_validity_row_is_valid(cellVecValidity, row) &&
-          duckdb_validity_row_is_valid(unitVecValidity, row)) {
-        H3Index edge = IndexFromVector(cellVecData, row);
-        auto unit = &unitVecData[row];
-
-        double out;
-        H3Error err = E_OPTION_INVALID;
-        if (strcmp(duckdb_string_t_data(unit), "rads") == 0) {
-          err = edgeLengthRads(edge, &out);
-        } else if (strcmp(duckdb_string_t_data(unit), "km") == 0) {
-          err = edgeLengthKm(edge, &out);
-        } else if (strcmp(duckdb_string_t_data(unit), "m") == 0) {
-          err = edgeLengthM(edge, &out);
-        }
-
-        if (!err) {
-          resultData[row] = out;
-          wasValid = true;
-        }
+      double out;
+      H3Error err = E_OPTION_INVALID;
+      if (strcmp(duckdb_string_t_data(unit), "rads") == 0) {
+        err = edgeLengthRads(edge, &out);
+      } else if (strcmp(duckdb_string_t_data(unit), "km") == 0) {
+        err = edgeLengthKm(edge, &out);
+      } else if (strcmp(duckdb_string_t_data(unit), "m") == 0) {
+        err = edgeLengthM(edge, &out);
       }
 
-      if (!wasValid) {
+      if (!err) {
+        resultData[row] = out;
+      } else {
         duckdb_validity_set_row_invalid(resultValidity, row);
       }
     }
@@ -197,28 +157,20 @@ void GetNumCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 0);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
-  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   duckdb_vector_ensure_validity_writable(output);
   int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
+    int res = resVecData[row];
 
-    if (duckdb_validity_row_is_valid(resVecValidity, row)) {
-      int res = resVecData[row];
+    int64_t out;
+    H3Error err = getNumCells(res, &out);
 
-      int64_t out;
-      H3Error err = getNumCells(res, &out);
-
-      if (!err) {
-        resultData[row] = out;
-        wasValid = true;
-      }
-    }
-
-    if (!wasValid) {
+    if (!err) {
+      resultData[row] = out;
+    } else {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -315,7 +267,6 @@ void GetPentagonsFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 0);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
-  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   duckdb_list_vector_reserve(output, inputSize * sz);
   duckdb_vector_ensure_validity_writable(output);
@@ -327,26 +278,19 @@ void GetPentagonsFunction(duckdb_function_info info, duckdb_data_chunk input,
   idx_t resultOffset = 0;
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
+    auto res = resVecData[row];
 
-    if (duckdb_validity_row_is_valid(resVecValidity, row)) {
-      auto res = resVecData[row];
+    std::vector<H3Index> out(sz);
+    H3Error err = getPentagons(res, out.data());
 
-      std::vector<H3Index> out(sz);
-      H3Error err = getPentagons(res, out.data());
-
-      if (!err) {
-        for (idx_t i = 0; i < sz; ++i) {
-          resultData[resultOffset + i] = out[i];
-        }
-        entries[row].offset = resultOffset;
-        entries[row].length = sz;
-        resultOffset += sz;
-        wasValid = true;
+    if (!err) {
+      for (idx_t i = 0; i < sz; ++i) {
+        resultData[resultOffset + i] = out[i];
       }
-    }
-
-    if (!wasValid) {
+      entries[row].offset = resultOffset;
+      entries[row].length = sz;
+      resultOffset += sz;
+    } else {
       // TODO: This should be unreachable
       entries[row].offset = resultOffset;
       entries[row].length = 0;
@@ -364,7 +308,6 @@ void GetPentagonsVarcharFunction(duckdb_function_info info,
 
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 0);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
-  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   duckdb_list_vector_reserve(output, inputSize * sz);
   duckdb_vector_ensure_validity_writable(output);
@@ -375,29 +318,22 @@ void GetPentagonsVarcharFunction(duckdb_function_info info,
   idx_t resultOffset = 0;
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
+    auto res = resVecData[row];
 
-    if (duckdb_validity_row_is_valid(resVecValidity, row)) {
-      auto res = resVecData[row];
+    std::vector<H3Index> out(sz);
+    H3Error err = getPentagons(res, out.data());
 
-      std::vector<H3Index> out(sz);
-      H3Error err = getPentagons(res, out.data());
-
-      if (!err) {
-        for (idx_t i = 0; i < sz; ++i) {
-          std::string resultStr = ToHexString(out[i]);
-          duckdb_vector_assign_string_element_len(
-              outputChildVec, resultOffset + i, resultStr.c_str(),
-              resultStr.size());
-        }
-        entries[row].offset = resultOffset;
-        entries[row].length = sz;
-        resultOffset += sz;
-        wasValid = true;
+    if (!err) {
+      for (idx_t i = 0; i < sz; ++i) {
+        std::string resultStr = ToHexString(out[i]);
+        duckdb_vector_assign_string_element_len(
+            outputChildVec, resultOffset + i, resultStr.c_str(),
+            resultStr.size());
       }
-    }
-
-    if (!wasValid) {
+      entries[row].offset = resultOffset;
+      entries[row].length = sz;
+      resultOffset += sz;
+    } else {
       // TODO: This should be unreachable
       entries[row].offset = resultOffset;
       entries[row].length = 0;
@@ -413,60 +349,38 @@ void GreatCircleDistanceFunction(duckdb_function_info info,
 
   duckdb_vector lat0Vec = duckdb_data_chunk_get_vector(input, 0);
   double *lat0VecData = (double *)duckdb_vector_get_data(lat0Vec);
-  uint64_t *lat0VecValidity = duckdb_vector_get_validity(lat0Vec);
   duckdb_vector lng0Vec = duckdb_data_chunk_get_vector(input, 1);
   double *lng0VecData = (double *)duckdb_vector_get_data(lng0Vec);
-  uint64_t *lng0VecValidity = duckdb_vector_get_validity(lng0Vec);
   duckdb_vector lat1Vec = duckdb_data_chunk_get_vector(input, 2);
   double *lat1VecData = (double *)duckdb_vector_get_data(lat1Vec);
-  uint64_t *lat1VecValidity = duckdb_vector_get_validity(lat1Vec);
   duckdb_vector lng1Vec = duckdb_data_chunk_get_vector(input, 3);
   double *lng1VecData = (double *)duckdb_vector_get_data(lng1Vec);
-  uint64_t *lng1VecValidity = duckdb_vector_get_validity(lng1Vec);
   duckdb_vector unitVec = duckdb_data_chunk_get_vector(input, 4);
   duckdb_string_t *unitVecData =
       (duckdb_string_t *)duckdb_vector_get_data(unitVec);
-  uint64_t *unitVecValidity = duckdb_vector_get_validity(unitVec);
 
   duckdb_vector_ensure_validity_writable(output);
   double *resultData = (double *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
+    double lat0 = lat0VecData[row];
+    double lng0 = lng0VecData[row];
+    double lat1 = lat1VecData[row];
+    double lng1 = lng1VecData[row];
+    auto unit = &unitVecData[row];
 
-    if (duckdb_validity_row_is_valid(lat0VecValidity, row) &&
-        duckdb_validity_row_is_valid(lng0VecValidity, row) &&
-        duckdb_validity_row_is_valid(lat1VecValidity, row) &&
-        duckdb_validity_row_is_valid(lng1VecValidity, row) &&
-        duckdb_validity_row_is_valid(unitVecValidity, row)) {
-      double lat0 = lat0VecData[row];
-      double lng0 = lng0VecData[row];
-      double lat1 = lat1VecData[row];
-      double lng1 = lng1VecData[row];
-      auto unit = &unitVecData[row];
+    LatLng latLng0 = {.lat = degsToRads(lat0), .lng = degsToRads(lng0)};
+    LatLng latLng1 = {.lat = degsToRads(lat1), .lng = degsToRads(lng1)};
 
-      LatLng latLng0 = {.lat = degsToRads(lat0), .lng = degsToRads(lng0)};
-      LatLng latLng1 = {.lat = degsToRads(lat1), .lng = degsToRads(lng1)};
-
-      double out;
-      if (strcmp(duckdb_string_t_data(unit), "rads") == 0) {
-        out = greatCircleDistanceRads(&latLng0, &latLng1);
-        wasValid = true;
-      } else if (strcmp(duckdb_string_t_data(unit), "km") == 0) {
-        out = greatCircleDistanceKm(&latLng0, &latLng1);
-        wasValid = true;
-      } else if (strcmp(duckdb_string_t_data(unit), "m") == 0) {
-        out = greatCircleDistanceM(&latLng0, &latLng1);
-        wasValid = true;
-      }
-
-      if (wasValid) {
-        resultData[row] = out;
-      }
-    }
-
-    if (!wasValid) {
+    double out;
+    if (strcmp(duckdb_string_t_data(unit), "rads") == 0) {
+      resultData[row] = greatCircleDistanceRads(&latLng0, &latLng1);
+    } else if (strcmp(duckdb_string_t_data(unit), "km") == 0) {
+      resultData[row] = greatCircleDistanceKm(&latLng0, &latLng1);
+    } else if (strcmp(duckdb_string_t_data(unit), "m") == 0) {
+      resultData[row] = greatCircleDistanceM(&latLng0, &latLng1);
+    } else {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
