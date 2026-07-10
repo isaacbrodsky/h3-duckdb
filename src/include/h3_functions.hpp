@@ -35,8 +35,8 @@ public:
     //    functions.push_back(GetGetBaseCellNumberFunction());
     functions.push_back(GetStringToH3Function());
     functionSets.push_back(GetH3ToStringFunction());
-    //    functions.push_back(GetIsValidIndexFunctions());
-    //    functions.push_back(GetIsValidCellFunctions());
+    functionSets.push_back(GetIsValidIndexFunction());
+    functionSets.push_back(GetIsValidCellFunction());
     //    functions.push_back(GetIsResClassIIIFunction());
     //    functions.push_back(GetIsPentagonFunction());
     //    functions.push_back(GetGetIcosahedronFacesFunction());
@@ -130,8 +130,8 @@ private:
   //  static CreateScalarFunctionInfo GetGetBaseCellNumberFunction();
   static duckdb_scalar_function GetStringToH3Function();
   static duckdb_scalar_function_set GetH3ToStringFunction();
-  //  static CreateScalarFunctionInfo GetIsValidIndexFunctions();
-  //  static CreateScalarFunctionInfo GetIsValidCellFunctions();
+  static duckdb_scalar_function_set GetIsValidIndexFunction();
+  static duckdb_scalar_function_set GetIsValidCellFunction();
   //  static CreateScalarFunctionInfo GetIsResClassIIIFunction();
   //  static CreateScalarFunctionInfo GetIsPentagonFunction();
   //  static CreateScalarFunctionInfo GetGetIcosahedronFacesFunction();

@@ -158,54 +158,32 @@ void H3ToStringFunction(duckdb_function_info info, duckdb_data_chunk input,
   }
 }
 
-// static void IsValidIndexVarcharFunction(DataChunk &args, ExpressionState
-// &state,
-//                                        Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::Execute<string_t, bool>(
-//      inputs, result, args.size(), [&](string_t input) {
-//        H3Index h;
-//        H3Error err = stringToH3(input.GetString().c_str(), &h);
-//        if (err) {
-//          return false;
-//        }
-//        return bool(isValidIndex(h));
-//      });
-//}
-//
-// template <typename T>
-// static void IsValidIndexFunction(DataChunk &args, ExpressionState &state,
-//                                 Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
-//    return bool(isValidIndex(input));
-//  });
-//}
-//
-// static void IsValidCellVarcharFunction(DataChunk &args, ExpressionState
-// &state,
-//                                       Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::Execute<string_t, bool>(
-//      inputs, result, args.size(), [&](string_t input) {
-//        H3Index h;
-//        H3Error err = stringToH3(input.GetString().c_str(), &h);
-//        if (err) {
-//          return false;
-//        }
-//        return bool(isValidCell(h));
-//      });
-//}
-//
-// template <typename T>
-// static void IsValidCellFunction(DataChunk &args, ExpressionState &state,
-//                                Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
-//    return bool(isValidCell(input));
-//  });
-//}
-//
+struct IsValidIndexOperator {
+  static bool operate(H3Index index) { return isValidIndex(index); }
+};
+
+struct IsValidCellOperator {
+  static bool operate(H3Index index) { return isValidCell(index); }
+};
+
+template <typename T, typename Operator>
+void IsValidGenericFunction(duckdb_function_info info, duckdb_data_chunk input,
+                            duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+
+  bool *resultData = (bool *)duckdb_vector_get_data(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    auto cell = IndexFromVector(indexVecData, row);
+
+    H3Error err = Operator::operate(cell);
+    resultData[row] = !err;
+  }
+}
+
 // template <typename T>
 // static void IsResClassIIIFunction(DataChunk &args, ExpressionState &state,
 //                                  Vector &result) {
@@ -641,34 +619,115 @@ duckdb_scalar_function_set H3Functions::GetH3ToStringFunction() {
   return functionSet;
 }
 
-// CreateScalarFunctionInfo H3Functions::GetIsValidIndexFunctions() {
-//  ScalarFunctionSet funcs("h3_is_valid_index");
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-//  LogicalType::BOOLEAN,
-//                                   IsValidIndexVarcharFunction));
-//  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-//  LogicalType::BOOLEAN,
-//                                   IsValidIndexFunction<uint64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-//  LogicalType::BOOLEAN,
-//                                   IsValidIndexFunction<int64_t>));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetIsValidCellFunctions() {
-//  ScalarFunctionSet funcs("h3_is_valid_cell");
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-//  LogicalType::BOOLEAN,
-//                                   IsValidCellVarcharFunction));
-//  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-//  LogicalType::BOOLEAN,
-//                                   IsValidCellFunction<uint64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-//  LogicalType::BOOLEAN,
-//                                   IsValidCellFunction<int64_t>));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
+duckdb_scalar_function_set H3Functions::GetIsValidIndexFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_is_valid_index");
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type boolType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BOOLEAN);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_is_valid_index");
+    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_set_return_type(function, boolType);
+    duckdb_scalar_function_set_function(
+        function, IsValidGenericFunction<uint64_t, IsValidIndexOperator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_is_valid_index");
+    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_set_return_type(function, varcharType);
+    duckdb_scalar_function_set_function(
+        function, IsValidGenericFunction<int64_t, IsValidIndexOperator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_is_valid_index");
+    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_set_return_type(function, varcharType);
+    duckdb_scalar_function_set_function(
+        function,
+        IsValidGenericFunction<duckdb_string_t, IsValidIndexOperator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&boolType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&ubigintType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetIsValidCellFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_is_valid_cell");
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type boolType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BOOLEAN);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_is_valid_cell");
+    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_set_return_type(function, boolType);
+    duckdb_scalar_function_set_function(
+        function, IsValidGenericFunction<uint64_t, IsValidCellOperator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_is_valid_cell");
+    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_set_return_type(function, varcharType);
+    duckdb_scalar_function_set_function(
+        function, IsValidGenericFunction<int64_t, IsValidCellOperator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_is_valid_cell");
+    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_set_return_type(function, varcharType);
+    duckdb_scalar_function_set_function(
+        function, IsValidGenericFunction<duckdb_string_t, IsValidCellOperator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&boolType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&ubigintType);
+
+  return functionSet;
+}
+
 // CreateScalarFunctionInfo H3Functions::GetIsResClassIIIFunction() {
 //  ScalarFunctionSet funcs("h3_is_res_class_iii");
 //  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
