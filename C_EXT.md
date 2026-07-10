@@ -2,6 +2,9 @@
 
 ## Done
 
+* Indexing
+* Misc
+
 | Function | Description
 | --: | ---
 | `h3_latlng_to_cell` | Convert latitude/longitude coordinate to cell ID
@@ -13,8 +16,25 @@
 | `h3_h3_to_string` | Convert BIGINT or UBIGINT cell ID to VARCHAR
 | `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary WKT
 | `h3_cell_to_boundary_wkb` | Convert cell ID to cell boundary WKB
+| `h3_get_hexagon_area_avg` | Get average area of a hexagon cell at resolution
+| `h3_cell_area` | Get the area of a cell ID
+| `h3_get_hexagon_edge_length_avg` | Average hexagon edge length at resolution
+| `h3_edge_length` | Get the length of a directed edge ID
+| `h3_get_num_cells` | Get the number of cells at a resolution
+| `h3_get_res0_cells` | Get all resolution 0 cells
+| `h3_get_res0_cells_string` | Get all resolution 0 cells (returns VARCHAR)
+| `h3_get_pentagons` | Get all pentagons at a resolution
+| `h3_get_pentagons_string` | Get all pentagons at a resolution (returns VARCHAR)
+| `h3_great_circle_distance` | Compute the great circle distance between two points (haversine)
 
 ## TODO
+
+* Inspection (partial)
+* Directed Edge
+* Hierarchy
+* Regions
+* Traversal
+* Vertex
 
 | Function | Description
 | --: | ---
@@ -64,16 +84,6 @@
 | `h3_directed_edge_to_boundary_wkt` | Convert directed edge ID to linestring WKT
 | `h3_directed_edge_to_boundary_wkb` | Convert directed edge ID to linestring WKB
 | `h3_reverse_directed_edge` | Convert a directed edge to one where origin and destination are swapped
-| `h3_get_hexagon_area_avg` | Get average area of a hexagon cell at resolution
-| `h3_cell_area` | Get the area of a cell ID
-| `h3_get_hexagon_edge_length_avg` | Average hexagon edge length at resolution
-| `h3_edge_length` | Get the length of a directed edge ID
-| `h3_get_num_cells` | Get the number of cells at a resolution
-| `h3_get_res0_cells` | Get all resolution 0 cells
-| `h3_get_res0_cells_string` | Get all resolution 0 cells (returns VARCHAR)
-| `h3_get_pentagons` | Get all pentagons at a resolution
-| `h3_get_pentagons_string` | Get all pentagons at a resolution (returns VARCHAR)
-| `h3_great_circle_distance` | Compute the great circle distance between two points (haversine)
 | `h3_cells_to_multi_polygon_wkt` | Convert a set of cells to multipolygon WKT
 | `h3_cells_to_multi_polygon_wkb` | Convert a set of cells to multipolygon WKB
 | `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells

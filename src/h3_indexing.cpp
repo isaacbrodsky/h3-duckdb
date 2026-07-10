@@ -147,9 +147,6 @@ void CellToLatLngFunction(duckdb_function_info info, duckdb_data_chunk input,
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
   uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
-  auto doubleType = duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
-  auto doubleListType = duckdb_create_list_type(doubleType);
-
   duckdb_list_vector_reserve(output, inputSize * 2);
   duckdb_vector_ensure_validity_writable(output);
   duckdb_list_entry *entries =
@@ -185,9 +182,6 @@ void CellToLatLngFunction(duckdb_function_info info, duckdb_data_chunk input,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
-
-  duckdb_destroy_logical_type(&doubleListType);
-  duckdb_destroy_logical_type(&doubleType);
 }
 
 template <typename T, typename Encoder>

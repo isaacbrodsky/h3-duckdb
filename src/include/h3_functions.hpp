@@ -87,19 +87,19 @@ public:
     //    functions.push_back(GetVertexToLngFunction());
     //    functions.push_back(GetVertexToLatLngFunction());
     //    functions.push_back(GetIsValidVertexFunctions());
-    //
-    //    // Misc
-    //    functions.push_back(GetGetHexagonAreaAvgFunction());
-    //    functions.push_back(GetCellAreaFunction());
-    //    functions.push_back(GetGetHexagonEdgeLengthAvgFunction());
-    //    functions.push_back(GetEdgeLengthFunction());
-    //    functions.push_back(GetGetNumCellsFunction());
-    //    functions.push_back(GetGetRes0CellsFunction());
-    //    functions.push_back(GetGetRes0CellsVarcharFunction());
-    //    functions.push_back(GetGetPentagonsFunction());
-    //    functions.push_back(GetGetPentagonsVarcharFunction());
-    //    functions.push_back(GetGreatCircleDistanceFunction());
-    //
+
+    // Misc
+    functions.push_back(GetGetHexagonAreaAvgFunction());
+    functionSets.push_back(GetCellAreaFunction());
+    functions.push_back(GetGetHexagonEdgeLengthAvgFunction());
+    functionSets.push_back(GetEdgeLengthFunction());
+    functions.push_back(GetGetNumCellsFunction());
+    functions.push_back(GetGetRes0CellsFunction());
+    functions.push_back(GetGetRes0CellsVarcharFunction());
+    functions.push_back(GetGetPentagonsFunction());
+    functions.push_back(GetGetPentagonsVarcharFunction());
+    functions.push_back(GetGreatCircleDistanceFunction());
+
     //    // Regions
     //    functions.push_back(GetCellsToMultiPolygonWktFunction());
     //    functions.push_back(GetCellsToMultiPolygonWkbFunction());
@@ -182,19 +182,19 @@ private:
   //  static CreateScalarFunctionInfo GetVertexToLngFunction();
   //  static CreateScalarFunctionInfo GetVertexToLatLngFunction();
   //  static CreateScalarFunctionInfo GetIsValidVertexFunctions();
-  //
-  //  // Misc
-  //  static CreateScalarFunctionInfo GetGetHexagonAreaAvgFunction();
-  //  static CreateScalarFunctionInfo GetCellAreaFunction();
-  //  static CreateScalarFunctionInfo GetGetHexagonEdgeLengthAvgFunction();
-  //  static CreateScalarFunctionInfo GetEdgeLengthFunction();
-  //  static CreateScalarFunctionInfo GetGetNumCellsFunction();
-  //  static CreateScalarFunctionInfo GetGetRes0CellsFunction();
-  //  static CreateScalarFunctionInfo GetGetRes0CellsVarcharFunction();
-  //  static CreateScalarFunctionInfo GetGetPentagonsFunction();
-  //  static CreateScalarFunctionInfo GetGetPentagonsVarcharFunction();
-  //  static CreateScalarFunctionInfo GetGreatCircleDistanceFunction();
-  //
+
+  // Misc
+  static duckdb_scalar_function GetGetHexagonAreaAvgFunction();
+  static duckdb_scalar_function_set GetCellAreaFunction();
+  static duckdb_scalar_function GetGetHexagonEdgeLengthAvgFunction();
+  static duckdb_scalar_function_set GetEdgeLengthFunction();
+  static duckdb_scalar_function GetGetNumCellsFunction();
+  static duckdb_scalar_function GetGetRes0CellsFunction();
+  static duckdb_scalar_function GetGetRes0CellsVarcharFunction();
+  static duckdb_scalar_function GetGetPentagonsFunction();
+  static duckdb_scalar_function GetGetPentagonsVarcharFunction();
+  static duckdb_scalar_function GetGreatCircleDistanceFunction();
+
   //  // Regions
   //  static CreateScalarFunctionInfo GetCellsToMultiPolygonWktFunction();
   //  static CreateScalarFunctionInfo GetCellsToMultiPolygonWkbFunction();
