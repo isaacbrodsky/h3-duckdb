@@ -11,13 +11,13 @@
 | `h3_cell_to_latlng` | Convert cell ID to latitude/longitude
 | `h3_string_to_h3` | Convert VARCHAR cell ID to UBIGINT
 | `h3_h3_to_string` | Convert BIGINT or UBIGINT cell ID to VARCHAR
+| `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary WKT
+| `h3_cell_to_boundary_wkb` | Convert cell ID to cell boundary WKB
 
 ## TODO
 
 | Function | Description
 | --: | ---
-| `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary WKT
-| `h3_cell_to_boundary_wkb` | Convert cell ID to cell boundary WKB
 | `h3_get_resolution` | Get resolution number of cell ID
 | `h3_get_base_cell_number` | Get base cell number of cell ID
 | `h3_get_index_digit` | Get specified indexing digit of a cell

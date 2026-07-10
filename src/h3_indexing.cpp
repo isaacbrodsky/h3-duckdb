@@ -1,6 +1,5 @@
-#include "h3_common.hpp"
 #include "h3_functions.hpp"
-//#include "well_known_encoder.hpp"
+#include "well_known_encoder.hpp"
 
 namespace h3duckdb {
 
@@ -191,128 +190,51 @@ void CellToLatLngFunction(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_destroy_logical_type(&doubleType);
 }
 
-// static void CellToLatLngFunction(DataChunk &args, ExpressionState &state,
-//                                 Vector &result) {
-//  result.SetVectorType(VectorType::FLAT_VECTOR);
-//  auto result_data = FlatVector::GetData<list_entry_t>(result);
-//  for (idx_t i = 0; i < args.size(); i++) {
-//    result_data[i].offset = ListVector::GetListSize(result);
-//
-//    uint64_t cell = args.GetValue(0, i)
-//                        .DefaultCastAs(LogicalType::UBIGINT)
-//                        .GetValue<uint64_t>();
-//    LatLng latLng;
-//    H3Error err = cellToLatLng(cell, &latLng);
-//    if (err) {
-//      result.SetValue(i, Value(LogicalType::SQLNULL));
-//    } else {
-//      ListVector::PushBack(result, radsToDegs(latLng.lat));
-//      ListVector::PushBack(result, radsToDegs(latLng.lng));
-//      result_data[i].length = 2;
-//    }
-//  }
-//  if (args.AllConstant()) {
-//    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-//  }
-//  result.Verify(args.size());
-//}
-//
-// static void CellToLatLngVarcharFunction(DataChunk &args, ExpressionState
-// &state,
-//                                        Vector &result) {
-//  result.SetVectorType(VectorType::FLAT_VECTOR);
-//  auto result_data = FlatVector::GetData<list_entry_t>(result);
-//  for (idx_t i = 0; i < args.size(); i++) {
-//    result_data[i].offset = ListVector::GetListSize(result);
-//
-//    string cellAddress = args.GetValue(0, i)
-//                             .DefaultCastAs(LogicalType::VARCHAR)
-//                             .GetValue<string>();
-//    H3Index cell;
-//    H3Error err0 = stringToH3(cellAddress.c_str(), &cell);
-//    if (err0) {
-//      result.SetValue(i, Value(LogicalType::SQLNULL));
-//    } else {
-//      LatLng latLng;
-//      H3Error err = cellToLatLng(cell, &latLng);
-//      if (err) {
-//        result.SetValue(i, Value(LogicalType::SQLNULL));
-//      } else {
-//        ListVector::PushBack(result, radsToDegs(latLng.lat));
-//        ListVector::PushBack(result, radsToDegs(latLng.lng));
-//        result_data[i].length = 2;
-//      }
-//    }
-//  }
-//  if (args.AllConstant()) {
-//    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-//  }
-//  result.Verify(args.size());
-//}
-//
-// template <typename Encoder> struct CellToBoundaryOperator {
-//  explicit CellToBoundaryOperator(Vector &_result) : result(_result) {}
-//  string_t operator()(uint64_t input, ValidityMask &mask, idx_t idx) {
-//    CellBoundary boundary;
-//    H3Error err = cellToBoundary(input, &boundary);
-//
-//    if (err) {
-//      mask.SetInvalid(idx);
-//      return StringVector::EmptyString(result, 0);
-//    } else {
-//      auto enc = Encoder();
-//      enc.StartPolygon();
-//      for (int i = 0; i <= boundary.numVerts; i++) {
-//        // Add an extra vertex onto the end to close the polygon
-//        int vertIndex = (i == boundary.numVerts) ? 0 : i;
-//        enc.Point(radsToDegs(boundary.verts[vertIndex].lng),
-//                  radsToDegs(boundary.verts[vertIndex].lat));
-//      }
-//      enc.EndPolygon();
-//      auto str = enc.Finish();
-//
-//      return StringVector::AddStringOrBlob(result, str);
-//    }
-//  }
-//
-// private:
-//  Vector &result;
-//};
-//
-// template <typename T, typename Encoder>
-// static void CellToBoundaryFunction(DataChunk &args, ExpressionState &state,
-//                                   Vector &result) {
-//  UnaryExecutor::ExecuteWithNulls<T, string_t>(
-//      args.data[0], result, args.size(),
-//      CellToBoundaryOperator<Encoder>{result});
-//}
-//
-// template <typename Encoder> struct CellToBoundaryVarcharOperator {
-//  explicit CellToBoundaryVarcharOperator(Vector &_result) : result(_result) {}
-//
-//  string_t operator()(string_t input, ValidityMask &mask, idx_t idx) {
-//    H3Index h;
-//    H3Error err = stringToH3(input.GetString().c_str(), &h);
-//    if (err) {
-//      mask.SetInvalid(idx);
-//      return StringVector::EmptyString(result, 0);
-//    } else {
-//      return CellToBoundaryOperator<Encoder>(result)(h, mask, idx);
-//    }
-//  }
-//
-// private:
-//  Vector &result;
-//};
-//
-// template <typename Encoder>
-// static void CellToBoundaryVarcharFunction(DataChunk &args,
-//                                          ExpressionState &state,
-//                                          Vector &result) {
-//  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-//      args.data[0], result, args.size(),
-//      CellToBoundaryVarcharOperator<Encoder>{result});
-//}
+template <typename T, typename Encoder>
+void CellToBoundaryFunction(duckdb_function_info info, duckdb_data_chunk input,
+                            duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
+
+      if (cell) {
+        CellBoundary boundary;
+        H3Error err = cellToBoundary(cell, &boundary);
+        if (!err) {
+          auto enc = Encoder();
+          enc.StartPolygon();
+          for (int i = 0; i <= boundary.numVerts; i++) {
+            // Add an extra vertex onto the end to close the polygon
+            int vertIndex = (i == boundary.numVerts) ? 0 : i;
+            enc.Point(radsToDegs(boundary.verts[vertIndex].lng),
+                      radsToDegs(boundary.verts[vertIndex].lat));
+          }
+          enc.EndPolygon();
+          auto str = enc.Finish();
+
+          duckdb_vector_assign_string_element_len(output, row, str.c_str(),
+                                                  str.size());
+          wasValid = true;
+        }
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
 
 duckdb_scalar_function H3Functions::GetLatLngToCellFunction() {
   duckdb_scalar_function function = duckdb_create_scalar_function();
@@ -516,31 +438,70 @@ duckdb_scalar_function_set H3Functions::GetCellToLatLngFunction() {
   return functionSet;
 }
 
-// CreateScalarFunctionInfo H3Functions::GetCellToBoundaryWktFunction() {
-//  ScalarFunctionSet funcs("h3_cell_to_boundary_wkt");
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-//  LogicalType::VARCHAR,
-//                                   CellToBoundaryVarcharFunction<WktEncoder>));
-//  funcs.AddFunction(
-//      ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
-//                     CellToBoundaryFunction<uint64_t, WktEncoder>));
-//  funcs.AddFunction(
-//      ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
-//                     CellToBoundaryFunction<int64_t, WktEncoder>));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetCellToBoundaryWkbFunction() {
-//  ScalarFunctionSet funcs("h3_cell_to_boundary_wkb");
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BLOB,
-//                                   CellToBoundaryVarcharFunction<WkbEncoder>));
-//  funcs.AddFunction(
-//      ScalarFunction({LogicalType::UBIGINT}, LogicalType::BLOB,
-//                     CellToBoundaryFunction<uint64_t, WkbEncoder>));
-//  funcs.AddFunction(
-//      ScalarFunction({LogicalType::BIGINT}, LogicalType::BLOB,
-//                     CellToBoundaryFunction<int64_t, WkbEncoder>));
-//  return CreateScalarFunctionInfo(funcs);
-//}
+template <typename Encoder>
+duckdb_scalar_function_set
+GetCellToBoundaryGenericFunction(const char *name, duckdb_type returnTypeId) {
+
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set(name);
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type returnType = duckdb_create_logical_type(returnTypeId);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, name);
+    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(
+        function, CellToBoundaryFunction<int64_t, WktEncoder>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, name);
+    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(
+        function, CellToBoundaryFunction<uint64_t, WktEncoder>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, name);
+    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(
+        function, CellToBoundaryFunction<duckdb_string_t, WktEncoder>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&ubigintType);
+  duckdb_destroy_logical_type(&returnType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetCellToBoundaryWktFunction() {
+  return GetCellToBoundaryGenericFunction<WktEncoder>("h3_cell_to_boundary_wkt",
+                                                      DUCKDB_TYPE_VARCHAR);
+}
+
+duckdb_scalar_function_set H3Functions::GetCellToBoundaryWkbFunction() {
+  return GetCellToBoundaryGenericFunction<WkbEncoder>("h3_cell_to_boundary_wkb",
+                                                      DUCKDB_TYPE_BLOB);
+}
 
 } // namespace h3duckdb

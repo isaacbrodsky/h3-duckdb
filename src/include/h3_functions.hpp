@@ -27,8 +27,8 @@ public:
     functionSets.push_back(GetCellToLatFunction());
     functionSets.push_back(GetCellToLngFunction());
     functionSets.push_back(GetCellToLatLngFunction());
-    //    functions.push_back(GetCellToBoundaryWktFunction());
-    //    functions.push_back(GetCellToBoundaryWkbFunction());
+    functionSets.push_back(GetCellToBoundaryWktFunction());
+    functionSets.push_back(GetCellToBoundaryWkbFunction());
 
     // Inspection
     //    functions.push_back(GetGetResolutionFunction());
@@ -122,8 +122,8 @@ private:
   static duckdb_scalar_function_set GetCellToLatFunction();
   static duckdb_scalar_function_set GetCellToLngFunction();
   static duckdb_scalar_function_set GetCellToLatLngFunction();
-  //  static CreateScalarFunctionInfo GetCellToBoundaryWktFunction();
-  //  static CreateScalarFunctionInfo GetCellToBoundaryWkbFunction();
+  static duckdb_scalar_function_set GetCellToBoundaryWktFunction();
+  static duckdb_scalar_function_set GetCellToBoundaryWkbFunction();
 
   // Inspection
   //  static CreateScalarFunctionInfo GetGetResolutionFunction();
