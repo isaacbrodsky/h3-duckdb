@@ -170,205 +170,75 @@ void GetIcosahedronFacesFunction(duckdb_function_info info,
   }
 }
 
-// static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
-//                                  Vector &result) {
-//  D_ASSERT(args.ColumnCount() == 3 || args.ColumnCount() == 2);
-//  auto count = args.size();
-//  bool hasRes = args.ColumnCount() == 3;
-//  bool resVecConstant = true;
-//
-//  Vector &baseCellVec = args.data[0];
-//  Vector &digitsVec = args.data[1];
-//  UnifiedVectorFormat res_data;
-//  if (hasRes) {
-//    Vector &resVec = args.data[2];
-//    if (resVec.GetType().id() == LogicalTypeId::SQLNULL) {
-//      result.Reference(resVec);
-//      return;
-//    }
-//    resVecConstant = resVec.GetVectorType() == VectorType::CONSTANT_VECTOR;
-//    resVec.ToUnifiedFormat(count, res_data);
-//  }
-//  if (baseCellVec.GetType().id() == LogicalTypeId::SQLNULL) {
-//    result.Reference(baseCellVec);
-//    return;
-//  }
-//  if (digitsVec.GetType().id() == LogicalTypeId::SQLNULL) {
-//    result.Reference(digitsVec);
-//    return;
-//  }
-//
-//  auto lists_size = ListVector::GetListSize(digitsVec);
-//  auto &child_vector = ListVector::GetEntry(digitsVec);
-//  child_vector.Flatten(lists_size);
-//
-//  UnifiedVectorFormat child_data;
-//  child_vector.ToUnifiedFormat(lists_size, child_data);
-//
-//  UnifiedVectorFormat lists_data;
-//  digitsVec.ToUnifiedFormat(count, lists_data);
-//  auto list_entries = UnifiedVectorFormat::GetData<list_entry_t>(lists_data);
-//
-//  UnifiedVectorFormat base_cell_data;
-//  baseCellVec.ToUnifiedFormat(count, base_cell_data);
-//
-//  result.SetVectorType(VectorType::FLAT_VECTOR);
-//  auto result_entries = FlatVector::GetData<uint64_t>(result);
-//  auto &result_validity = FlatVector::Validity(result);
-//
-//  idx_t offset = 0;
-//  for (idx_t i = 0; i < count; i++) {
-//    auto list_index = lists_data.sel->get_index(i);
-//    if (!lists_data.validity.RowIsValid(list_index) ||
-//        (hasRes && !res_data.validity.RowIsValid(i)) ||
-//        !base_cell_data.validity.RowIsValid(i)) {
-//      result_validity.SetInvalid(i);
-//      continue;
-//    }
-//
-//    auto baseCell = baseCellVec.GetValue(i)
-//                        .DefaultCastAs(LogicalType::INTEGER)
-//                        .GetValue<int>();
-//
-//    vector<int> digits(list_entries[i].length);
-//    for (size_t j = 0; j < list_entries[i].length; j++) {
-//      if (child_data.validity.RowIsValid(
-//              child_data.sel->get_index(list_entries[i].offset + j))) {
-//        digits[j] =
-//            ((int *)child_data
-//                 .data)[child_data.sel->get_index(list_entries[i].offset +
-//                 j)];
-//      }
-//    }
-//
-//    auto res = hasRes ? args.data[2]
-//                            .GetValue(i)
-//                            .DefaultCastAs(LogicalType::INTEGER)
-//                            .GetValue<int>()
-//                      : digits.size();
-//
-//    if (list_entries[i].length != res) {
-//      result_validity.SetInvalid(i);
-//      continue;
-//    }
-//
-//    H3Index out;
-//    H3Error err = constructCell(res, baseCell, digits.data(), &out);
-//    if (err) {
-//      result_validity.SetInvalid(i);
-//    } else {
-//      result.SetValue(i, Value::UBIGINT(out));
-//    }
-//  }
-//
-//  if (resVecConstant &&
-//      baseCellVec.GetVectorType() == VectorType::CONSTANT_VECTOR &&
-//      digitsVec.GetVectorType() == VectorType::CONSTANT_VECTOR) {
-//    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-//  }
-//  result.Verify(args.size());
-//}
-//
-// static void ConstructCellVarcharFunction(DataChunk &args,
-//                                         ExpressionState &state,
-//                                         Vector &result) {
-//  D_ASSERT(args.ColumnCount() == 3 || args.ColumnCount() == 2);
-//  auto count = args.size();
-//  bool hasRes = args.ColumnCount() == 3;
-//  bool resVecConstant = true;
-//
-//  Vector &baseCellVec = args.data[0];
-//  Vector &digitsVec = args.data[1];
-//  UnifiedVectorFormat res_data;
-//  if (hasRes) {
-//    Vector &resVec = args.data[2];
-//    if (resVec.GetType().id() == LogicalTypeId::SQLNULL) {
-//      result.Reference(resVec);
-//      return;
-//    }
-//    resVecConstant = resVec.GetVectorType() == VectorType::CONSTANT_VECTOR;
-//    resVec.ToUnifiedFormat(count, res_data);
-//  }
-//  if (baseCellVec.GetType().id() == LogicalTypeId::SQLNULL) {
-//    result.Reference(baseCellVec);
-//    return;
-//  }
-//  if (digitsVec.GetType().id() == LogicalTypeId::SQLNULL) {
-//    result.Reference(digitsVec);
-//    return;
-//  }
-//
-//  auto lists_size = ListVector::GetListSize(digitsVec);
-//  auto &child_vector = ListVector::GetEntry(digitsVec);
-//  child_vector.Flatten(lists_size);
-//
-//  UnifiedVectorFormat child_data;
-//  child_vector.ToUnifiedFormat(lists_size, child_data);
-//
-//  UnifiedVectorFormat lists_data;
-//  digitsVec.ToUnifiedFormat(count, lists_data);
-//  auto list_entries = UnifiedVectorFormat::GetData<list_entry_t>(lists_data);
-//
-//  UnifiedVectorFormat base_cell_data;
-//  baseCellVec.ToUnifiedFormat(count, base_cell_data);
-//
-//  result.SetVectorType(VectorType::FLAT_VECTOR);
-//  auto result_entries = FlatVector::GetData<string_t>(result);
-//  auto &result_validity = FlatVector::Validity(result);
-//
-//  idx_t offset = 0;
-//  for (idx_t i = 0; i < count; i++) {
-//    auto list_index = lists_data.sel->get_index(i);
-//    if (!lists_data.validity.RowIsValid(list_index) ||
-//        (hasRes && !res_data.validity.RowIsValid(i)) ||
-//        !base_cell_data.validity.RowIsValid(i)) {
-//      result_validity.SetInvalid(i);
-//      continue;
-//    }
-//
-//    auto baseCell = baseCellVec.GetValue(i)
-//                        .DefaultCastAs(LogicalType::INTEGER)
-//                        .GetValue<int>();
-//
-//    vector<int> digits(list_entries[i].length);
-//    for (size_t j = 0; j < list_entries[i].length; j++) {
-//      if (child_data.validity.RowIsValid(
-//              child_data.sel->get_index(list_entries[i].offset + j))) {
-//        digits[j] =
-//            ((int *)child_data
-//                 .data)[child_data.sel->get_index(list_entries[i].offset +
-//                 j)];
-//      }
-//    }
-//
-//    auto res = hasRes ? args.data[2]
-//                            .GetValue(i)
-//                            .DefaultCastAs(LogicalType::INTEGER)
-//                            .GetValue<int>()
-//                      : digits.size();
-//
-//    if (list_entries[i].length != res) {
-//      result_validity.SetInvalid(i);
-//      continue;
-//    }
-//
-//    H3Index out;
-//    H3Error err = constructCell(res, baseCell, digits.data(), &out);
-//    if (err) {
-//      result_validity.SetInvalid(i);
-//    } else {
-//      auto str = StringUtil::Format("%llx", out);
-//      result.SetValue(i, StringVector::AddString(result, str));
-//    }
-//  }
-//
-//  if (resVecConstant &&
-//      baseCellVec.GetVectorType() == VectorType::CONSTANT_VECTOR &&
-//      digitsVec.GetVectorType() == VectorType::CONSTANT_VECTOR) {
-//    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-//  }
-//  result.Verify(args.size());
-//}
+template <typename T>
+void ConstructCellFunction(duckdb_function_info info, duckdb_data_chunk input,
+                           duckdb_vector output) {
+  auto hasRes = duckdb_data_chunk_get_column_count(input) >= 3;
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector baseCellVec = duckdb_data_chunk_get_vector(input, 0);
+  int32_t *baseCellVecData = (int32_t *)duckdb_vector_get_data(baseCellVec);
+  duckdb_vector digitsVec = duckdb_data_chunk_get_vector(input, 1);
+  duckdb_list_entry *digitsVecData =
+      (duckdb_list_entry *)duckdb_vector_get_data(digitsVec);
+  duckdb_vector digitsChildVec = duckdb_list_vector_get_child(digitsVec);
+  int32_t *digitsChildData = (int32_t *)duckdb_vector_get_data(digitsChildVec);
+  uint64_t *digitsChildValidity = duckdb_vector_get_validity(digitsChildVec);
+
+  int32_t *resData = nullptr;
+  if (hasRes) {
+    duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 2);
+    resData = (int32_t *)duckdb_vector_get_data(resVec);
+  }
+
+  duckdb_vector_ensure_validity_writable(output);
+  T *resultData = (T *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+
+    auto baseCell = baseCellVecData[row];
+    auto digitsEntry = digitsVecData[row];
+
+    std::vector<int> digits(digitsEntry.length);
+    bool digitsContainsNull = false;
+    for (idx_t j = 0; j < digitsEntry.length; j++) {
+      if (!duckdb_validity_row_is_valid(digitsChildValidity,
+                                        digitsEntry.offset + j)) {
+        digitsContainsNull = true;
+        break;
+      }
+      digits[j] = digitsChildData[digitsEntry.offset + j];
+    }
+
+    auto res = hasRes ? resData[row] : static_cast<int32_t>(digits.size());
+
+    if (digits.size() == res && !digitsContainsNull) {
+      H3Index out;
+      H3Error err = constructCell(res, baseCell, digits.data(), &out);
+      if (!err) {
+        if (std::is_same<T, duckdb_string_t>::value) {
+          auto str = ToHexString(out);
+          duckdb_vector_assign_string_element_len(output, row, str.c_str(),
+                                                  str.size());
+        } else {
+          // Known to be safe, but cast is required here
+          static_assert(std::is_same<T, duckdb_string_t>::value ||
+                            std::is_same<T, uint64_t>::value,
+                        "Must be either duckdb_string_t or uint64_t");
+          ((uint64_t *)resultData)[row] = out;
+        }
+
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
 
 duckdb_scalar_function_set H3Functions::GetGetIndexDigitFunction() {
   duckdb_scalar_function_set functionSet =
@@ -620,32 +490,85 @@ duckdb_scalar_function_set H3Functions::GetGetIcosahedronFacesFunction() {
   return functionSet;
 }
 
-// CreateScalarFunctionInfo H3Functions::GetConstructCellFunction() {
-//  ScalarFunctionSet funcs("h3_construct_cell");
-//  funcs.AddFunction(ScalarFunction(
-//      "h3_construct_cell",
-//      {LogicalType::INTEGER, LogicalType::LIST(LogicalType::INTEGER)},
-//      LogicalType::UBIGINT, ConstructCellFunction));
-//  funcs.AddFunction(ScalarFunction(
-//      "h3_construct_cell",
-//      {LogicalType::INTEGER, LogicalType::LIST(LogicalType::INTEGER),
-//       LogicalType::INTEGER},
-//      LogicalType::UBIGINT, ConstructCellFunction));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetConstructCellVarcharFunction() {
-//  ScalarFunctionSet funcs("h3_construct_cell_string");
-//  funcs.AddFunction(ScalarFunction(
-//      "h3_construct_cell_string",
-//      {LogicalType::INTEGER, LogicalType::LIST(LogicalType::INTEGER)},
-//      LogicalType::VARCHAR, ConstructCellVarcharFunction));
-//  funcs.AddFunction(ScalarFunction(
-//      "h3_construct_cell_string",
-//      {LogicalType::INTEGER, LogicalType::LIST(LogicalType::INTEGER),
-//       LogicalType::INTEGER},
-//      LogicalType::VARCHAR, ConstructCellVarcharFunction));
-//  return CreateScalarFunctionInfo(funcs);
-//}
+duckdb_scalar_function_set H3Functions::GetConstructCellFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_construct_cell");
 
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type intListType = duckdb_create_list_type(intType);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_construct_cell");
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_add_parameter(function, intListType);
+    duckdb_scalar_function_set_return_type(function, ubigintType);
+    duckdb_scalar_function_set_function(function,
+                                        ConstructCellFunction<uint64_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_construct_cell");
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_add_parameter(function, intListType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, ubigintType);
+    duckdb_scalar_function_set_function(function,
+                                        ConstructCellFunction<uint64_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&intListType);
+  duckdb_destroy_logical_type(&intType);
+  duckdb_destroy_logical_type(&ubigintType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetConstructCellVarcharFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_construct_cell_string");
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type intListType = duckdb_create_list_type(intType);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_construct_cell_string");
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_add_parameter(function, intListType);
+    duckdb_scalar_function_set_return_type(function, varcharType);
+    duckdb_scalar_function_set_function(function,
+                                        ConstructCellFunction<duckdb_string_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_construct_cell_string");
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_add_parameter(function, intListType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, varcharType);
+    duckdb_scalar_function_set_function(function,
+                                        ConstructCellFunction<duckdb_string_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&intListType);
+  duckdb_destroy_logical_type(&intType);
+  duckdb_destroy_logical_type(&varcharType);
+
+  return functionSet;
+}
 } // namespace h3duckdb

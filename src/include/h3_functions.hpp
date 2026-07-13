@@ -41,8 +41,8 @@ public:
     functionSets.push_back(GetIsPentagonFunction());
     functionSets.push_back(GetGetIcosahedronFacesFunction());
     functionSets.push_back(GetGetIndexDigitFunction());
-    //    functions.push_back(GetConstructCellFunction());
-    //    functions.push_back(GetConstructCellVarcharFunction());
+    functionSets.push_back(GetConstructCellFunction());
+    functionSets.push_back(GetConstructCellVarcharFunction());
     //
     //    // Hierarchy
     //    functions.push_back(GetCellToParentFunction());
@@ -136,9 +136,9 @@ private:
   static duckdb_scalar_function_set GetIsPentagonFunction();
   static duckdb_scalar_function_set GetGetIcosahedronFacesFunction();
   static duckdb_scalar_function_set GetGetIndexDigitFunction();
-  //  static CreateScalarFunctionInfo GetConstructCellFunction();
-  //  static CreateScalarFunctionInfo GetConstructCellVarcharFunction();
-  //
+  static duckdb_scalar_function_set GetConstructCellFunction();
+  static duckdb_scalar_function_set GetConstructCellVarcharFunction();
+
   //  // Hierarchy
   //  static CreateScalarFunctionInfo GetCellToParentFunction();
   //  static CreateScalarFunctionInfo GetCellToChildrenFunction();

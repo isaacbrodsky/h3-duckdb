@@ -4,6 +4,7 @@
 
 * Indexing
 * Misc
+* Inspection
 
 | Function | Description
 | --: | ---
@@ -22,6 +23,8 @@
 | `h3_is_pentagon` | True if the cell is a pentagon
 | `h3_get_index_digit` | Get specified indexing digit of a cell
 | `h3_get_icosahedron_faces` | List of icosahedron face IDs the cell is on
+| `h3_construct_cell` | Create cell index from component parts
+| `h3_construct_cell_string` | Create cell index string from component parts
 | `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary WKT
 | `h3_cell_to_boundary_wkb` | Convert cell ID to cell boundary WKB
 | `h3_get_hexagon_area_avg` | Get average area of a hexagon cell at resolution
@@ -37,7 +40,6 @@
 
 ## TODO
 
-* Inspection (partial)
 * Directed Edge
 * Hierarchy
 * Regions
@@ -46,8 +48,6 @@
 
 | Function | Description
 | --: | ---
-| `h3_construct_cell` | Create cell index from component parts
-| `h3_construct_cell_string` | Create cell index string from component parts
 | `h3_cell_to_parent` | Get coarser cell for a cell
 | `h3_cell_to_children` | Get finer cells for a cell
 | `h3_cell_to_children_size` | Number of finer cells for a cell
