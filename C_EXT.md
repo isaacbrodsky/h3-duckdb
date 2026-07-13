@@ -16,6 +16,12 @@
 | `h3_h3_to_string` | Convert BIGINT or UBIGINT cell ID to VARCHAR
 | `h3_is_valid_cell` | True if this is a valid cell ID
 | `h3_is_valid_index` | True if this is a valid cell/edge/vertex ID
+| `h3_get_resolution` | Get resolution number of cell ID
+| `h3_get_base_cell_number` | Get base cell number of cell ID
+| `h3_is_res_class_iii` | True if the cell's resolution is class III
+| `h3_is_pentagon` | True if the cell is a pentagon
+| `h3_get_index_digit` | Get specified indexing digit of a cell
+| `h3_get_icosahedron_faces` | List of icosahedron face IDs the cell is on
 | `h3_cell_to_boundary_wkt` | Convert cell ID to cell boundary WKT
 | `h3_cell_to_boundary_wkb` | Convert cell ID to cell boundary WKB
 | `h3_get_hexagon_area_avg` | Get average area of a hexagon cell at resolution
@@ -40,12 +46,6 @@
 
 | Function | Description
 | --: | ---
-| `h3_get_resolution` | Get resolution number of cell ID
-| `h3_get_base_cell_number` | Get base cell number of cell ID
-| `h3_get_index_digit` | Get specified indexing digit of a cell
-| `h3_is_res_class_iii` | True if the cell's resolution is class III
-| `h3_is_pentagon` | True if the cell is a pentagon
-| `h3_get_icosahedron_faces` | List of icosahedron face IDs the cell is on
 | `h3_construct_cell` | Create cell index from component parts
 | `h3_construct_cell_string` | Create cell index string from component parts
 | `h3_cell_to_parent` | Get coarser cell for a cell

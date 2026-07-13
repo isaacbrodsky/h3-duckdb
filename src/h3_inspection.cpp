@@ -3,104 +3,42 @@
 
 namespace h3duckdb {
 
-// template <typename T>
-// static void GetResolutionFunction(DataChunk &args, ExpressionState &state,
-//                                  Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::Execute<T, int>(inputs, result, args.size(),
-//                                 [&](T cell) { return getResolution(cell); });
-//}
-//
-// static void GetResolutionVarcharFunction(DataChunk &args,
-//                                         ExpressionState &state,
-//                                         Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::ExecuteWithNulls<string_t, int>(
-//      inputs, result, args.size(),
-//      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
-//        H3Index cell;
-//        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
-//        if (err0) {
-//          mask.SetInvalid(idx);
-//          return 0;
-//        } else {
-//          return getResolution(cell);
-//        }
-//      });
-//}
-//
-// template <typename T>
-// static void GetBaseCellNumberFunction(DataChunk &args, ExpressionState
-// &state,
-//                                      Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::Execute<T, int>(inputs, result, args.size(), [&](T cell) {
-//    return getBaseCellNumber(cell);
-//  });
-//}
-//
-// static void GetBaseCellNumberVarcharFunction(DataChunk &args,
-//                                             ExpressionState &state,
-//                                             Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::ExecuteWithNulls<string_t, int>(
-//      inputs, result, args.size(),
-//      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
-//        H3Index cell;
-//        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
-//        if (err0) {
-//          mask.SetInvalid(idx);
-//          return 0;
-//        } else {
-//          return getBaseCellNumber(cell);
-//        }
-//      });
-//}
-//
-// template <typename T>
-// static void GetIndexDigitFunction(DataChunk &args, ExpressionState &state,
-//                                  Vector &result) {
-//  auto &inputs = args.data[0];
-//  auto &inputs2 = args.data[1];
-//  BinaryExecutor::ExecuteWithNulls<T, int, int>(
-//      inputs, inputs2, result, args.size(),
-//      [&](T cell, int res, ValidityMask &mask, idx_t idx) {
-//        int out;
-//        H3Error err0 = getIndexDigit(cell, res, &out);
-//        if (err0) {
-//          mask.SetInvalid(idx);
-//          return 0;
-//        } else {
-//          return out;
-//        }
-//      });
-//}
-//
-// static void GetIndexDigitVarcharFunction(DataChunk &args,
-//                                         ExpressionState &state,
-//                                         Vector &result) {
-//  auto &inputs = args.data[0];
-//  auto &inputs2 = args.data[1];
-//  BinaryExecutor::ExecuteWithNulls<string_t, int, int>(
-//      inputs, inputs2, result, args.size(),
-//      [&](string_t cellAddress, int res, ValidityMask &mask, idx_t idx) {
-//        H3Index cell;
-//        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
-//        if (err0) {
-//          mask.SetInvalid(idx);
-//          return 0;
-//        } else {
-//          int out;
-//          H3Error err1 = getIndexDigit(cell, res, &out);
-//          if (err1) {
-//            mask.SetInvalid(idx);
-//            return 0;
-//          } else {
-//            return out;
-//          }
-//        }
-//      });
-//}
+struct GetResolutionOperator {
+  static int32_t operate(H3Index index) { return getResolution(index); }
+};
+
+struct GetBaseCellNumberOperator {
+  static int32_t operate(H3Index index) { return getBaseCellNumber(index); }
+};
+
+template <typename T>
+void GetIndexDigitFunction(duckdb_function_info info, duckdb_data_chunk input,
+                           duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  duckdb_vector digitVec = duckdb_data_chunk_get_vector(input, 1);
+  int32_t *digitVecData = (int32_t *)duckdb_vector_get_data(digitVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  uint64_t *resultData = (uint64_t *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    auto index = IndexFromVector(indexVecData, row);
+    auto digit = digitVecData[row];
+    H3Index cell;
+
+    int out;
+    H3Error err = getIndexDigit(index, digit, &out);
+    if (!err) {
+      resultData[row] = out;
+    } else {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
 
 void StringToH3Function(duckdb_function_info info, duckdb_data_chunk input,
                         duckdb_vector output) {
@@ -109,27 +47,19 @@ void StringToH3Function(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   duckdb_string_t *indexVecData =
       (duckdb_string_t *)duckdb_vector_get_data(indexVec);
-  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   duckdb_vector_ensure_validity_writable(output);
   uint64_t *resultData = (uint64_t *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
+    auto index = &indexVecData[row];
+    H3Index cell;
 
-    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
-      auto index = &indexVecData[row];
-      H3Index cell;
-
-      H3Error err = stringToH3(duckdb_string_t_data(index), &cell);
-      if (!err) {
-        resultData[row] = cell;
-        wasValid = true;
-      }
-    }
-
-    if (!wasValid) {
+    H3Error err = stringToH3(duckdb_string_t_data(index), &cell);
+    if (!err) {
+      resultData[row] = cell;
+    } else {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -142,19 +72,14 @@ void H3ToStringFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
-  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   duckdb_vector_ensure_validity_writable(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
-      auto str = ToHexString(indexVecData[row]);
-      duckdb_vector_assign_string_element_len(output, row, str.c_str(),
-                                              str.size());
-    } else {
-      duckdb_validity_set_row_invalid(resultValidity, row);
-    }
+    auto str = ToHexString(indexVecData[row]);
+    duckdb_vector_assign_string_element_len(output, row, str.c_str(),
+                                            str.size());
   }
 }
 
@@ -166,161 +91,85 @@ struct IsValidCellOperator {
   static bool operate(H3Index index) { return isValidCell(index); }
 };
 
-template <typename T, typename Operator>
-void IsValidGenericFunction(duckdb_function_info info, duckdb_data_chunk input,
+struct IsPentagonOperator {
+  static bool operate(H3Index index) { return isPentagon(index); }
+};
+
+struct IsResClassIIIOperator {
+  static bool operate(H3Index index) { return isResClassIII(index); }
+};
+
+template <typename T, typename U, typename Operator>
+void InspectGenericFunction(duckdb_function_info info, duckdb_data_chunk input,
                             duckdb_vector output) {
   idx_t inputSize = duckdb_data_chunk_get_size(input);
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
 
-  bool *resultData = (bool *)duckdb_vector_get_data(output);
+  U *resultData = (U *)duckdb_vector_get_data(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
     auto cell = IndexFromVector(indexVecData, row);
 
-    H3Error err = Operator::operate(cell);
-    resultData[row] = !err;
+    resultData[row] = Operator::operate(cell);
   }
 }
 
-// template <typename T>
-// static void IsResClassIIIFunction(DataChunk &args, ExpressionState &state,
-//                                  Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T cell) {
-//    return bool(isResClassIII(cell));
-//  });
-//}
-//
-// static void IsResClassIIIVarcharFunction(DataChunk &args,
-//                                         ExpressionState &state,
-//                                         Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::ExecuteWithNulls<string_t, bool>(
-//      inputs, result, args.size(),
-//      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
-//        H3Index cell;
-//        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
-//        if (err0) {
-//          mask.SetInvalid(idx);
-//          return false;
-//        } else {
-//          return bool(isResClassIII(cell));
-//        }
-//      });
-//}
-//
-// template <typename T>
-// static void IsPentagonFunction(DataChunk &args, ExpressionState &state,
-//                               Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T cell) {
-//    return bool(isPentagon(cell));
-//  });
-//}
-//
-// static void IsPentagonVarcharFunction(DataChunk &args, ExpressionState
-// &state,
-//                                      Vector &result) {
-//  auto &inputs = args.data[0];
-//  UnaryExecutor::ExecuteWithNulls<string_t, bool>(
-//      inputs, result, args.size(),
-//      [&](string_t cellAddress, ValidityMask &mask, idx_t idx) {
-//        H3Index cell;
-//        H3Error err0 = stringToH3(cellAddress.GetString().c_str(), &cell);
-//        if (err0) {
-//          mask.SetInvalid(idx);
-//          return false;
-//        } else {
-//          return bool(isPentagon(cell));
-//        }
-//      });
-//}
-//
-// static void GetIcosahedronFacesFunction(DataChunk &args, ExpressionState
-// &state,
-//                                        Vector &result) {
-//  auto result_data = FlatVector::GetData<list_entry_t>(result);
-//  for (idx_t i = 0; i < args.size(); i++) {
-//    result_data[i].offset = ListVector::GetListSize(result);
-//
-//    uint64_t cell = args.GetValue(0, i)
-//                        .DefaultCastAs(LogicalType::UBIGINT)
-//                        .GetValue<uint64_t>();
-//    int faceCount;
-//    int64_t actual = 0;
-//    H3Error err1 = maxFaceCount(cell, &faceCount);
-//    if (err1) {
-//      result.SetValue(i, Value(LogicalType::SQLNULL));
-//    } else {
-//      std::vector<int> out(faceCount);
-//      H3Error err2 = getIcosahedronFaces(cell, out.data());
-//      if (err2) {
-//        result.SetValue(i, Value(LogicalType::SQLNULL));
-//      } else {
-//        for (auto val : out) {
-//          if (val != -1) {
-//            ListVector::PushBack(result, Value::INTEGER(val));
-//            actual++;
-//          }
-//        }
-//      }
-//    }
-//
-//    result_data[i].length = actual;
-//  }
-//  if (args.AllConstant()) {
-//    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-//  }
-//  result.Verify(args.size());
-//}
-//
-// static void GetIcosahedronFacesVarcharFunction(DataChunk &args,
-//                                               ExpressionState &state,
-//                                               Vector &result) {
-//  result.SetVectorType(VectorType::FLAT_VECTOR);
-//  auto result_data = FlatVector::GetData<list_entry_t>(result);
-//  for (idx_t i = 0; i < args.size(); i++) {
-//    result_data[i].offset = ListVector::GetListSize(result);
-//
-//    int faceCount;
-//    int64_t actual = 0;
-//    string cellAddress = args.GetValue(0, i)
-//                             .DefaultCastAs(LogicalType::VARCHAR)
-//                             .GetValue<string>();
-//    H3Index cell;
-//    H3Error err0 = stringToH3(cellAddress.c_str(), &cell);
-//    if (err0) {
-//      result.SetValue(i, Value(LogicalType::SQLNULL));
-//    } else {
-//      H3Error err1 = maxFaceCount(cell, &faceCount);
-//      if (err1) {
-//        result.SetValue(i, Value(LogicalType::SQLNULL));
-//      } else {
-//        std::vector<int> out(faceCount);
-//        H3Error err2 = getIcosahedronFaces(cell, out.data());
-//        if (err2) {
-//          result.SetValue(i, Value(LogicalType::SQLNULL));
-//        } else {
-//          for (auto val : out) {
-//            if (val != -1) {
-//              ListVector::PushBack(result, Value::INTEGER(val));
-//              actual++;
-//            }
-//          }
-//        }
-//      }
-//    }
-//
-//    result_data[i].length = actual;
-//  }
-//  if (args.AllConstant()) {
-//    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-//  }
-//  result.Verify(args.size());
-//}
-//
+template <typename T>
+void GetIcosahedronFacesFunction(duckdb_function_info info,
+                                 duckdb_data_chunk input,
+                                 duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+
+  // Worst case scenario: all pentagons
+  duckdb_list_vector_reserve(output, inputSize * 5);
+  duckdb_vector_ensure_validity_writable(output);
+  duckdb_list_entry *entries =
+      (duckdb_list_entry *)duckdb_vector_get_data(output);
+  duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
+  int32_t *resultData = (int32_t *)duckdb_vector_get_data(outputChildVec);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+  idx_t resultOffset = 0;
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+    H3Index cell = IndexFromVector(indexVecData, row);
+
+    if (cell) {
+      int faceCount;
+
+      H3Error err = maxFaceCount(cell, &faceCount);
+      if (!err) {
+        std::vector<int> out(faceCount);
+        H3Error err2 = getIcosahedronFaces(cell, out.data());
+        if (!err2) {
+          idx_t actualCount = 0;
+          for (idx_t face = 0; face < faceCount; ++face) {
+            if (out[face] != -1) {
+              resultData[resultOffset + actualCount] = out[face];
+              actualCount++;
+            }
+          }
+          entries[row].offset = resultOffset;
+          entries[row].length = actualCount;
+          resultOffset += actualCount;
+          wasValid = true;
+        }
+      }
+    }
+
+    if (!wasValid) {
+      entries[row].offset = resultOffset;
+      entries[row].length = 0;
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
 // static void ConstructCellFunction(DataChunk &args, ExpressionState &state,
 //                                  Vector &result) {
 //  D_ASSERT(args.ColumnCount() == 3 || args.ColumnCount() == 2);
@@ -520,51 +369,128 @@ void IsValidGenericFunction(duckdb_function_info info, duckdb_data_chunk input,
 //  }
 //  result.Verify(args.size());
 //}
-//
-// CreateScalarFunctionInfo H3Functions::GetGetResolutionFunction() {
-//  ScalarFunctionSet funcs("h3_get_resolution");
-//  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-//  LogicalType::INTEGER,
-//                                   GetResolutionFunction<uint64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-//  LogicalType::INTEGER,
-//                                   GetResolutionFunction<int64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-//  LogicalType::INTEGER,
-//                                   GetResolutionVarcharFunction));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetGetBaseCellNumberFunction() {
-//  ScalarFunctionSet funcs("h3_get_base_cell_number");
-//  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-//  LogicalType::INTEGER,
-//                                   GetBaseCellNumberFunction<uint64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-//  LogicalType::INTEGER,
-//                                   GetBaseCellNumberFunction<int64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-//  LogicalType::INTEGER,
-//                                   GetBaseCellNumberVarcharFunction));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetGetIndexDigitFunction() {
-//  ScalarFunctionSet funcs("h3_get_index_digit");
-//  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT,
-//  LogicalType::INTEGER},
-//                                   LogicalType::INTEGER,
-//                                   GetIndexDigitFunction<uint64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT,
-//  LogicalType::INTEGER},
-//                                   LogicalType::INTEGER,
-//                                   GetIndexDigitFunction<int64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR,
-//  LogicalType::INTEGER},
-//                                   LogicalType::INTEGER,
-//                                   GetIndexDigitVarcharFunction));
-//  return CreateScalarFunctionInfo(funcs);
-//}
+
+duckdb_scalar_function_set H3Functions::GetGetIndexDigitFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_get_index_digit");
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_get_index_digit");
+    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, intType);
+    duckdb_scalar_function_set_function(function,
+                                        GetIndexDigitFunction<int64_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_get_index_digit");
+    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, intType);
+    duckdb_scalar_function_set_function(function,
+                                        GetIndexDigitFunction<uint64_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_get_index_digit");
+    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, intType);
+    duckdb_scalar_function_set_function(function,
+                                        GetIndexDigitFunction<duckdb_string_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&ubigintType);
+  duckdb_destroy_logical_type(&intType);
+
+  return functionSet;
+}
+
+template <typename ResultType, typename Operator>
+static duckdb_scalar_function_set
+GetGenericInspectFunction(const char *name, duckdb_type returnTypeId) {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set(name);
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type returnType = duckdb_create_logical_type(returnTypeId);
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, name);
+    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(
+        function, InspectGenericFunction<uint64_t, ResultType, Operator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, name);
+    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(
+        function, InspectGenericFunction<int64_t, ResultType, Operator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, name);
+    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(
+        function,
+        InspectGenericFunction<duckdb_string_t, ResultType, Operator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&returnType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&ubigintType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetGetResolutionFunction() {
+  return GetGenericInspectFunction<int32_t, GetResolutionOperator>(
+      "h3_get_resolution", DUCKDB_TYPE_INTEGER);
+}
+
+duckdb_scalar_function_set H3Functions::GetGetBaseCellNumberFunction() {
+  return GetGenericInspectFunction<int32_t, GetBaseCellNumberOperator>(
+      "h3_get_base_cell_number", DUCKDB_TYPE_INTEGER);
+}
 
 duckdb_scalar_function H3Functions::GetStringToH3Function() {
   duckdb_scalar_function function = duckdb_create_scalar_function();
@@ -620,63 +546,28 @@ duckdb_scalar_function_set H3Functions::GetH3ToStringFunction() {
 }
 
 duckdb_scalar_function_set H3Functions::GetIsValidIndexFunction() {
-  duckdb_scalar_function_set functionSet =
-      duckdb_create_scalar_function_set("h3_is_valid_index");
-
-  duckdb_logical_type varcharType =
-      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
-  duckdb_logical_type boolType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BOOLEAN);
-
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_is_valid_index");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
-    duckdb_scalar_function_set_return_type(function, boolType);
-    duckdb_scalar_function_set_function(
-        function, IsValidGenericFunction<uint64_t, IsValidIndexOperator>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_is_valid_index");
-    duckdb_scalar_function_add_parameter(function, bigintType);
-    duckdb_scalar_function_set_return_type(function, varcharType);
-    duckdb_scalar_function_set_function(
-        function, IsValidGenericFunction<int64_t, IsValidIndexOperator>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_is_valid_index");
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_set_return_type(function, varcharType);
-    duckdb_scalar_function_set_function(
-        function,
-        IsValidGenericFunction<duckdb_string_t, IsValidIndexOperator>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  duckdb_destroy_logical_type(&boolType);
-  duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
-
-  return functionSet;
+  return GetGenericInspectFunction<bool, IsValidIndexOperator>(
+      "h3_is_valid_index", DUCKDB_TYPE_BOOLEAN);
 }
 
 duckdb_scalar_function_set H3Functions::GetIsValidCellFunction() {
+  return GetGenericInspectFunction<bool, IsValidCellOperator>(
+      "h3_is_valid_cell", DUCKDB_TYPE_BOOLEAN);
+}
+
+duckdb_scalar_function_set H3Functions::GetIsResClassIIIFunction() {
+  return GetGenericInspectFunction<bool, IsResClassIIIOperator>(
+      "h3_is_res_class_iii", DUCKDB_TYPE_BOOLEAN);
+}
+
+duckdb_scalar_function_set H3Functions::GetIsPentagonFunction() {
+  return GetGenericInspectFunction<bool, IsPentagonOperator>(
+      "h3_is_pentagon", DUCKDB_TYPE_BOOLEAN);
+}
+
+duckdb_scalar_function_set H3Functions::GetGetIcosahedronFacesFunction() {
   duckdb_scalar_function_set functionSet =
-      duckdb_create_scalar_function_set("h3_is_valid_cell");
+      duckdb_create_scalar_function_set("h3_get_icosahedron_faces");
 
   duckdb_logical_type varcharType =
       duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
@@ -684,43 +575,44 @@ duckdb_scalar_function_set H3Functions::GetIsValidCellFunction() {
       duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
   duckdb_logical_type ubigintType =
       duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
-  duckdb_logical_type boolType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BOOLEAN);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type intListType = duckdb_create_list_type(intType);
 
   {
     duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_is_valid_cell");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
-    duckdb_scalar_function_set_return_type(function, boolType);
-    duckdb_scalar_function_set_function(
-        function, IsValidGenericFunction<uint64_t, IsValidCellOperator>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_is_valid_cell");
+    duckdb_scalar_function_set_name(function, "h3_get_icosahedron_faces");
     duckdb_scalar_function_add_parameter(function, bigintType);
-    duckdb_scalar_function_set_return_type(function, varcharType);
-    duckdb_scalar_function_set_function(
-        function, IsValidGenericFunction<int64_t, IsValidCellOperator>);
+    duckdb_scalar_function_set_return_type(function, intListType);
+    duckdb_scalar_function_set_function(function,
+                                        GetIcosahedronFacesFunction<int64_t>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
   }
 
   {
     duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_is_valid_cell");
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_set_return_type(function, varcharType);
-    duckdb_scalar_function_set_function(
-        function, IsValidGenericFunction<duckdb_string_t, IsValidCellOperator>);
+    duckdb_scalar_function_set_name(function, "h3_get_icosahedron_faces");
+    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_set_return_type(function, intListType);
+    duckdb_scalar_function_set_function(function,
+                                        GetIcosahedronFacesFunction<uint64_t>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
   }
 
-  duckdb_destroy_logical_type(&boolType);
+  {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_get_icosahedron_faces");
+    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_set_return_type(function, intListType);
+    duckdb_scalar_function_set_function(
+        function, GetIcosahedronFacesFunction<duckdb_string_t>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  }
+
+  duckdb_destroy_logical_type(&intListType);
+  duckdb_destroy_logical_type(&intType);
   duckdb_destroy_logical_type(&varcharType);
   duckdb_destroy_logical_type(&bigintType);
   duckdb_destroy_logical_type(&ubigintType);
@@ -728,48 +620,6 @@ duckdb_scalar_function_set H3Functions::GetIsValidCellFunction() {
   return functionSet;
 }
 
-// CreateScalarFunctionInfo H3Functions::GetIsResClassIIIFunction() {
-//  ScalarFunctionSet funcs("h3_is_res_class_iii");
-//  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-//  LogicalType::BOOLEAN,
-//                                   IsResClassIIIFunction<uint64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-//  LogicalType::BOOLEAN,
-//                                   IsResClassIIIFunction<int64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-//  LogicalType::BOOLEAN,
-//                                   IsResClassIIIVarcharFunction));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetIsPentagonFunction() {
-//  ScalarFunctionSet funcs("h3_is_pentagon");
-//  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-//  LogicalType::BOOLEAN,
-//                                   IsPentagonFunction<uint64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-//  LogicalType::BOOLEAN,
-//                                   IsPentagonFunction<int64_t>));
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-//  LogicalType::BOOLEAN,
-//                                   IsPentagonVarcharFunction));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetGetIcosahedronFacesFunction() {
-//  ScalarFunctionSet funcs("h3_get_icosahedron_faces");
-//  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-//                                   LogicalType::LIST(LogicalType::INTEGER),
-//                                   GetIcosahedronFacesFunction));
-//  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-//                                   LogicalType::LIST(LogicalType::INTEGER),
-//                                   GetIcosahedronFacesFunction));
-//  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-//                                   LogicalType::LIST(LogicalType::INTEGER),
-//                                   GetIcosahedronFacesVarcharFunction));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
 // CreateScalarFunctionInfo H3Functions::GetConstructCellFunction() {
 //  ScalarFunctionSet funcs("h3_construct_cell");
 //  funcs.AddFunction(ScalarFunction(

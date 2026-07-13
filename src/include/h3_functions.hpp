@@ -31,16 +31,16 @@ public:
     functionSets.push_back(GetCellToBoundaryWkbFunction());
 
     // Inspection
-    //    functions.push_back(GetGetResolutionFunction());
-    //    functions.push_back(GetGetBaseCellNumberFunction());
+    functionSets.push_back(GetGetResolutionFunction());
+    functionSets.push_back(GetGetBaseCellNumberFunction());
     functions.push_back(GetStringToH3Function());
     functionSets.push_back(GetH3ToStringFunction());
     functionSets.push_back(GetIsValidIndexFunction());
     functionSets.push_back(GetIsValidCellFunction());
-    //    functions.push_back(GetIsResClassIIIFunction());
-    //    functions.push_back(GetIsPentagonFunction());
-    //    functions.push_back(GetGetIcosahedronFacesFunction());
-    //    functions.push_back(GetGetIndexDigitFunction());
+    functionSets.push_back(GetIsResClassIIIFunction());
+    functionSets.push_back(GetIsPentagonFunction());
+    functionSets.push_back(GetGetIcosahedronFacesFunction());
+    functionSets.push_back(GetGetIndexDigitFunction());
     //    functions.push_back(GetConstructCellFunction());
     //    functions.push_back(GetConstructCellVarcharFunction());
     //
@@ -126,16 +126,16 @@ private:
   static duckdb_scalar_function_set GetCellToBoundaryWkbFunction();
 
   // Inspection
-  //  static CreateScalarFunctionInfo GetGetResolutionFunction();
-  //  static CreateScalarFunctionInfo GetGetBaseCellNumberFunction();
+  static duckdb_scalar_function_set GetGetResolutionFunction();
+  static duckdb_scalar_function_set GetGetBaseCellNumberFunction();
   static duckdb_scalar_function GetStringToH3Function();
   static duckdb_scalar_function_set GetH3ToStringFunction();
   static duckdb_scalar_function_set GetIsValidIndexFunction();
   static duckdb_scalar_function_set GetIsValidCellFunction();
-  //  static CreateScalarFunctionInfo GetIsResClassIIIFunction();
-  //  static CreateScalarFunctionInfo GetIsPentagonFunction();
-  //  static CreateScalarFunctionInfo GetGetIcosahedronFacesFunction();
-  //  static CreateScalarFunctionInfo GetGetIndexDigitFunction();
+  static duckdb_scalar_function_set GetIsResClassIIIFunction();
+  static duckdb_scalar_function_set GetIsPentagonFunction();
+  static duckdb_scalar_function_set GetGetIcosahedronFacesFunction();
+  static duckdb_scalar_function_set GetGetIndexDigitFunction();
   //  static CreateScalarFunctionInfo GetConstructCellFunction();
   //  static CreateScalarFunctionInfo GetConstructCellVarcharFunction();
   //
