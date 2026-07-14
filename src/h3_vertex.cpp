@@ -159,54 +159,29 @@ duckdb_scalar_function_set H3Functions::GetCellToVertexFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_cell_to_vertex");
 
-  duckdb_logical_type varcharType =
-      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
   duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_cell_to_vertex");
-    duckdb_scalar_function_add_parameter(function, bigintType);
-    duckdb_scalar_function_add_parameter(function, intType);
-    duckdb_scalar_function_set_return_type(function, bigintType);
-    duckdb_scalar_function_set_function(function,
-                                        CellToVertexFunction<int64_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+  auto r = [&functionSet, &intType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
 
-  {
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, "h3_cell_to_vertex");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_add_parameter(function, intType);
-    duckdb_scalar_function_set_return_type(function, ubigintType);
+    duckdb_scalar_function_set_return_type(function, logicalType);
     duckdb_scalar_function_set_function(function,
-                                        CellToVertexFunction<uint64_t>);
+                                        CellToVertexFunction<PhysicalType>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
-  }
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_cell_to_vertex");
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_add_parameter(function, intType);
-    duckdb_scalar_function_set_return_type(function, varcharType);
-    duckdb_scalar_function_set_function(function,
-                                        CellToVertexFunction<duckdb_string_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
 
   duckdb_destroy_logical_type(&intType);
-  duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
 
   return functionSet;
 }
@@ -215,55 +190,26 @@ duckdb_scalar_function_set H3Functions::GetCellToVertexesFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_cell_to_vertexes");
 
-  duckdb_logical_type varcharType =
-      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
-  duckdb_logical_type varcharListType = duckdb_create_list_type(varcharType);
-  duckdb_logical_type ubigintListType = duckdb_create_list_type(ubigintType);
-  duckdb_logical_type bigintListType = duckdb_create_list_type(bigintType);
+  auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
 
-  {
+    duckdb_logical_type returnType = duckdb_create_list_type(logicalType);
+
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, "h3_cell_to_vertexes");
-    duckdb_scalar_function_add_parameter(function, bigintType);
-    duckdb_scalar_function_set_return_type(function, bigintListType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, returnType);
     duckdb_scalar_function_set_function(function,
-                                        CellToVertexesFunction<int64_t>);
+                                        CellToVertexesFunction<PhysicalType>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
-  }
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_cell_to_vertexes");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
-    duckdb_scalar_function_set_return_type(function, ubigintListType);
-    duckdb_scalar_function_set_function(function,
-                                        CellToVertexesFunction<uint64_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+    duckdb_destroy_logical_type(&returnType);
+  };
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_cell_to_vertexes");
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_set_return_type(function, varcharListType);
-    duckdb_scalar_function_set_function(
-        function, CellToVertexesFunction<duckdb_string_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
-  duckdb_destroy_logical_type(&ubigintListType);
-  duckdb_destroy_logical_type(&bigintListType);
-  duckdb_destroy_logical_type(&varcharListType);
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
 
   return functionSet;
 }
@@ -272,52 +218,30 @@ duckdb_scalar_function_set H3Functions::GetVertexToLatFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_vertex_to_lat");
 
-  duckdb_logical_type varcharType =
-      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
   duckdb_logical_type doubleType =
       duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_vertex_to_lat");
-    duckdb_scalar_function_add_parameter(function, bigintType);
-    duckdb_scalar_function_set_return_type(function, doubleType);
-    duckdb_scalar_function_set_function(
-        function, VertexToLatOrLngFunction<int64_t, false>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+  auto r = [&functionSet,
+            &doubleType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
 
-  {
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, "h3_vertex_to_lat");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_set_return_type(function, doubleType);
     duckdb_scalar_function_set_function(
-        function, VertexToLatOrLngFunction<uint64_t, false>);
+        function, VertexToLatOrLngFunction<PhysicalType, false>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
-  }
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_vertex_to_lat");
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_set_return_type(function, doubleType);
-    duckdb_scalar_function_set_function(
-        function, VertexToLatOrLngFunction<duckdb_string_t, false>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
 
   duckdb_destroy_logical_type(&doubleType);
-  duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
 
   return functionSet;
 }
@@ -326,52 +250,30 @@ duckdb_scalar_function_set H3Functions::GetVertexToLngFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_vertex_to_lng");
 
-  duckdb_logical_type varcharType =
-      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
   duckdb_logical_type doubleType =
       duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_vertex_to_lng");
-    duckdb_scalar_function_add_parameter(function, bigintType);
-    duckdb_scalar_function_set_return_type(function, doubleType);
-    duckdb_scalar_function_set_function(
-        function, VertexToLatOrLngFunction<int64_t, true>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+  auto r = [&functionSet,
+            &doubleType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
 
-  {
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, "h3_vertex_to_lng");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_set_return_type(function, doubleType);
     duckdb_scalar_function_set_function(
-        function, VertexToLatOrLngFunction<uint64_t, true>);
+        function, VertexToLatOrLngFunction<PhysicalType, true>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
-  }
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_vertex_to_lng");
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_set_return_type(function, doubleType);
-    duckdb_scalar_function_set_function(
-        function, VertexToLatOrLngFunction<duckdb_string_t, true>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
 
   duckdb_destroy_logical_type(&doubleType);
-  duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
 
   return functionSet;
 }
@@ -380,54 +282,32 @@ duckdb_scalar_function_set H3Functions::GetVertexToLatLngFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_vertex_to_Latlng");
 
-  duckdb_logical_type varcharType =
-      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
   duckdb_logical_type doubleType =
       duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
   duckdb_logical_type doubleListType = duckdb_create_list_type(doubleType);
 
-  {
+  auto r = [&functionSet,
+            &doubleListType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, "h3_vertex_to_latlng");
-    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_set_return_type(function, doubleListType);
     duckdb_scalar_function_set_function(function,
-                                        VertexToLatLngFunction<int64_t>);
+                                        VertexToLatLngFunction<PhysicalType>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
-  }
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_vertex_to_latlng");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
-    duckdb_scalar_function_set_return_type(function, doubleListType);
-    duckdb_scalar_function_set_function(function,
-                                        VertexToLatLngFunction<uint64_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+    duckdb_destroy_logical_type(&logicalType);
+  };
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_vertex_to_latlng");
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_set_return_type(function, doubleListType);
-    duckdb_scalar_function_set_function(
-        function, VertexToLatLngFunction<duckdb_string_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
 
   duckdb_destroy_logical_type(&doubleType);
   duckdb_destroy_logical_type(&doubleListType);
-  duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
 
   return functionSet;
 }
