@@ -217,53 +217,28 @@ duckdb_scalar_function_set H3Functions::GetGetIndexDigitFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_get_index_digit");
 
-  duckdb_logical_type varcharType =
-      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
   duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
 
-  {
+  auto r = [&functionSet, &intType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, "h3_get_index_digit");
-    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_add_parameter(function, intType);
     duckdb_scalar_function_set_return_type(function, intType);
     duckdb_scalar_function_set_function(function,
-                                        GetIndexDigitFunction<int64_t>);
+                                        GetIndexDigitFunction<PhysicalType>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
-  }
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_get_index_digit");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
-    duckdb_scalar_function_add_parameter(function, intType);
-    duckdb_scalar_function_set_return_type(function, intType);
-    duckdb_scalar_function_set_function(function,
-                                        GetIndexDigitFunction<uint64_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+    duckdb_destroy_logical_type(&logicalType);
+  };
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_get_index_digit");
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_add_parameter(function, intType);
-    duckdb_scalar_function_set_return_type(function, intType);
-    duckdb_scalar_function_set_function(function,
-                                        GetIndexDigitFunction<duckdb_string_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
 
-  duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
   duckdb_destroy_logical_type(&intType);
 
   return functionSet;
@@ -300,34 +275,26 @@ duckdb_scalar_function_set H3Functions::GetH3ToStringFunction() {
 
   duckdb_logical_type varcharType =
       duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
 
-  {
+  auto r = [&functionSet,
+            &varcharType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, "h3_h3_to_string");
-    duckdb_scalar_function_add_parameter(function, bigintType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_set_return_type(function, varcharType);
     duckdb_scalar_function_set_function(function, H3ToStringFunction<int64_t>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
-  }
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_h3_to_string");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
-    duckdb_scalar_function_set_return_type(function, varcharType);
-    duckdb_scalar_function_set_function(function, H3ToStringFunction<uint64_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
 
   duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
 
   return functionSet;
 }
@@ -356,53 +323,31 @@ duckdb_scalar_function_set H3Functions::GetGetIcosahedronFacesFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_get_icosahedron_faces");
 
-  duckdb_logical_type varcharType =
-      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
   duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
   duckdb_logical_type intListType = duckdb_create_list_type(intType);
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_get_icosahedron_faces");
-    duckdb_scalar_function_add_parameter(function, bigintType);
-    duckdb_scalar_function_set_return_type(function, intListType);
-    duckdb_scalar_function_set_function(function,
-                                        GetIcosahedronFacesFunction<int64_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+  auto r = [&functionSet,
+            &intListType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
 
-  {
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, "h3_get_icosahedron_faces");
-    duckdb_scalar_function_add_parameter(function, ubigintType);
-    duckdb_scalar_function_set_return_type(function, intListType);
-    duckdb_scalar_function_set_function(function,
-                                        GetIcosahedronFacesFunction<uint64_t>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, "h3_get_icosahedron_faces");
-    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_set_return_type(function, intListType);
     duckdb_scalar_function_set_function(
-        function, GetIcosahedronFacesFunction<duckdb_string_t>);
+        function, GetIcosahedronFacesFunction<PhysicalType>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
-  }
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
 
   duckdb_destroy_logical_type(&intListType);
   duckdb_destroy_logical_type(&intType);
-  duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
 
   return functionSet;
 }

@@ -408,56 +408,36 @@ GetGetHexagonGenericAvgFunction(const char *name, duckdb_scalar_function_t fn) {
 template <template <typename> class Operator>
 duckdb_scalar_function_set
 GetCellAreaOrEdgeLengthGenericFunction(const char *name) {
-
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set(name);
 
   duckdb_logical_type varcharType =
       duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
   duckdb_logical_type doubleType =
       duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
 
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, name);
-    duckdb_scalar_function_add_parameter(function, bigintType);
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_set_return_type(function, doubleType);
-    duckdb_scalar_function_set_function(function, Operator<int64_t>::operate);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
+  auto r = [&functionSet, &name, &varcharType,
+            &doubleType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
 
-  {
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, name);
-    duckdb_scalar_function_add_parameter(function, ubigintType);
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_set_return_type(function, doubleType);
-    duckdb_scalar_function_set_function(function, Operator<uint64_t>::operate);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, name);
-    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_add_parameter(function, varcharType);
     duckdb_scalar_function_set_return_type(function, doubleType);
     duckdb_scalar_function_set_function(function,
-                                        Operator<duckdb_string_t>::operate);
+                                        Operator<PhysicalType>::operate);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
-  }
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.template operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.template operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.template operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
 
   duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
   duckdb_destroy_logical_type(&doubleType);
 
   return functionSet;
