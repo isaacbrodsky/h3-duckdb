@@ -5,6 +5,7 @@
 * Indexing
 * Misc
 * Inspection
+* Vertex
 
 | Function | Description
 | --: | ---
@@ -37,6 +38,12 @@
 | `h3_get_pentagons` | Get all pentagons at a resolution
 | `h3_get_pentagons_string` | Get all pentagons at a resolution (returns VARCHAR)
 | `h3_great_circle_distance` | Compute the great circle distance between two points (haversine)
+| `h3_cell_to_vertex` | Get the vertex ID for a cell ID and vertex number
+| `h3_cell_to_vertexes` | Get all vertex IDs for a cell ID
+| `h3_vertex_to_lat` | Convert a vertex ID to latitude
+| `h3_vertex_to_lng` | Convert a vertex ID to longitude
+| `h3_vertex_to_latlng` | Convert a vertex ID to latitude/longitude coordinate
+| `h3_is_valid_vertex` | True if passed a valid vertex ID
 
 ## TODO
 
@@ -44,7 +51,6 @@
 * Hierarchy
 * Regions
 * Traversal
-* Vertex
 
 | Function | Description
 | --: | ---
@@ -68,12 +74,6 @@
 | `h3_grid_distance` | Find the grid distance between two cells
 | `h3_cell_to_local_ij` | Convert a cell ID to a local I,J coordinate space
 | `h3_local_ij_to_cell` | Convert a local I,J coordinate to a cell ID
-| `h3_cell_to_vertex` | Get the vertex ID for a cell ID and vertex number
-| `h3_cell_to_vertexes` | Get all vertex IDs for a cell ID
-| `h3_vertex_to_lat` | Convert a vertex ID to latitude
-| `h3_vertex_to_lng` | Convert a vertex ID to longitude
-| `h3_vertex_to_latlng` | Convert a vertex ID to latitude/longitude coordinate
-| `h3_is_valid_vertex` | True if passed a valid vertex ID
 | `h3_is_valid_directed_edge` | True if passed a valid directed edge ID
 | `h3_origin_to_directed_edges` | Get all directed edge IDs for a cell ID
 | `h3_directed_edge_to_cells` | Convert a directed edge ID to origin/destination cell IDs

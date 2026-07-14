@@ -99,23 +99,6 @@ struct IsResClassIIIOperator {
   static bool operate(H3Index index) { return isResClassIII(index); }
 };
 
-template <typename T, typename U, typename Operator>
-void InspectGenericFunction(duckdb_function_info info, duckdb_data_chunk input,
-                            duckdb_vector output) {
-  idx_t inputSize = duckdb_data_chunk_get_size(input);
-
-  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
-  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
-
-  U *resultData = (U *)duckdb_vector_get_data(output);
-
-  for (idx_t row = 0; row < inputSize; ++row) {
-    auto cell = IndexFromVector(indexVecData, row);
-
-    resultData[row] = Operator::operate(cell);
-  }
-}
-
 template <typename T>
 void GetIcosahedronFacesFunction(duckdb_function_info info,
                                  duckdb_data_chunk input,
@@ -218,17 +201,7 @@ void ConstructCellFunction(duckdb_function_info info, duckdb_data_chunk input,
       H3Index out;
       H3Error err = constructCell(res, baseCell, digits.data(), &out);
       if (!err) {
-        if (std::is_same<T, duckdb_string_t>::value) {
-          auto str = ToHexString(out);
-          duckdb_vector_assign_string_element_len(output, row, str.c_str(),
-                                                  str.size());
-        } else {
-          // Known to be safe, but cast is required here
-          static_assert(std::is_same<T, duckdb_string_t>::value ||
-                            std::is_same<T, uint64_t>::value,
-                        "Must be either duckdb_string_t or uint64_t");
-          ((uint64_t *)resultData)[row] = out;
-        }
+        AssignHexString(output, resultData, row, out);
 
         wasValid = true;
       }
@@ -292,62 +265,6 @@ duckdb_scalar_function_set H3Functions::GetGetIndexDigitFunction() {
   duckdb_destroy_logical_type(&bigintType);
   duckdb_destroy_logical_type(&ubigintType);
   duckdb_destroy_logical_type(&intType);
-
-  return functionSet;
-}
-
-template <typename ResultType, typename Operator>
-static duckdb_scalar_function_set
-GetGenericInspectFunction(const char *name, duckdb_type returnTypeId) {
-  duckdb_scalar_function_set functionSet =
-      duckdb_create_scalar_function_set(name);
-
-  duckdb_logical_type varcharType =
-      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
-  duckdb_logical_type bigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
-  duckdb_logical_type ubigintType =
-      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
-  duckdb_logical_type returnType = duckdb_create_logical_type(returnTypeId);
-
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, name);
-    duckdb_scalar_function_add_parameter(function, ubigintType);
-    duckdb_scalar_function_set_return_type(function, returnType);
-    duckdb_scalar_function_set_function(
-        function, InspectGenericFunction<uint64_t, ResultType, Operator>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, name);
-    duckdb_scalar_function_add_parameter(function, bigintType);
-    duckdb_scalar_function_set_return_type(function, returnType);
-    duckdb_scalar_function_set_function(
-        function, InspectGenericFunction<int64_t, ResultType, Operator>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  {
-    duckdb_scalar_function function = duckdb_create_scalar_function();
-    duckdb_scalar_function_set_name(function, name);
-    duckdb_scalar_function_add_parameter(function, varcharType);
-    duckdb_scalar_function_set_return_type(function, returnType);
-    duckdb_scalar_function_set_function(
-        function,
-        InspectGenericFunction<duckdb_string_t, ResultType, Operator>);
-    duckdb_add_scalar_function_to_set(functionSet, function);
-    duckdb_destroy_scalar_function(&function);
-  }
-
-  duckdb_destroy_logical_type(&returnType);
-  duckdb_destroy_logical_type(&varcharType);
-  duckdb_destroy_logical_type(&bigintType);
-  duckdb_destroy_logical_type(&ubigintType);
 
   return functionSet;
 }

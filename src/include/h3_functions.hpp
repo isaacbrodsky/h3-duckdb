@@ -79,14 +79,14 @@ public:
     //    functions.push_back(GetDirectedEdgeToBoundaryWktFunction());
     //    functions.push_back(GetDirectedEdgeToBoundaryWkbFunction());
     //    functions.push_back(GetReverseDirectedEdgeFunction());
-    //
-    //    // Vertex
-    //    functions.push_back(GetCellToVertexFunction());
-    //    functions.push_back(GetCellToVertexesFunction());
-    //    functions.push_back(GetVertexToLatFunction());
-    //    functions.push_back(GetVertexToLngFunction());
-    //    functions.push_back(GetVertexToLatLngFunction());
-    //    functions.push_back(GetIsValidVertexFunctions());
+
+    // Vertex
+    functionSets.push_back(GetCellToVertexFunction());
+    functionSets.push_back(GetCellToVertexesFunction());
+    functionSets.push_back(GetVertexToLatFunction());
+    functionSets.push_back(GetVertexToLngFunction());
+    functionSets.push_back(GetVertexToLatLngFunction());
+    functionSets.push_back(GetIsValidVertexFunctions());
 
     // Misc
     functions.push_back(GetGetHexagonAreaAvgFunction());
@@ -174,14 +174,14 @@ private:
   //  static CreateScalarFunctionInfo GetDirectedEdgeToBoundaryWktFunction();
   //  static CreateScalarFunctionInfo GetDirectedEdgeToBoundaryWkbFunction();
   //  static CreateScalarFunctionInfo GetReverseDirectedEdgeFunction();
-  //
-  //  // Vertex
-  //  static CreateScalarFunctionInfo GetCellToVertexFunction();
-  //  static CreateScalarFunctionInfo GetCellToVertexesFunction();
-  //  static CreateScalarFunctionInfo GetVertexToLatFunction();
-  //  static CreateScalarFunctionInfo GetVertexToLngFunction();
-  //  static CreateScalarFunctionInfo GetVertexToLatLngFunction();
-  //  static CreateScalarFunctionInfo GetIsValidVertexFunctions();
+
+  // Vertex
+  static duckdb_scalar_function_set GetCellToVertexFunction();
+  static duckdb_scalar_function_set GetCellToVertexesFunction();
+  static duckdb_scalar_function_set GetVertexToLatFunction();
+  static duckdb_scalar_function_set GetVertexToLngFunction();
+  static duckdb_scalar_function_set GetVertexToLatLngFunction();
+  static duckdb_scalar_function_set GetIsValidVertexFunctions();
 
   // Misc
   static duckdb_scalar_function GetGetHexagonAreaAvgFunction();
