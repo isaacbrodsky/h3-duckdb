@@ -56,7 +56,8 @@ void StringToH3Function(duckdb_function_info info, duckdb_data_chunk input,
     auto index = &indexVecData[row];
     H3Index cell;
 
-    H3Error err = stringToH3(duckdb_string_t_data(index), &cell);
+    auto cellStr = DuckdbToString(index);
+    H3Error err = stringToH3(cellStr.c_str(), &cell);
     if (!err) {
       resultData[row] = cell;
     } else {

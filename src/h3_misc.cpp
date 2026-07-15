@@ -26,9 +26,10 @@ void GetHexagonAreaAvgFunction(duckdb_function_info info,
 
     double out;
     H3Error err = E_OPTION_INVALID;
-    if (strcmp(duckdb_string_t_data(unit), "km^2") == 0) {
+    auto unitStr = DuckdbToString(unit);
+    if (unitStr == "km^2") {
       err = getHexagonAreaAvgKm2(res, &out);
-    } else if (strcmp(duckdb_string_t_data(unit), "m^2") == 0) {
+    } else if (unitStr == "m^2") {
       err = getHexagonAreaAvgM2(res, &out);
     }
 
@@ -61,11 +62,12 @@ template <typename T> struct CellAreaOperator {
 
       double out;
       H3Error err = E_OPTION_INVALID;
-      if (strcmp(duckdb_string_t_data(unit), "rads^2") == 0) {
+      auto unitStr = DuckdbToString(unit);
+      if (unitStr == "rads^2") {
         err = cellAreaRads2(cell, &out);
-      } else if (strcmp(duckdb_string_t_data(unit), "km^2") == 0) {
+      } else if (unitStr == "km^2") {
         err = cellAreaKm2(cell, &out);
-      } else if (strcmp(duckdb_string_t_data(unit), "m^2") == 0) {
+      } else if (unitStr == "m^2") {
         err = cellAreaM2(cell, &out);
       }
 
@@ -99,9 +101,10 @@ void GetHexagonEdgeLengthAvgFunction(duckdb_function_info info,
 
     double out;
     H3Error err = E_OPTION_INVALID;
-    if (strcmp(duckdb_string_t_data(unit), "km") == 0) {
+    auto unitStr = DuckdbToString(unit);
+    if (unitStr == "km") {
       err = getHexagonEdgeLengthAvgKm(res, &out);
-    } else if (strcmp(duckdb_string_t_data(unit), "m") == 0) {
+    } else if (unitStr == "m") {
       err = getHexagonEdgeLengthAvgM(res, &out);
     }
 
@@ -134,11 +137,12 @@ template <typename T> struct EdgeLengthOperator {
 
       double out;
       H3Error err = E_OPTION_INVALID;
-      if (strcmp(duckdb_string_t_data(unit), "rads") == 0) {
+      auto unitStr = DuckdbToString(unit);
+      if (unitStr == "rads") {
         err = edgeLengthRads(edge, &out);
-      } else if (strcmp(duckdb_string_t_data(unit), "km") == 0) {
+      } else if (unitStr == "km") {
         err = edgeLengthKm(edge, &out);
-      } else if (strcmp(duckdb_string_t_data(unit), "m") == 0) {
+      } else if (unitStr == "m") {
         err = edgeLengthM(edge, &out);
       }
 
@@ -374,11 +378,12 @@ void GreatCircleDistanceFunction(duckdb_function_info info,
     LatLng latLng1 = {.lat = degsToRads(lat1), .lng = degsToRads(lng1)};
 
     double out;
-    if (strcmp(duckdb_string_t_data(unit), "rads") == 0) {
+    auto unitStr = DuckdbToString(unit);
+    if (unitStr == "rads") {
       resultData[row] = greatCircleDistanceRads(&latLng0, &latLng1);
-    } else if (strcmp(duckdb_string_t_data(unit), "km") == 0) {
+    } else if (unitStr == "km") {
       resultData[row] = greatCircleDistanceKm(&latLng0, &latLng1);
-    } else if (strcmp(duckdb_string_t_data(unit), "m") == 0) {
+    } else if (unitStr == "m") {
       resultData[row] = greatCircleDistanceM(&latLng0, &latLng1);
     } else {
       duckdb_validity_set_row_invalid(resultValidity, row);

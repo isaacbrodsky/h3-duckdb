@@ -11,6 +11,12 @@ std::string ToHexString(H3Index index) {
   return ss.str();
 }
 
+std::string DuckdbToString(duckdb_string_t *str) {
+  uint32_t len = duckdb_string_t_length(*str);
+  const char *data = duckdb_string_t_data(str);
+  return std::string(data, len);
+}
+
 void ThrowH3Error(H3Error err) {
   if (err) {
     throw H3Exception(std::string("H3 error: ") + std::to_string(err));

@@ -21,6 +21,8 @@ namespace h3duckdb {
 
 std::string ToHexString(H3Index index);
 
+std::string DuckdbToString(duckdb_string_t *str);
+
 template <typename T> inline H3Index IndexFromVector(T *data, idx_t idx) {
   static_assert(std::is_same<T, duckdb_string_t>::value ||
                     std::is_same<T, uint64_t>::value ||
@@ -30,7 +32,8 @@ template <typename T> inline H3Index IndexFromVector(T *data, idx_t idx) {
   H3Index cell;
   if (IsStringT) {
     auto str = (duckdb_string_t *)&data[idx];
-    H3Error err = stringToH3(duckdb_string_t_data(str), &cell);
+    auto str2 = DuckdbToString(str);
+    H3Error err = stringToH3(str2.c_str(), &cell);
     if (err) {
       cell = 0;
     }

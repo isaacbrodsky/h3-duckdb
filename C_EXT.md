@@ -7,6 +7,7 @@
 * Inspection
 * Vertex
 * Directed Edge
+* Hierarchy
 
 | Function | Description
 | --: | ---
@@ -55,15 +56,6 @@
 | `h3_directed_edge_to_boundary_wkt` | Convert directed edge ID to linestring WKT
 | `h3_directed_edge_to_boundary_wkb` | Convert directed edge ID to linestring WKB
 | `h3_reverse_directed_edge` | Convert a directed edge to one where origin and destination are swapped
-
-## TODO
-
-* Hierarchy
-* Regions
-* Traversal
-
-| Function | Description
-| --: | ---
 | `h3_cell_to_parent` | Get coarser cell for a cell
 | `h3_cell_to_children` | Get finer cells for a cell
 | `h3_cell_to_children_size` | Number of finer cells for a cell
@@ -72,6 +64,14 @@
 | `h3_child_pos_to_cell` | Convert parent and sub-indexing number to a cell ID
 | `h3_compact_cells` | Convert a set of single-resolution cells to the minimal mixed-resolution set
 | `h3_uncompact_cells` | Convert a mixed-resolution set to a single-resolution set of cells
+
+## TODO
+
+* Traversal
+* Regions
+
+| Function | Description
+| --: | ---
 | `h3_grid_disk` | Find cells within a grid distance
 | `h3_grid_disk_distances` | Find cells within a grid distance, sorted by distance
 | `h3_grid_disk_unsafe` | Find cells within a grid distance, with no pentagon distortion

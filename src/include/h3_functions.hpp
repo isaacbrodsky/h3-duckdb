@@ -43,17 +43,17 @@ public:
     functionSets.push_back(GetGetIndexDigitFunction());
     functionSets.push_back(GetConstructCellFunction());
     functionSets.push_back(GetConstructCellVarcharFunction());
-    //
-    //    // Hierarchy
-    //    functions.push_back(GetCellToParentFunction());
-    //    functions.push_back(GetCellToChildrenFunction());
-    //    functions.push_back(GetCellToChildrenSizeFunction());
-    //    functions.push_back(GetCellToCenterChildFunction());
-    //    functions.push_back(GetCellToChildPosFunction());
-    //    functions.push_back(GetChildPosToCellFunction());
-    //    functions.push_back(GetCompactCellsFunction());
-    //    functions.push_back(GetUncompactCellsFunction());
-    //
+
+    // Hierarchy
+    functionSets.push_back(GetCellToParentFunction());
+    functionSets.push_back(GetCellToChildrenFunction());
+    functionSets.push_back(GetCellToChildrenSizeFunction());
+    functionSets.push_back(GetCellToCenterChildFunction());
+    functionSets.push_back(GetCellToChildPosFunction());
+    functionSets.push_back(GetChildPosToCellFunction());
+    functionSets.push_back(GetCompactCellsFunction());
+    functionSets.push_back(GetUncompactCellsFunction());
+
     //    // Traversal
     //    functions.push_back(GetGridDiskFunction());
     //    functions.push_back(GetGridDiskDistancesFunction());
@@ -139,16 +139,16 @@ private:
   static duckdb_scalar_function_set GetConstructCellFunction();
   static duckdb_scalar_function_set GetConstructCellVarcharFunction();
 
-  //  // Hierarchy
-  //  static CreateScalarFunctionInfo GetCellToParentFunction();
-  //  static CreateScalarFunctionInfo GetCellToChildrenFunction();
-  //  static CreateScalarFunctionInfo GetCellToChildrenSizeFunction();
-  //  static CreateScalarFunctionInfo GetCellToCenterChildFunction();
-  //  static CreateScalarFunctionInfo GetCellToChildPosFunction();
-  //  static CreateScalarFunctionInfo GetChildPosToCellFunction();
-  //  static CreateScalarFunctionInfo GetCompactCellsFunction();
-  //  static CreateScalarFunctionInfo GetUncompactCellsFunction();
-  //
+  // Hierarchy
+  static duckdb_scalar_function_set GetCellToParentFunction();
+  static duckdb_scalar_function_set GetCellToChildrenFunction();
+  static duckdb_scalar_function_set GetCellToChildrenSizeFunction();
+  static duckdb_scalar_function_set GetCellToCenterChildFunction();
+  static duckdb_scalar_function_set GetCellToChildPosFunction();
+  static duckdb_scalar_function_set GetChildPosToCellFunction();
+  static duckdb_scalar_function_set GetCompactCellsFunction();
+  static duckdb_scalar_function_set GetUncompactCellsFunction();
+
   //  // Traversal
   //  static CreateScalarFunctionInfo GetGridDiskFunction();
   //  static CreateScalarFunctionInfo GetGridDiskDistancesFunction();

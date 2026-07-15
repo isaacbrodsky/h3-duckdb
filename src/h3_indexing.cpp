@@ -114,7 +114,8 @@ void CellToLatOrLngFunction(duckdb_function_info info, duckdb_data_chunk input,
       H3Index cell;
       if (IsStringT) {
         auto str = (duckdb_string_t *)&indexVecData[row];
-        H3Error err = stringToH3(duckdb_string_t_data(str), &cell);
+        auto strStr = DuckdbToString(str);
+        H3Error err = stringToH3(strStr.c_str(), &cell);
         if (err) {
           cell = 0;
         }
