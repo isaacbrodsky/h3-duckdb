@@ -192,7 +192,6 @@ duckdb_scalar_function_set H3Functions::GetCellToVertexesFunction() {
 
   auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
     duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
-
     duckdb_logical_type returnType = duckdb_create_list_type(logicalType);
 
     duckdb_scalar_function function = duckdb_create_scalar_function();
@@ -205,6 +204,7 @@ duckdb_scalar_function_set H3Functions::GetCellToVertexesFunction() {
     duckdb_destroy_scalar_function(&function);
 
     duckdb_destroy_logical_type(&returnType);
+    duckdb_destroy_logical_type(&logicalType);
   };
 
   r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);

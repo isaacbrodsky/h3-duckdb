@@ -67,18 +67,18 @@ public:
     //    functions.push_back(GetMaxGridDiskSizeFunction());
     //    functions.push_back(GetCellToLocalIjFunction());
     //    functions.push_back(GetLocalIjToCellFunction());
-    //
-    //    // Directed edge
-    //    functions.push_back(GetAreNeighborCellsFunction());
-    //    functions.push_back(GetCellsToDirectedEdgeFunction());
-    //    functions.push_back(GetIsValidDirectedEdgeFunctions());
-    //    functions.push_back(GetGetDirectedEdgeOriginFunction());
-    //    functions.push_back(GetGetDirectedEdgeDestinationFunction());
-    //    functions.push_back(GetDirectedEdgeToCellsFunction());
-    //    functions.push_back(GetOriginToDirectedEdgesFunction());
-    //    functions.push_back(GetDirectedEdgeToBoundaryWktFunction());
-    //    functions.push_back(GetDirectedEdgeToBoundaryWkbFunction());
-    //    functions.push_back(GetReverseDirectedEdgeFunction());
+
+    // Directed edge
+    functionSets.push_back(GetAreNeighborCellsFunction());
+    functionSets.push_back(GetCellsToDirectedEdgeFunction());
+    functionSets.push_back(GetIsValidDirectedEdgeFunctions());
+    functionSets.push_back(GetGetDirectedEdgeOriginFunction());
+    functionSets.push_back(GetGetDirectedEdgeDestinationFunction());
+    functionSets.push_back(GetDirectedEdgeToCellsFunction());
+    functionSets.push_back(GetOriginToDirectedEdgesFunction());
+    functionSets.push_back(GetDirectedEdgeToBoundaryWktFunction());
+    functionSets.push_back(GetDirectedEdgeToBoundaryWkbFunction());
+    functionSets.push_back(GetReverseDirectedEdgeFunction());
 
     // Vertex
     functionSets.push_back(GetCellToVertexFunction());
@@ -162,18 +162,18 @@ private:
   //  static CreateScalarFunctionInfo GetMaxGridDiskSizeFunction();
   //  static CreateScalarFunctionInfo GetCellToLocalIjFunction();
   //  static CreateScalarFunctionInfo GetLocalIjToCellFunction();
-  //
-  //  // Directed edge
-  //  static CreateScalarFunctionInfo GetAreNeighborCellsFunction();
-  //  static CreateScalarFunctionInfo GetCellsToDirectedEdgeFunction();
-  //  static CreateScalarFunctionInfo GetIsValidDirectedEdgeFunctions();
-  //  static CreateScalarFunctionInfo GetGetDirectedEdgeOriginFunction();
-  //  static CreateScalarFunctionInfo GetGetDirectedEdgeDestinationFunction();
-  //  static CreateScalarFunctionInfo GetDirectedEdgeToCellsFunction();
-  //  static CreateScalarFunctionInfo GetOriginToDirectedEdgesFunction();
-  //  static CreateScalarFunctionInfo GetDirectedEdgeToBoundaryWktFunction();
-  //  static CreateScalarFunctionInfo GetDirectedEdgeToBoundaryWkbFunction();
-  //  static CreateScalarFunctionInfo GetReverseDirectedEdgeFunction();
+
+  // Directed edge
+  static duckdb_scalar_function_set GetAreNeighborCellsFunction();
+  static duckdb_scalar_function_set GetCellsToDirectedEdgeFunction();
+  static duckdb_scalar_function_set GetIsValidDirectedEdgeFunctions();
+  static duckdb_scalar_function_set GetGetDirectedEdgeOriginFunction();
+  static duckdb_scalar_function_set GetGetDirectedEdgeDestinationFunction();
+  static duckdb_scalar_function_set GetDirectedEdgeToCellsFunction();
+  static duckdb_scalar_function_set GetOriginToDirectedEdgesFunction();
+  static duckdb_scalar_function_set GetDirectedEdgeToBoundaryWktFunction();
+  static duckdb_scalar_function_set GetDirectedEdgeToBoundaryWkbFunction();
+  static duckdb_scalar_function_set GetReverseDirectedEdgeFunction();
 
   // Vertex
   static duckdb_scalar_function_set GetCellToVertexFunction();

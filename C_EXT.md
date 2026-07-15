@@ -6,6 +6,7 @@
 * Misc
 * Inspection
 * Vertex
+* Directed Edge
 
 | Function | Description
 | --: | ---
@@ -44,10 +45,19 @@
 | `h3_vertex_to_lng` | Convert a vertex ID to longitude
 | `h3_vertex_to_latlng` | Convert a vertex ID to latitude/longitude coordinate
 | `h3_is_valid_vertex` | True if passed a valid vertex ID
+| `h3_is_valid_directed_edge` | True if passed a valid directed edge ID
+| `h3_origin_to_directed_edges` | Get all directed edge IDs for a cell ID
+| `h3_directed_edge_to_cells` | Convert a directed edge ID to origin/destination cell IDs
+| `h3_get_directed_edge_origin` | Convert a directed edge ID to origin cell ID
+| `h3_get_directed_edge_destination` | Convert a directed edge ID to destination cell ID
+| `h3_cells_to_directed_edge` | Convert an origin/destination pair to directed edge ID
+| `h3_are_neighbor_cells` | True if the two cell IDs are directly adjacent
+| `h3_directed_edge_to_boundary_wkt` | Convert directed edge ID to linestring WKT
+| `h3_directed_edge_to_boundary_wkb` | Convert directed edge ID to linestring WKB
+| `h3_reverse_directed_edge` | Convert a directed edge to one where origin and destination are swapped
 
 ## TODO
 
-* Directed Edge
 * Hierarchy
 * Regions
 * Traversal
@@ -74,16 +84,6 @@
 | `h3_grid_distance` | Find the grid distance between two cells
 | `h3_cell_to_local_ij` | Convert a cell ID to a local I,J coordinate space
 | `h3_local_ij_to_cell` | Convert a local I,J coordinate to a cell ID
-| `h3_is_valid_directed_edge` | True if passed a valid directed edge ID
-| `h3_origin_to_directed_edges` | Get all directed edge IDs for a cell ID
-| `h3_directed_edge_to_cells` | Convert a directed edge ID to origin/destination cell IDs
-| `h3_get_directed_edge_origin` | Convert a directed edge ID to origin cell ID
-| `h3_get_directed_edge_destination` | Convert a directed edge ID to destination cell ID
-| `h3_cells_to_directed_edge` | Convert an origin/destination pair to directed edge ID
-| `h3_are_neighbor_cells` | True if the two cell IDs are directly adjacent
-| `h3_directed_edge_to_boundary_wkt` | Convert directed edge ID to linestring WKT
-| `h3_directed_edge_to_boundary_wkb` | Convert directed edge ID to linestring WKB
-| `h3_reverse_directed_edge` | Convert a directed edge to one where origin and destination are swapped
 | `h3_cells_to_multi_polygon_wkt` | Convert a set of cells to multipolygon WKT
 | `h3_cells_to_multi_polygon_wkb` | Convert a set of cells to multipolygon WKB
 | `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells
