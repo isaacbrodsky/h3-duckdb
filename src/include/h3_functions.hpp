@@ -103,10 +103,10 @@ public:
     // Regions
     functionSets.push_back(GetCellsToMultiPolygonWktFunction());
     functionSets.push_back(GetCellsToMultiPolygonWkbFunction());
-    //    functionSets.push_back(GetPolygonWktToCellsFunction());
-    //    functionSets.push_back(GetPolygonWktToCellsVarcharFunction());
-    //    functionSets.push_back(GetPolygonWkbToCellsFunction());
-    //    functionSets.push_back(GetPolygonWkbToCellsVarcharFunction());
+    functions.push_back(GetPolygonWktToCellsFunction());
+    functions.push_back(GetPolygonWktToCellsVarcharFunction());
+    functions.push_back(GetPolygonWkbToCellsFunction());
+    functions.push_back(GetPolygonWkbToCellsVarcharFunction());
     //    functionSets.push_back(GetPolygonWktToCellsExperimentalFunction());
     //    functionSets.push_back(GetPolygonWktToCellsExperimentalVarcharFunction());
     //    functionSets.push_back(GetPolygonWkbToCellsExperimentalFunction());
@@ -198,10 +198,10 @@ private:
   // Regions
   static duckdb_scalar_function_set GetCellsToMultiPolygonWktFunction();
   static duckdb_scalar_function_set GetCellsToMultiPolygonWkbFunction();
-  //  static duckdb_scalar_function_set GetPolygonWktToCellsFunction();
-  //  static duckdb_scalar_function_set GetPolygonWktToCellsVarcharFunction();
-  //  static duckdb_scalar_function_set GetPolygonWkbToCellsFunction();
-  //  static duckdb_scalar_function_set GetPolygonWkbToCellsVarcharFunction();
+  static duckdb_scalar_function GetPolygonWktToCellsFunction();
+  static duckdb_scalar_function GetPolygonWktToCellsVarcharFunction();
+  static duckdb_scalar_function GetPolygonWkbToCellsFunction();
+  static duckdb_scalar_function GetPolygonWkbToCellsVarcharFunction();
   //  static duckdb_scalar_function_set
   //  GetPolygonWktToCellsExperimentalFunction(); static
   //  duckdb_scalar_function_set

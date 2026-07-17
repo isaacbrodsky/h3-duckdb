@@ -261,10 +261,10 @@ select h3_uncompact_cells([], 2)
 
 statement ok
 -- https://github.com/isaacbrodsky/h3-duckdb/issues/140
-CREATE TABLE h3_child_cells AS 
+CREATE TABLE h3_child_cells AS
 WITH h3BaseCell AS ( SELECT h3_latlng_to_cell(51.477928, -0.001545, 5) AS base_cell_id)
     , kRing AS ( select UNNEST ( h3_cell_to_children(base_cell_id, 6) ) AS h3_child_id FROM h3BaseCell )
-SELECT h3_child_id, h3_cell_to_boundary_wkt(h3_child_id) AS wkt 
+SELECT h3_child_id, h3_cell_to_boundary_wkt(h3_child_id) AS wkt
 FROM kRing;
 
 statement ok

@@ -51,6 +51,8 @@ void DirectedEdgeToCellsFunction(duckdb_function_info info,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+
+  duckdb_list_vector_set_size(output, resultOffset);
 }
 
 template <typename T>
@@ -100,6 +102,8 @@ void OriginToDirectedEdgesFunction(duckdb_function_info info,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+
+  duckdb_list_vector_set_size(output, resultOffset);
 }
 
 template <typename T, bool IsDestination>

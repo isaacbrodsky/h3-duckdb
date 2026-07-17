@@ -78,7 +78,7 @@ void CellsToMultiPolygonFunction(duckdb_function_info info,
       }
     }
 
-    LinkedGeoPolygon firstLgp;
+    LinkedGeoPolygon firstLgp = {0};
     H3Error err =
         hasNullInput ||
         cellsToLinkedMultiPolygon(inputSet.data(), inputSet.size(), &firstLgp);
@@ -132,34 +132,6 @@ void CellsToMultiPolygonFunction(duckdb_function_info info,
   }
 }
 
-// static list_entry_t PolygonToCells(Vector &result, GeoPolygon &polygon, int
-// res,
-//                                   uint32_t flags) {
-//  uint64_t offset = ListVector::GetListSize(result);
-//  if (polygon.geoloop.numVerts > 0) {
-//    int64_t numCells = 0;
-//    H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
-//    if (err) {
-//      return list_entry_t(offset, 0);
-//    } else {
-//      std::vector<H3Index> out(numCells);
-//      H3Error err2 = polygonToCells(&polygon, res, flags, out.data());
-//      if (err2) {
-//        return list_entry_t(offset, 0);
-//      } else {
-//        uint64_t actual = 0;
-//        for (H3Index outCell : out) {
-//          if (outCell != H3_NULL) {
-//            ListVector::PushBack(result, Value::UBIGINT(outCell));
-//            actual++;
-//          }
-//        }
-//        return list_entry_t(offset, actual);
-//      }
-//    }
-//  }
-//  return list_entry_t(offset, 0);
-//}
 //
 // static list_entry_t PolygonToCellsExperimental(Vector &result,
 //                                               GeoPolygon &polygon, int res,
@@ -193,49 +165,93 @@ void CellsToMultiPolygonFunction(duckdb_function_info info,
 //  return list_entry_t(offset, 0);
 //}
 //
-// static void PolygonWktToCellsFunction(DataChunk &args, ExpressionState
-// &state,
-//                                      Vector &result) {
-//  // TODO: Note this function is not fully noexcept -- some invalid WKT
-//  strings
-//  // will throw, others will return empty lists.
-//  BinaryExecutor::Execute<string_t, int, list_entry_t>(
-//      args.data[0], args.data[1], result, args.size(),
-//      [&](string_t input, int res) {
-//        GeoPolygon polygon = {0};
-//        int32_t flags = 0;
-//
-//        auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-//        std::vector<GeoLoop> holes;
-//        std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
-//        DecodeWktPolygon(input, polygon, outerVerts, holes, holesVerts);
-//
-//        return PolygonToCells(result, polygon, res, flags);
-//      });
-//}
-//
-// static void PolygonWkbToCellsFunction(DataChunk &args, ExpressionState
-// &state,
-//                                      Vector &result) {
-//  // TODO: Note this function is not fully noexcept -- some invalid WKB
-//  strings
-//      // will throw, others will return empty lists.
-//      BinaryExecutor::Execute<string_t, int, list_entry_t>(
-//          args.data[0], args.data[1], result, args.size(),
-//          [&](string_t input, int res) {
-//            GeoPolygon polygon = {0};
-//            int32_t flags = 0;
-//
-//            uint64_t offset = ListVector::GetListSize(result);
-//
-//            auto outerVerts = duckdb::make_shared_ptr<std::vector<LatLng>>();
-//            std::vector<GeoLoop> holes;
-//            std::vector<duckdb::shared_ptr<std::vector<LatLng>>> holesVerts;
-//            DecodeWkbPolygon(input, polygon, outerVerts, holes, holesVerts);
-//
-//            return PolygonToCells(result, polygon, res, flags);
-//          });
-//}
+
+template <typename T, bool IsWkb>
+void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
+                                    duckdb_data_chunk input,
+                                    duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector wellKnownVec = duckdb_data_chunk_get_vector(input, 0);
+  duckdb_string_t *wellKnownVecData =
+      (duckdb_string_t *)duckdb_vector_get_data(wellKnownVec);
+  duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
+  int32_t *resData = (int32_t *)duckdb_vector_get_data(resVec);
+
+  std::vector<std::pair<bool, std::vector<H3Index>>> results;
+  idx_t outputReserveSize = 0;
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool hasData = false;
+    auto inputStr = DuckdbToString(&wellKnownVecData[row]);
+    GeoPolygon polygon = {0};
+    int32_t flags = 0;
+    int32_t res = resData[row];
+
+    std::vector<LatLng> outerVerts;
+    std::vector<GeoLoop> holes;
+    std::vector<std::vector<LatLng>> holesVerts;
+    std::vector<H3Index> resultsTmp;
+    try {
+      if (IsWkb) {
+        DecodeWkbPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
+      } else {
+        DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
+      }
+    } catch (H3Exception ex) {
+      results.push_back(std::make_pair(false, resultsTmp));
+      continue;
+    }
+
+    if (polygon.geoloop.numVerts > 0) {
+      int64_t numCells = 0;
+      H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
+      if (!err) {
+        std::vector<H3Index> out(numCells);
+        H3Error err2 = polygonToCells(&polygon, res, flags, out.data());
+        if (!err2) {
+          for (H3Index outCell : out) {
+            if (outCell != H3_NULL) {
+              resultsTmp.push_back(outCell);
+            }
+          }
+          hasData = true;
+        }
+      }
+    }
+
+    results.push_back(std::make_pair(hasData, resultsTmp));
+  }
+
+  duckdb_list_vector_reserve(output, outputReserveSize);
+  duckdb_vector_ensure_validity_writable(output);
+  duckdb_list_entry *entries =
+      (duckdb_list_entry *)duckdb_vector_get_data(output);
+  duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
+  T *resultData = (T *)duckdb_vector_get_data(outputChildVec);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+  idx_t resultOffset = 0;
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    auto [hasData, resultsTmp] = results[row];
+
+    if (hasData) {
+      for (idx_t j = 0; j < resultsTmp.size(); ++j) {
+        auto out = resultsTmp[j];
+        auto childRowOffset = resultOffset + j;
+        AssignHexString(outputChildVec, resultData, childRowOffset, out);
+      }
+
+      entries[row].offset = resultOffset;
+      entries[row].length = resultsTmp.size();
+      resultOffset += resultsTmp.size();
+    } else {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+
+  duckdb_list_vector_set_size(output, resultOffset);
+}
+
 //
 // static list_entry_t
 // PolygonWktToCellsExperimentalInnerFunction(string_t input, int res,
@@ -402,38 +418,89 @@ duckdb_scalar_function_set H3Functions::GetCellsToMultiPolygonWkbFunction() {
   return functionSet;
 }
 
-// CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsFunction() {
-//  // TODO: Expose flags
-//  return CreateScalarFunctionInfo(ScalarFunction(
-//      "h3_polygon_wkt_to_cells", {LogicalType::VARCHAR, LogicalType::INTEGER},
-//      LogicalType::LIST(LogicalType::UBIGINT), PolygonWktToCellsFunction));
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetPolygonWktToCellsVarcharFunction() {
-//  // TODO: Expose flags
-//  return CreateScalarFunctionInfo(
-//      ScalarFunction("h3_polygon_wkt_to_cells_string",
-//                     {LogicalType::VARCHAR, LogicalType::INTEGER},
-//                     LogicalType::LIST(LogicalType::VARCHAR),
-//                     PolygonWktToCellsVarcharFunction));
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetPolygonWkbToCellsFunction() {
-//  // TODO: Expose flags
-//  return CreateScalarFunctionInfo(ScalarFunction(
-//      "h3_polygon_wkb_to_cells", {LogicalType::BLOB, LogicalType::INTEGER},
-//      LogicalType::LIST(LogicalType::UBIGINT), PolygonWkbToCellsFunction));
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetPolygonWkbToCellsVarcharFunction() {
-//  // TODO: Expose flags
-//  return CreateScalarFunctionInfo(
-//      ScalarFunction("h3_polygon_wkb_to_cells_string",
-//                     {LogicalType::BLOB, LogicalType::INTEGER},
-//                     LogicalType::LIST(LogicalType::VARCHAR),
-//                     PolygonWkbToCellsVarcharFunction));
-//}
-//
+duckdb_scalar_function H3Functions::GetPolygonWktToCellsFunction() {
+  // TODO: Expose flags
+  duckdb_scalar_function function = duckdb_create_scalar_function();
+  duckdb_scalar_function_set_name(function, "h3_polygon_wkt_to_cells");
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type ubigintListType = duckdb_create_list_type(ubigintType);
+  duckdb_scalar_function_add_parameter(function, varcharType);
+  duckdb_scalar_function_add_parameter(function, intType);
+  duckdb_scalar_function_set_return_type(function, ubigintListType);
+  duckdb_destroy_logical_type(&ubigintListType);
+  duckdb_destroy_logical_type(&ubigintType);
+  duckdb_destroy_logical_type(&intType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_scalar_function_set_function(
+      function, PolygonWktOrWkbToCellsFunction<uint64_t, false>);
+  return function;
+}
+
+duckdb_scalar_function H3Functions::GetPolygonWktToCellsVarcharFunction() {
+  // TODO: Expose flags
+  duckdb_scalar_function function = duckdb_create_scalar_function();
+  duckdb_scalar_function_set_name(function, "h3_polygon_wkt_to_cells_string");
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type varcharListType = duckdb_create_list_type(varcharType);
+  duckdb_scalar_function_add_parameter(function, varcharType);
+  duckdb_scalar_function_add_parameter(function, intType);
+  duckdb_scalar_function_set_return_type(function, varcharListType);
+  duckdb_destroy_logical_type(&varcharListType);
+  duckdb_destroy_logical_type(&intType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_scalar_function_set_function(
+      function, PolygonWktOrWkbToCellsFunction<duckdb_string_t, false>);
+  return function;
+}
+
+duckdb_scalar_function H3Functions::GetPolygonWkbToCellsFunction() {
+  // TODO: Expose flags
+  duckdb_scalar_function function = duckdb_create_scalar_function();
+  duckdb_scalar_function_set_name(function, "h3_polygon_wkb_to_cells");
+  duckdb_logical_type blobType = duckdb_create_logical_type(DUCKDB_TYPE_BLOB);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type ubigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_UBIGINT);
+  duckdb_logical_type ubigintListType = duckdb_create_list_type(ubigintType);
+  duckdb_scalar_function_add_parameter(function, blobType);
+  duckdb_scalar_function_add_parameter(function, intType);
+  duckdb_scalar_function_set_return_type(function, ubigintListType);
+  duckdb_destroy_logical_type(&ubigintListType);
+  duckdb_destroy_logical_type(&ubigintType);
+  duckdb_destroy_logical_type(&intType);
+  duckdb_destroy_logical_type(&blobType);
+  duckdb_scalar_function_set_function(
+      function, PolygonWktOrWkbToCellsFunction<uint64_t, true>);
+  return function;
+}
+
+duckdb_scalar_function H3Functions::GetPolygonWkbToCellsVarcharFunction() {
+  // TODO: Expose flags
+  duckdb_scalar_function function = duckdb_create_scalar_function();
+  duckdb_scalar_function_set_name(function, "h3_polygon_wkb_to_cells_string");
+  duckdb_logical_type blobType = duckdb_create_logical_type(DUCKDB_TYPE_BLOB);
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type varcharListType = duckdb_create_list_type(varcharType);
+  duckdb_scalar_function_add_parameter(function, blobType);
+  duckdb_scalar_function_add_parameter(function, intType);
+  duckdb_scalar_function_set_return_type(function, varcharListType);
+  duckdb_destroy_logical_type(&varcharListType);
+  duckdb_destroy_logical_type(&intType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&blobType);
+  duckdb_scalar_function_set_function(
+      function, PolygonWktOrWkbToCellsFunction<duckdb_string_t, true>);
+  return function;
+}
+
 // CreateScalarFunctionInfo
 // H3Functions::GetPolygonWktToCellsExperimentalFunction() {
 //  ScalarFunctionSet funcs("h3_polygon_wkt_to_cells_experimental");

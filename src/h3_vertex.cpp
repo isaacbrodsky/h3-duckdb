@@ -78,6 +78,8 @@ void CellToVertexesFunction(duckdb_function_info info, duckdb_data_chunk input,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+
+  duckdb_list_vector_set_size(output, resultOffset);
 }
 
 template <typename T, bool IsLng>
@@ -149,6 +151,8 @@ void VertexToLatLngFunction(duckdb_function_info info, duckdb_data_chunk input,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+
+  duckdb_list_vector_set_size(output, resultOffset);
 }
 
 struct IsValidVertexOperator {

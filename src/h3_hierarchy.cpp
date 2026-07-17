@@ -41,7 +41,22 @@ void CellToChildrenFunction(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
 
-  duckdb_list_vector_reserve(output, inputSize * 6);
+  idx_t totalSize = 0;
+  for (idx_t row = 0; row < inputSize; ++row) {
+    H3Index parent = IndexFromVector(indexVecData, row);
+    auto res = resVecData[row];
+
+    if (parent) {
+      int64_t currentOut = 0;
+      H3Error err = cellToChildrenSize(parent, res, &currentOut);
+
+      if (!err) {
+        totalSize += currentOut;
+      }
+    }
+  }
+
+  duckdb_list_vector_reserve(output, totalSize);
   duckdb_vector_ensure_validity_writable(output);
   duckdb_list_entry *entries =
       (duckdb_list_entry *)duckdb_vector_get_data(output);
@@ -84,6 +99,8 @@ void CellToChildrenFunction(duckdb_function_info info, duckdb_data_chunk input,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+
+  duckdb_list_vector_set_size(output, resultOffset);
 }
 
 template <typename T>
@@ -284,6 +301,8 @@ void CompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+
+  duckdb_list_vector_set_size(output, outputReserveSize);
 }
 
 template <typename T>
@@ -383,6 +402,8 @@ void UncompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+
+  duckdb_list_vector_set_size(output, outputReserveSize);
 }
 
 duckdb_scalar_function_set H3Functions::GetCellToParentFunction() {
