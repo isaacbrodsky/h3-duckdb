@@ -187,9 +187,9 @@ void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
     int32_t flags = 0;
     int32_t res = resData[row];
 
-    std::vector<LatLng> outerVerts;
+    auto outerVerts = std::make_shared<std::vector<LatLng>>();
     std::vector<GeoLoop> holes;
-    std::vector<std::vector<LatLng>> holesVerts;
+    std::vector<std::shared_ptr<std::vector<LatLng>>> holesVerts;
     std::vector<H3Index> resultsTmp;
     try {
       if (IsWkb) {
@@ -198,12 +198,13 @@ void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
         DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
       }
     } catch (H3Exception ex) {
-      results.push_back(std::make_pair(false, resultsTmp));
-      continue;
+      duckdb_scalar_function_set_error(info, ex.what());
+      return;
     }
 
     if (polygon.geoloop.numVerts > 0) {
       int64_t numCells = 0;
+
       H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
       if (!err) {
         std::vector<H3Index> out(numCells);
@@ -217,6 +218,8 @@ void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
           hasData = true;
         }
       }
+    } else {
+      hasData = true;
     }
 
     results.push_back(std::make_pair(hasData, resultsTmp));

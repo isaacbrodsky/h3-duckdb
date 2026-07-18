@@ -17,7 +17,8 @@ static T ReadWkb(const std::string &input, size_t &inputIdx) {
 }
 
 void DecodeWkbGeoLoop(const std::string &input, size_t &inputIdx,
-                      std::vector<LatLng> &verts, GeoLoop &loop) {
+                      std::shared_ptr<std::vector<LatLng>> &verts,
+                      GeoLoop &loop) {
   uint32_t numVerts = ReadWkb<uint32_t>(input, inputIdx);
 
   for (uint32_t vertIdx = 0; vertIdx < numVerts; vertIdx++) {
@@ -26,17 +27,18 @@ void DecodeWkbGeoLoop(const std::string &input, size_t &inputIdx,
 
     LatLng ll = {.lat = degsToRads(lat), .lng = degsToRads(lng)};
 
-    verts.push_back(ll);
+    verts->push_back(ll);
   }
 
   loop.numVerts = numVerts;
-  loop.verts = verts.data();
+  loop.verts = verts->data();
 }
 
-void DecodeWkbPolygon(const std::string &input, GeoPolygon &polygon,
-                      std::vector<LatLng> &outerVerts,
-                      std::vector<GeoLoop> &holes,
-                      std::vector<std::vector<LatLng>> &holesVerts) {
+void DecodeWkbPolygon(
+    const std::string &input, GeoPolygon &polygon,
+    std::shared_ptr<std::vector<LatLng>> &outerVerts,
+    std::vector<GeoLoop> &holes,
+    std::vector<std::shared_ptr<std::vector<LatLng>>> &holesVerts) {
   size_t strIndex = 0;
 
   uint8_t orderMark = ReadWkb<uint8_t>(input, strIndex);
@@ -66,7 +68,7 @@ void DecodeWkbPolygon(const std::string &input, GeoPolygon &polygon,
   if (loopCount > 1) {
     for (uint32_t loopIdx = 1; loopIdx < loopCount; loopIdx++) {
       GeoLoop hole;
-      std::vector<LatLng> verts;
+      auto verts = std::make_shared<std::vector<LatLng>>();
       DecodeWkbGeoLoop(input, strIndex, verts, hole);
       holes.push_back(hole);
       holesVerts.push_back(verts);
@@ -107,7 +109,8 @@ static size_t ReadWktNumber(const std::string &str, size_t offset,
 }
 
 static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
-                             std::vector<LatLng> &verts, GeoLoop &loop) {
+                             std::shared_ptr<std::vector<LatLng>> &verts,
+                             GeoLoop &loop) {
   if (str[offset] != '(') {
     throw H3Exception("Expected ( at pos " + std::to_string(offset));
   }
@@ -121,7 +124,7 @@ static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
     offset = WktWhitespace(str, offset);
     offset = ReadWktNumber(str, offset, y);
     offset = WktWhitespace(str, offset);
-    verts.push_back({.lat = degsToRads(y), .lng = degsToRads(x)});
+    verts->push_back({.lat = degsToRads(y), .lng = degsToRads(x)});
 
     if (str[offset] == ',') {
       offset++;
@@ -131,17 +134,18 @@ static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
   // Consume the )
   offset++;
 
-  loop.numVerts = verts.size();
-  loop.verts = verts.data();
+  loop.numVerts = verts->size();
+  loop.verts = verts->data();
 
   offset = WktWhitespace(str, offset);
   return offset;
 }
 
-void DecodeWktPolygon(const std::string &str, GeoPolygon &polygon,
-                      std::vector<LatLng> &outerVerts,
-                      std::vector<GeoLoop> &holes,
-                      std::vector<std::vector<LatLng>> &holesVerts) {
+void DecodeWktPolygon(
+    const std::string &str, GeoPolygon &polygon,
+    std::shared_ptr<std::vector<LatLng>> &outerVerts,
+    std::vector<GeoLoop> &holes,
+    std::vector<std::shared_ptr<std::vector<LatLng>>> &holesVerts) {
   if (str.rfind(POLYGON, 0) != 0) {
     return;
   }
@@ -164,7 +168,7 @@ void DecodeWktPolygon(const std::string &str, GeoPolygon &polygon,
       strIndex = WktWhitespace(str, strIndex);
       if (str[strIndex] == '(') {
         GeoLoop hole;
-        std::vector<LatLng> verts;
+        auto verts = std::make_shared<std::vector<LatLng>>();
         strIndex = ReadWktGeoLoop(str, strIndex, verts, hole);
         holes.push_back(hole);
         holesVerts.push_back(verts);
