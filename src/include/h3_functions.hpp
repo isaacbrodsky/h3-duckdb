@@ -107,10 +107,10 @@ public:
     functions.push_back(GetPolygonWktToCellsVarcharFunction());
     functions.push_back(GetPolygonWkbToCellsFunction());
     functions.push_back(GetPolygonWkbToCellsVarcharFunction());
-    //    functionSets.push_back(GetPolygonWktToCellsExperimentalFunction());
-    //    functionSets.push_back(GetPolygonWktToCellsExperimentalVarcharFunction());
-    //    functionSets.push_back(GetPolygonWkbToCellsExperimentalFunction());
-    //    functionSets.push_back(GetPolygonWkbToCellsExperimentalVarcharFunction());
+    functionSets.push_back(GetPolygonWktToCellsExperimentalFunction());
+    functionSets.push_back(GetPolygonWktToCellsExperimentalVarcharFunction());
+    functionSets.push_back(GetPolygonWkbToCellsExperimentalFunction());
+    functionSets.push_back(GetPolygonWkbToCellsExperimentalVarcharFunction());
 
     return std::make_pair(functions, functionSets);
   }
@@ -202,14 +202,12 @@ private:
   static duckdb_scalar_function GetPolygonWktToCellsVarcharFunction();
   static duckdb_scalar_function GetPolygonWkbToCellsFunction();
   static duckdb_scalar_function GetPolygonWkbToCellsVarcharFunction();
-  //  static duckdb_scalar_function_set
-  //  GetPolygonWktToCellsExperimentalFunction(); static
-  //  duckdb_scalar_function_set
-  //  GetPolygonWktToCellsExperimentalVarcharFunction();
-  //  static duckdb_scalar_function_set
-  //  GetPolygonWkbToCellsExperimentalFunction(); static
-  //  duckdb_scalar_function_set
-  //  GetPolygonWkbToCellsExperimentalVarcharFunction();
+  static duckdb_scalar_function_set GetPolygonWktToCellsExperimentalFunction();
+  static duckdb_scalar_function_set
+  GetPolygonWktToCellsExperimentalVarcharFunction();
+  static duckdb_scalar_function_set GetPolygonWkbToCellsExperimentalFunction();
+  static duckdb_scalar_function_set
+  GetPolygonWkbToCellsExperimentalVarcharFunction();
 };
 
 } // namespace h3duckdb

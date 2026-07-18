@@ -8,7 +8,7 @@
 * Vertex
 * Directed Edge
 * Hierarchy
-* Regions (wip)
+* Regions
 
 | Function | Description
 | --: | ---
@@ -67,11 +67,18 @@
 | `h3_uncompact_cells` | Convert a mixed-resolution set to a single-resolution set of cells
 | `h3_cells_to_multi_polygon_wkt` | Convert a set of cells to multipolygon WKT
 | `h3_cells_to_multi_polygon_wkb` | Convert a set of cells to multipolygon WKB
+| `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells
+| `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells (returns VARCHAR)
+| `h3_polygon_wkb_to_cells` | Convert polygon WKB to a set of cells
+| `h3_polygon_wkb_to_cells_string` | Convert polygon WKB to a set of cells (returns VARCHAR)
+| `h3_polygon_wkt_to_cells_experimental` | Convert polygon WKT to a set of cells, new algorithm
+| `h3_polygon_wkt_to_cells_experimental_string` | Convert polygon WKT to a set of cells, new algorithm (returns VARCHAR)
+| `h3_polygon_wkb_to_cells_experimental` | Convert polygon WKB to a set of cells, new algorithm
+| `h3_polygon_wkb_to_cells_experimental_string` | Convert polygon WKB to a set of cells, new algorithm (returns VARCHAR)
 
 ## TODO
 
 * Traversal
-* Regions
 
 | Function | Description
 | --: | ---
@@ -87,13 +94,3 @@
 | `h3_grid_distance` | Find the grid distance between two cells
 | `h3_cell_to_local_ij` | Convert a cell ID to a local I,J coordinate space
 | `h3_local_ij_to_cell` | Convert a local I,J coordinate to a cell ID
-
-| `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells
-| `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells (returns VARCHAR)
-| `h3_polygon_wkb_to_cells` | Convert polygon WKB to a set of cells
-| `h3_polygon_wkb_to_cells_string` | Convert polygon WKB to a set of cells (returns VARCHAR)
-| `h3_polygon_wkt_to_cells_experimental` | Convert polygon WKT to a set of cells, new algorithm
-| `h3_polygon_wkt_to_cells_experimental_string` | Convert polygon WKT to a set of cells, new algorithm (returns VARCHAR)
-| `h3_polygon_wkb_to_cells_experimental` | Convert polygon WKB to a set of cells, new algorithm
-| `h3_polygon_wkb_to_cells_experimental_string` | Convert polygon WKB to a set of cells, new algorithm (returns VARCHAR)
-
