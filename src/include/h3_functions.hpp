@@ -56,10 +56,10 @@ public:
 
     // Traversal
     functionSets.push_back(GetGridDiskFunction());
-    //    functions.push_back(GetGridDiskDistancesFunction());
+    functionSets.push_back(GetGridDiskDistancesFunction());
     functionSets.push_back(GetGridDiskUnsafeFunction());
-    //    functions.push_back(GetGridDiskDistancesUnsafeFunction());
-    //    functions.push_back(GetGridDiskDistancesSafeFunction());
+    functionSets.push_back(GetGridDiskDistancesUnsafeFunction());
+    functionSets.push_back(GetGridDiskDistancesSafeFunction());
     functionSets.push_back(GetGridRingFunction());
     functionSets.push_back(GetGridRingUnsafeFunction());
     //    functions.push_back(GetGridPathCellsFunction());
@@ -151,10 +151,10 @@ private:
 
   // Traversal
   static duckdb_scalar_function_set GetGridDiskFunction();
-  //  static CreateScalarFunctionInfo GetGridDiskDistancesFunction();
+  static duckdb_scalar_function_set GetGridDiskDistancesFunction();
   static duckdb_scalar_function_set GetGridDiskUnsafeFunction();
-  //  static CreateScalarFunctionInfo GetGridDiskDistancesUnsafeFunction();
-  //  static CreateScalarFunctionInfo GetGridDiskDistancesSafeFunction();
+  static duckdb_scalar_function_set GetGridDiskDistancesUnsafeFunction();
+  static duckdb_scalar_function_set GetGridDiskDistancesSafeFunction();
   static duckdb_scalar_function_set GetGridRingFunction();
   static duckdb_scalar_function_set GetGridRingUnsafeFunction();
   //  static CreateScalarFunctionInfo GetGridPathCellsFunction();

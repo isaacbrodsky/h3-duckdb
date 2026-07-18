@@ -181,7 +181,6 @@ void GridRingFunction(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_list_vector_set_size(output, resultOffset);
 }
 
-// TODO:
 template <typename T, class Operator>
 void GridDiskDistancesGenericFunction(duckdb_function_info info,
                                       duckdb_data_chunk input,
@@ -194,6 +193,7 @@ void GridDiskDistancesGenericFunction(duckdb_function_info info,
   int32_t *kVecData = (int32_t *)duckdb_vector_get_data(kVec);
 
   idx_t totalSize = 0;
+  idx_t kSize = inputSize;
   for (idx_t row = 0; row < inputSize; ++row) {
     H3Index parent = IndexFromVector(indexVecData, row);
     auto k = kVecData[row];
@@ -204,18 +204,24 @@ void GridDiskDistancesGenericFunction(duckdb_function_info info,
 
       if (!err) {
         totalSize += currentOut;
+        kSize += k;
       }
     }
   }
 
-  duckdb_list_vector_reserve(output, totalSize);
+  duckdb_list_vector_reserve(output, kSize);
   duckdb_vector_ensure_validity_writable(output);
   duckdb_list_entry *entries =
       (duckdb_list_entry *)duckdb_vector_get_data(output);
   duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
-  T *resultData = (T *)duckdb_vector_get_data(outputChildVec);
+  duckdb_list_vector_reserve(outputChildVec, totalSize);
+  duckdb_list_entry *resultData =
+      (duckdb_list_entry *)duckdb_vector_get_data(outputChildVec);
+  duckdb_vector outputChild2Vec = duckdb_list_vector_get_child(outputChildVec);
+  T *result2Data = (T *)duckdb_vector_get_data(outputChild2Vec);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
   idx_t resultOffset = 0;
+  idx_t entriesOffset = 0;
 
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
@@ -231,19 +237,26 @@ void GridDiskDistancesGenericFunction(duckdb_function_info info,
         std::vector<int32_t> distances(sz);
         H3Error err2 = Operator::fn(parent, k, out.data(), distances.data());
         if (!err2) {
-          idx_t actualCount = 0;
-          for (idx_t j = 0; j < out.size(); ++j) {
-            if (out[j]) {
-              AssignHexString(outputChildVec, resultData,
-                              resultOffset + actualCount, out[j]);
-              actualCount++;
+          for (idx_t dist = 0; dist <= k; ++dist) {
+            idx_t actualCount = 0;
+
+            for (idx_t j = 0; j < out.size(); ++j) {
+              if (out[j] && distances[j] == dist) {
+                AssignHexString(outputChild2Vec, result2Data,
+                                resultOffset + actualCount, out[j]);
+                actualCount++;
+              }
             }
+            resultData[row + dist].offset = resultOffset;
+            resultData[row + dist].length = actualCount;
+
+            resultOffset += actualCount;
           }
 
-          entries[row].offset = resultOffset;
-          entries[row].length = actualCount;
-          resultOffset += actualCount;
+          entries[row].offset = entriesOffset;
+          entries[row].length = k + 1;
           wasValid = true;
+          entriesOffset += k + 1;
         }
       }
     }
@@ -253,7 +266,8 @@ void GridDiskDistancesGenericFunction(duckdb_function_info info,
     }
   }
 
-  duckdb_list_vector_set_size(output, resultOffset);
+  duckdb_list_vector_set_size(outputChildVec, resultOffset);
+  duckdb_list_vector_set_size(output, entriesOffset);
 }
 
 // template <class Fn>
@@ -614,6 +628,7 @@ duckdb_scalar_function_set H3Functions::GetGridDiskFunction() {
     duckdb_destroy_scalar_function(&function);
 
     duckdb_destroy_logical_type(&logicalType);
+    duckdb_destroy_logical_type(&logicalListType);
   };
 
   r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
@@ -638,23 +653,115 @@ duckdb_scalar_function H3Functions::GetMaxGridDiskSizeFunction() {
   return function;
 }
 
-// CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesFunction() {
-//  ScalarFunctionSet funcs("h3_grid_disk_distances");
-//  funcs.AddFunction(
-//      ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
-//                     LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-//                     GridDiskDistancesTmplFunction<GridDiskDistancesOperator>));
-//  funcs.AddFunction(
-//      ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
-//                     LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
-//                     GridDiskDistancesTmplFunction<GridDiskDistancesOperator>));
-//  funcs.AddFunction(ScalarFunction(
-//      {LogicalType::VARCHAR, LogicalType::INTEGER},
-//      LogicalType::LIST(LogicalType::LIST(LogicalType::VARCHAR)),
-//      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesOperator>));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
+duckdb_scalar_function_set H3Functions::GetGridDiskDistancesFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_grid_disk_distances");
+
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+
+  auto r = [&functionSet, &intType]<typename PhysicalType>(duckdb_type typeId) {
+    auto logicalType = duckdb_create_logical_type(typeId);
+    auto logicalListType = duckdb_create_list_type(logicalType);
+    auto logicalListListType = duckdb_create_list_type(logicalListType);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_grid_disk_distances");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, logicalListListType);
+    duckdb_scalar_function_set_function(
+        function, GridDiskDistancesGenericFunction<PhysicalType,
+                                                   GridDiskDistancesOperator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+    duckdb_destroy_logical_type(&logicalListType);
+    duckdb_destroy_logical_type(&logicalListListType);
+  };
+
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&intType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetGridDiskDistancesUnsafeFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_grid_disk_distances_unsafe");
+
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+
+  auto r = [&functionSet, &intType]<typename PhysicalType>(duckdb_type typeId) {
+    auto logicalType = duckdb_create_logical_type(typeId);
+    auto logicalListType = duckdb_create_list_type(logicalType);
+    auto logicalListListType = duckdb_create_list_type(logicalListType);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_grid_disk_distances_unsafe");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, logicalListListType);
+    duckdb_scalar_function_set_function(
+        function,
+        GridDiskDistancesGenericFunction<PhysicalType,
+                                         GridDiskDistancesUnsafeOperator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+    duckdb_destroy_logical_type(&logicalListType);
+    duckdb_destroy_logical_type(&logicalListListType);
+  };
+
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&intType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetGridDiskDistancesSafeFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_grid_disk_distances_safe");
+
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+
+  auto r = [&functionSet, &intType]<typename PhysicalType>(duckdb_type typeId) {
+    auto logicalType = duckdb_create_logical_type(typeId);
+    auto logicalListType = duckdb_create_list_type(logicalType);
+    auto logicalListListType = duckdb_create_list_type(logicalListType);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_grid_disk_distances_safe");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, logicalListListType);
+    duckdb_scalar_function_set_function(
+        function,
+        GridDiskDistancesGenericFunction<PhysicalType,
+                                         GridDiskDistancesSafeOperator>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+    duckdb_destroy_logical_type(&logicalListType);
+    duckdb_destroy_logical_type(&logicalListListType);
+  };
+
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&intType);
+
+  return functionSet;
+}
 
 duckdb_scalar_function_set H3Functions::GetGridDiskUnsafeFunction() {
   duckdb_scalar_function_set functionSet =
@@ -678,6 +785,7 @@ duckdb_scalar_function_set H3Functions::GetGridDiskUnsafeFunction() {
     duckdb_destroy_scalar_function(&function);
 
     duckdb_destroy_logical_type(&logicalType);
+    duckdb_destroy_logical_type(&logicalListType);
   };
 
   r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
@@ -688,41 +796,7 @@ duckdb_scalar_function_set H3Functions::GetGridDiskUnsafeFunction() {
 
   return functionSet;
 }
-//
-// CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesUnsafeFunction() {
-//  ScalarFunctionSet funcs("h3_grid_disk_distances_unsafe");
-//  funcs.AddFunction(ScalarFunction(
-//      {LogicalType::UBIGINT, LogicalType::INTEGER},
-//      LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-//      GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
-//  funcs.AddFunction(ScalarFunction(
-//      {LogicalType::BIGINT, LogicalType::INTEGER},
-//      LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
-//      GridDiskDistancesTmplFunction<GridDiskDistancesUnsafeOperator>));
-//  funcs.AddFunction(ScalarFunction(
-//      {LogicalType::VARCHAR, LogicalType::INTEGER},
-//      LogicalType::LIST(LogicalType::LIST(LogicalType::VARCHAR)),
-//      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesUnsafeOperator>));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
-// CreateScalarFunctionInfo H3Functions::GetGridDiskDistancesSafeFunction() {
-//  ScalarFunctionSet funcs("h3_grid_disk_distances_safe");
-//  funcs.AddFunction(ScalarFunction(
-//      {LogicalType::UBIGINT, LogicalType::INTEGER},
-//      LogicalType::LIST(LogicalType::LIST(LogicalType::UBIGINT)),
-//      GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
-//  funcs.AddFunction(ScalarFunction(
-//      {LogicalType::BIGINT, LogicalType::INTEGER},
-//      LogicalType::LIST(LogicalType::LIST(LogicalType::BIGINT)),
-//      GridDiskDistancesTmplFunction<GridDiskDistancesSafeOperator>));
-//  funcs.AddFunction(ScalarFunction(
-//      {LogicalType::VARCHAR, LogicalType::INTEGER},
-//      LogicalType::LIST(LogicalType::LIST(LogicalType::VARCHAR)),
-//      GridDiskDistancesTmplVarcharFunction<GridDiskDistancesSafeOperator>));
-//  return CreateScalarFunctionInfo(funcs);
-//}
-//
+
 duckdb_scalar_function_set H3Functions::GetGridRingFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_grid_ring");
