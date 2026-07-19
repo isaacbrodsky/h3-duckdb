@@ -1,6 +1,5 @@
 
 #include "well_known_encoder.hpp"
-#include "h3_common.hpp"
 #include "h3api.h"
 #include <cassert>
 
@@ -70,11 +69,11 @@ void WktEncoder::StartLineString() { buffer = "LINESTRING ("; }
 
 void WktEncoder::Point(double lng, double lat) {
   auto sep = firstPoint ? "" : ", ";
-  buffer += sep;
-  AppendDouble(buffer, lng);
-  buffer += " ";
-  AppendDouble(buffer, lat);
+  char buf[100] = {0};
+  // TODO: Switch away from fixed format to minimize generated WKT
+  auto n = snprintf(buf, sizeof(buf), "%s%.6f %.6f", sep, lng, lat);
   firstPoint = false;
+  buffer += std::string(buf, n);
 }
 
 void WktEncoder::EndLineString() { buffer += ")"; }

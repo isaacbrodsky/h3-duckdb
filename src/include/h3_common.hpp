@@ -139,8 +139,6 @@ duckdb_scalar_function_set GetGenericInspectFunction(const char *name,
   return functionSet;
 }
 
-void AppendDouble(std::string &str, double d);
-
 class H3Exception : public std::runtime_error {
 public:
   H3Exception(std::string err) : std::runtime_error(err){};

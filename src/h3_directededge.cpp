@@ -12,6 +12,7 @@ void DirectedEdgeToCellsFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   duckdb_list_vector_reserve(output, inputSize * 2);
   duckdb_vector_ensure_validity_writable(output);
@@ -25,25 +26,27 @@ void DirectedEdgeToCellsFunction(duckdb_function_info info,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index cell = IndexFromVector(indexVecData, row);
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
 
-    if (cell) {
-      std::vector<H3Index> out(2);
-      H3Error err = directedEdgeToCells(cell, out.data());
-      if (!err) {
-        idx_t actualCount = 0;
-        for (idx_t j = 0; j < out.size(); ++j) {
-          if (out[j]) {
-            AssignHexString(outputChildVec, resultData,
-                            resultOffset + actualCount, out[j]);
-            actualCount++;
+      if (cell) {
+        std::vector<H3Index> out(2);
+        H3Error err = directedEdgeToCells(cell, out.data());
+        if (!err) {
+          idx_t actualCount = 0;
+          for (idx_t j = 0; j < out.size(); ++j) {
+            if (out[j]) {
+              AssignHexString(outputChildVec, resultData,
+                              resultOffset + actualCount, out[j]);
+              actualCount++;
+            }
           }
-        }
 
-        entries[row].offset = resultOffset;
-        entries[row].length = actualCount;
-        resultOffset += actualCount;
-        wasValid = true;
+          entries[row].offset = resultOffset;
+          entries[row].length = actualCount;
+          resultOffset += actualCount;
+          wasValid = true;
+        }
       }
     }
 
@@ -63,6 +66,7 @@ void OriginToDirectedEdgesFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   duckdb_list_vector_reserve(output, inputSize * 6);
   duckdb_vector_ensure_validity_writable(output);
@@ -76,25 +80,27 @@ void OriginToDirectedEdgesFunction(duckdb_function_info info,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index cell = IndexFromVector(indexVecData, row);
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
 
-    if (cell) {
-      std::vector<H3Index> out(6);
-      H3Error err = originToDirectedEdges(cell, out.data());
-      if (!err) {
-        idx_t actualCount = 0;
-        for (idx_t j = 0; j < out.size(); ++j) {
-          if (out[j]) {
-            AssignHexString(outputChildVec, resultData,
-                            resultOffset + actualCount, out[j]);
-            actualCount++;
+      if (cell) {
+        std::vector<H3Index> out(6);
+        H3Error err = originToDirectedEdges(cell, out.data());
+        if (!err) {
+          idx_t actualCount = 0;
+          for (idx_t j = 0; j < out.size(); ++j) {
+            if (out[j]) {
+              AssignHexString(outputChildVec, resultData,
+                              resultOffset + actualCount, out[j]);
+              actualCount++;
+            }
           }
-        }
 
-        entries[row].offset = resultOffset;
-        entries[row].length = actualCount;
-        resultOffset += actualCount;
-        wasValid = true;
+          entries[row].offset = resultOffset;
+          entries[row].length = actualCount;
+          resultOffset += actualCount;
+          wasValid = true;
+        }
       }
     }
 
@@ -114,20 +120,27 @@ void GetDirectedEdgeOriginOrDestinationFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   duckdb_vector_ensure_validity_writable(output);
   T *resultData = (T *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(indexVecData, row);
-    H3Index out;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      H3Index out;
 
-    H3Error err = IsDestination ? getDirectedEdgeDestination(index, &out)
-                                : getDirectedEdgeOrigin(index, &out);
-    if (!err) {
-      AssignHexString(output, resultData, row, out);
-    } else {
+      H3Error err = IsDestination ? getDirectedEdgeDestination(index, &out)
+                                  : getDirectedEdgeOrigin(index, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -141,22 +154,31 @@ void CellsToDirectedEdgeFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector index2Vec = duckdb_data_chunk_get_vector(input, 1);
   T *index2VecData = (T *)duckdb_vector_get_data(index2Vec);
+  uint64_t *indexVec2Validity = duckdb_vector_get_validity(index2Vec);
 
   duckdb_vector_ensure_validity_writable(output);
   T *resultData = (T *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(indexVecData, row);
-    H3Index index2 = IndexFromVector(index2VecData, row);
-    H3Index out;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(indexVec2Validity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      H3Index index2 = IndexFromVector(index2VecData, row);
+      H3Index out;
 
-    H3Error err = cellsToDirectedEdge(index, index2, &out);
-    if (!err) {
-      AssignHexString(output, resultData, row, out);
-    } else {
+      H3Error err = cellsToDirectedEdge(index, index2, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -170,19 +192,26 @@ void ReverseDirectedEdgeFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   duckdb_vector_ensure_validity_writable(output);
   T *resultData = (T *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(indexVecData, row);
-    H3Index out;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      H3Index out;
 
-    H3Error err = reverseDirectedEdge(index, &out);
-    if (!err) {
-      AssignHexString(output, resultData, row, out);
-    } else {
+      H3Error err = reverseDirectedEdge(index, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -195,22 +224,31 @@ void AreNeighborCellsFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector index2Vec = duckdb_data_chunk_get_vector(input, 1);
   T *index2VecData = (T *)duckdb_vector_get_data(index2Vec);
+  uint64_t *indexVec2Validity = duckdb_vector_get_validity(index2Vec);
 
   duckdb_vector_ensure_validity_writable(output);
   bool *resultData = (bool *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(indexVecData, row);
-    H3Index index2 = IndexFromVector(index2VecData, row);
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(indexVec2Validity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      H3Index index2 = IndexFromVector(index2VecData, row);
 
-    int out;
-    H3Error err = areNeighborCells(index, index2, &out);
-    if (!err) {
-      resultData[row] = out;
-    } else {
+      int out;
+      H3Error err = areNeighborCells(index, index2, &out);
+      if (!err) {
+        resultData[row] = out;
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -236,26 +274,28 @@ void DirectedEdgeToBoundaryFunction(duckdb_function_info info,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index cell = IndexFromVector(indexVecData, row);
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
 
-    if (cell) {
-      CellBoundary boundary;
-      H3Error err = directedEdgeToBoundary(cell, &boundary);
-      if (!err) {
-        auto enc = Encoder();
-        enc.StartLineString();
-        for (int i = 0; i <= boundary.numVerts; i++) {
-          // Add an extra vertex onto the end to close the polygon
-          int vertIndex = (i == boundary.numVerts) ? 0 : i;
-          enc.Point(radsToDegs(boundary.verts[vertIndex].lng),
-                    radsToDegs(boundary.verts[vertIndex].lat));
+      if (cell) {
+        CellBoundary boundary;
+        H3Error err = directedEdgeToBoundary(cell, &boundary);
+        if (!err) {
+          auto enc = Encoder();
+          enc.StartLineString();
+          for (int i = 0; i <= boundary.numVerts; i++) {
+            // Add an extra vertex onto the end to close the polygon
+            int vertIndex = (i == boundary.numVerts) ? 0 : i;
+            enc.Point(radsToDegs(boundary.verts[vertIndex].lng),
+                      radsToDegs(boundary.verts[vertIndex].lat));
+          }
+          enc.EndLineString();
+          auto str = enc.Finish();
+
+          duckdb_vector_assign_string_element_len(output, row, str.c_str(),
+                                                  str.size());
+          wasValid = true;
         }
-        enc.EndLineString();
-        auto str = enc.Finish();
-
-        duckdb_vector_assign_string_element_len(output, row, str.c_str(),
-                                                str.size());
-        wasValid = true;
       }
     }
 
