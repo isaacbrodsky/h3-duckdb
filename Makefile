@@ -39,21 +39,3 @@ format:
 
 format-fix:
 	python3 duckdb/scripts/format.py --all --fix --noconfirm --directories src test
-
-#### Clang Tidy
-ifneq ($(TIDY_THREADS),)
-	TIDY_THREAD_PARAMETER := -j ${TIDY_THREADS}
-endif
-ifneq ($(TIDY_BINARY),)
-	TIDY_BINARY_PARAMETER := -clang-tidy-binary ${TIDY_BINARY}
-endif
-ifneq ($(TIDY_CHECKS),)
-        TIDY_PERFORM_CHECKS := '-checks=${TIDY_CHECKS}'
-endif
-
-tidy-check:
-	mkdir -p ./build/tidy
-	cmake -DEXTENSION_NAME=${EXTENSION_NAME} -S . -B build/tidy
-	cp duckdb/.clang-tidy build/tidy/.clang-tidy
-	cd build/tidy && python3 ../../duckdb/scripts/run-clang-tidy.py '../../src/.*' -header-filter '../../src/include/.*' -quiet ${TIDY_THREAD_PARAMETER} ${TIDY_BINARY_PARAMETER} ${TIDY_PERFORM_CHECKS}
-
