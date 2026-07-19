@@ -180,6 +180,7 @@ void GetNumCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
   }
 }
 
+template <typename T>
 void GetRes0CellsFunction(duckdb_function_info info, duckdb_data_chunk input,
                           duckdb_vector output) {
   idx_t inputSize = duckdb_data_chunk_get_size(input);
@@ -191,7 +192,7 @@ void GetRes0CellsFunction(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_list_entry *entries =
       (duckdb_list_entry *)duckdb_vector_get_data(output);
   duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
-  uint64_t *resultData = (uint64_t *)duckdb_vector_get_data(outputChildVec);
+  T *resultData = (T *)duckdb_vector_get_data(outputChildVec);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
   idx_t resultOffset = 0;
 
@@ -203,7 +204,7 @@ void GetRes0CellsFunction(duckdb_function_info info, duckdb_data_chunk input,
 
     if (!err) {
       for (idx_t i = 0; i < sz; ++i) {
-        resultData[resultOffset + i] = out[i];
+        AssignHexString(outputChildVec, resultData, resultOffset + i, out[i]);
       }
       entries[row].offset = resultOffset;
       entries[row].length = sz;
@@ -222,49 +223,7 @@ void GetRes0CellsFunction(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_list_vector_set_size(output, resultOffset);
 }
 
-void GetRes0CellsVarcharFunction(duckdb_function_info info,
-                                 duckdb_data_chunk input,
-                                 duckdb_vector output) {
-  idx_t inputSize = duckdb_data_chunk_get_size(input);
-
-  int sz = res0CellCount();
-
-  duckdb_list_vector_reserve(output, inputSize * sz);
-  duckdb_vector_ensure_validity_writable(output);
-  duckdb_list_entry *entries =
-      (duckdb_list_entry *)duckdb_vector_get_data(output);
-  duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
-  uint64_t *resultValidity = duckdb_vector_get_validity(output);
-  idx_t resultOffset = 0;
-
-  std::vector<H3Index> out(sz);
-  H3Error err = getRes0Cells(out.data());
-
-  for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
-
-    if (!err) {
-      for (idx_t i = 0; i < sz; ++i) {
-        std::string resultStr = ToHexString(out[i]);
-        duckdb_vector_assign_string_element_len(
-            outputChildVec, resultOffset + i, resultStr.c_str(),
-            resultStr.size());
-      }
-      entries[row].offset = resultOffset;
-      entries[row].length = sz;
-      resultOffset += sz;
-      wasValid = true;
-    }
-
-    if (!wasValid) {
-      // TODO: This should be unreachable
-      entries[row].offset = resultOffset;
-      entries[row].length = 0;
-      duckdb_validity_set_row_invalid(resultValidity, row);
-    }
-  }
-}
-
+template <typename T>
 void GetPentagonsFunction(duckdb_function_info info, duckdb_data_chunk input,
                           duckdb_vector output) {
   idx_t inputSize = duckdb_data_chunk_get_size(input);
@@ -279,7 +238,7 @@ void GetPentagonsFunction(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_list_entry *entries =
       (duckdb_list_entry *)duckdb_vector_get_data(output);
   duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
-  uint64_t *resultData = (uint64_t *)duckdb_vector_get_data(outputChildVec);
+  T *resultData = (T *)duckdb_vector_get_data(outputChildVec);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
   idx_t resultOffset = 0;
 
@@ -291,7 +250,7 @@ void GetPentagonsFunction(duckdb_function_info info, duckdb_data_chunk input,
 
     if (!err) {
       for (idx_t i = 0; i < sz; ++i) {
-        resultData[resultOffset + i] = out[i];
+        AssignHexString(outputChildVec, resultData, resultOffset + i, out[i]);
       }
       entries[row].offset = resultOffset;
       entries[row].length = sz;
@@ -495,7 +454,7 @@ duckdb_scalar_function H3Functions::GetGetRes0CellsFunction() {
   duckdb_scalar_function_set_return_type(function, ubigintListType);
   duckdb_destroy_logical_type(&ubigintListType);
   duckdb_destroy_logical_type(&ubigintType);
-  duckdb_scalar_function_set_function(function, GetRes0CellsFunction);
+  duckdb_scalar_function_set_function(function, GetRes0CellsFunction<uint64_t>);
   return function;
 }
 
@@ -508,7 +467,8 @@ duckdb_scalar_function H3Functions::GetGetRes0CellsVarcharFunction() {
   duckdb_scalar_function_set_return_type(function, varcharListType);
   duckdb_destroy_logical_type(&varcharListType);
   duckdb_destroy_logical_type(&varcharType);
-  duckdb_scalar_function_set_function(function, GetRes0CellsVarcharFunction);
+  duckdb_scalar_function_set_function(function,
+                                      GetRes0CellsFunction<duckdb_string_t>);
   return function;
 }
 
@@ -523,7 +483,7 @@ duckdb_scalar_function H3Functions::GetGetPentagonsFunction() {
   duckdb_scalar_function_set_return_type(function, ubigintListType);
   duckdb_destroy_logical_type(&ubigintListType);
   duckdb_destroy_logical_type(&ubigintType);
-  duckdb_scalar_function_set_function(function, GetPentagonsFunction);
+  duckdb_scalar_function_set_function(function, GetPentagonsFunction<uint64_t>);
   return function;
 }
 
@@ -538,7 +498,8 @@ duckdb_scalar_function H3Functions::GetGetPentagonsVarcharFunction() {
   duckdb_scalar_function_set_return_type(function, varcharListType);
   duckdb_destroy_logical_type(&varcharListType);
   duckdb_destroy_logical_type(&varcharType);
-  duckdb_scalar_function_set_function(function, GetPentagonsVarcharFunction);
+  duckdb_scalar_function_set_function(function,
+                                      GetPentagonsFunction<duckdb_string_t>);
   return function;
 }
 

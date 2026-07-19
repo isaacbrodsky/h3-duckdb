@@ -286,7 +286,8 @@ duckdb_scalar_function_set H3Functions::GetH3ToStringFunction() {
     duckdb_scalar_function_set_name(function, "h3_h3_to_string");
     duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_set_return_type(function, varcharType);
-    duckdb_scalar_function_set_function(function, H3ToStringFunction<int64_t>);
+    duckdb_scalar_function_set_function(function,
+                                        H3ToStringFunction<PhysicalType>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
 

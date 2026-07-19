@@ -294,6 +294,7 @@ void PolygonWktOrWkbToCellsExperimentalFunction(duckdb_function_info info,
     }
 
     results.push_back(std::make_pair(hasData, resultsTmp));
+    outputReserveSize += resultsTmp.size();
   }
 
   duckdb_list_vector_reserve(output, outputReserveSize);

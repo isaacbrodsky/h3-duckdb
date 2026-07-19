@@ -23,6 +23,7 @@ void AppendDouble(std::string &str, double d) {
   // TODO: Switch away from fixed format to minimize generated WKT
   auto res =
       std::to_chars(buf, buf + sizeof(buf), d, std::chars_format::fixed, 6);
+  // TODO: Check res.ec
   str.append(buf, res.ptr);
 }
 

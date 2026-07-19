@@ -63,12 +63,12 @@ set(ENABLE_FORMAT
     OFF
     CACHE BOOL "" FORCE)
 
-# Build the core library as static TODO: Is this needed? Consider restoring
-# correctly
 # Hide symbols
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
-set(VISIBILITY_INLINES_HIDDEN ON)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+# Build the core library as static TODO: Is this needed? Consider restoring
+# correctly
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(h3)
 if(WIN32)
