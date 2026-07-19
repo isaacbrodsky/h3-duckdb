@@ -55,5 +55,5 @@ tidy-check:
 	mkdir -p ./build/tidy
 	cmake -DEXTENSION_NAME=${EXTENSION_NAME} -S . -B build/tidy
 	cp duckdb/.clang-tidy build/tidy/.clang-tidy
-	cd build/tidy && python3 ../../duckdb/scripts/run-clang-tidy.py '../../src/' -header-filter '../../src/include/' -quiet ${TIDY_THREAD_PARAMETER} ${TIDY_BINARY_PARAMETER} ${TIDY_PERFORM_CHECKS}
+	cd build/tidy && python3 ../../duckdb/scripts/run-clang-tidy.py '../../src/.*' -header-filter '../../src/include/.*' -quiet ${TIDY_THREAD_PARAMETER} ${TIDY_BINARY_PARAMETER} ${TIDY_PERFORM_CHECKS}
 
