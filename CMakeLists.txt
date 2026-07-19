@@ -67,6 +67,9 @@ set(ENABLE_FORMAT
 # correctly
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(h3)
+if(WIN32)
+    set_target_properties(h3 PROPERTIES ARCHIVE_OUTPUT_NAME h3_static)
+endif()
 
 # Create Extension library
 set(EXTENSION_SOURCES
