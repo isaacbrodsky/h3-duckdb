@@ -3,6 +3,7 @@
 
 #include "h3_common.hpp"
 #include <vector>
+#include <memory>
 
 namespace h3duckdb {
 
