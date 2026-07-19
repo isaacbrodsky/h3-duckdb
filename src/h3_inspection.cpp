@@ -28,7 +28,6 @@ void GetIndexDigitFunction(duckdb_function_info info, duckdb_data_chunk input,
   for (idx_t row = 0; row < inputSize; ++row) {
     auto index = IndexFromVector(indexVecData, row);
     auto digit = digitVecData[row];
-    H3Index cell;
 
     int out;
     H3Error err = getIndexDigit(index, digit, &out);

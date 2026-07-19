@@ -218,6 +218,8 @@ void GetRes0CellsFunction(duckdb_function_info info, duckdb_data_chunk input,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+
+  duckdb_list_vector_set_size(output, resultOffset);
 }
 
 void GetRes0CellsVarcharFunction(duckdb_function_info info,
@@ -301,6 +303,8 @@ void GetPentagonsFunction(duckdb_function_info info, duckdb_data_chunk input,
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+
+  duckdb_list_vector_set_size(output, resultOffset);
 }
 
 void GetPentagonsVarcharFunction(duckdb_function_info info,

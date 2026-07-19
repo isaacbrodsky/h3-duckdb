@@ -162,7 +162,7 @@ void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
       } else {
         DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
       }
-    } catch (H3Exception ex) {
+    } catch (const H3Exception &ex) {
       duckdb_scalar_function_set_error(info, ex.what());
       return;
     }
@@ -188,6 +188,7 @@ void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
     }
 
     results.push_back(std::make_pair(hasData, resultsTmp));
+    outputReserveSize += resultsTmp.size();
   }
 
   duckdb_list_vector_reserve(output, outputReserveSize);
@@ -256,7 +257,7 @@ void PolygonWktOrWkbToCellsExperimentalFunction(duckdb_function_info info,
       } else {
         DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
       }
-    } catch (H3Exception ex) {
+    } catch (const H3Exception &ex) {
       duckdb_scalar_function_set_error(info, ex.what());
       return;
     }

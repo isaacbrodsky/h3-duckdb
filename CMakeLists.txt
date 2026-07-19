@@ -65,6 +65,10 @@ set(ENABLE_FORMAT
 
 # Build the core library as static TODO: Is this needed? Consider restoring
 # correctly
+# Hide symbols
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(VISIBILITY_INLINES_HIDDEN ON)
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(h3)
 if(WIN32)
@@ -99,13 +103,6 @@ else()
 endif()
 
 set_target_properties(${EXTENSION_TARGET_NAME} PROPERTIES OUTPUT_NAME ${EXTENSION_NAME})
-
-# Hide symbols
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_C_VISIBILITY_PRESET hidden)
-set(VISIBILITY_INLINES_HIDDEN ON)
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
 # Include own headers
 target_include_directories(${EXTENSION_TARGET_NAME} PRIVATE src/include)

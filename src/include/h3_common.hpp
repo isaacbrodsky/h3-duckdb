@@ -31,15 +31,15 @@ template <typename T> inline H3Index IndexFromVector(T *data, idx_t idx) {
                 "T must be duckdb_string_t, uint64_t, or int64_t");
   constexpr auto IsStringT = std::is_same<T, duckdb_string_t>::value;
   H3Index cell;
-  if (IsStringT) {
-    auto str = (duckdb_string_t *)&data[idx];
+  if constexpr (IsStringT) {
+    auto str = static_cast<duckdb_string_t *>(&data[idx]);
     auto str2 = DuckdbToString(str);
     H3Error err = stringToH3(str2.c_str(), &cell);
     if (err) {
       cell = 0;
     }
   } else {
-    cell = ((uint64_t *)data)[idx];
+    cell = data[idx];
   }
   return cell;
 }
@@ -53,12 +53,12 @@ inline void AssignHexString(duckdb_vector &output, T *resultData, idx_t row,
                 "T must be duckdb_string_t, uint64_t, or int64_t");
   constexpr auto IsStringT = std::is_same<T, duckdb_string_t>::value;
 
-  if (IsStringT) {
+  if constexpr (IsStringT) {
     auto str = ToHexString(out);
     duckdb_vector_assign_string_element_len(output, row, str.c_str(),
                                             str.size());
   } else {
-    ((uint64_t *)resultData)[row] = out;
+    resultData[row] = out;
   }
 }
 
@@ -139,7 +139,7 @@ duckdb_scalar_function_set GetGenericInspectFunction(const char *name,
   return functionSet;
 }
 
-void ThrowH3Error(H3Error err);
+void AppendDouble(std::string &str, double d);
 
 class H3Exception : public std::runtime_error {
 public:

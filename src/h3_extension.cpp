@@ -13,7 +13,6 @@ DUCKDB_EXTENSION_ENTRYPOINT(duckdb_connection connection,
   //                         H3_VERSION_MAJOR, H3_VERSION_MINOR,
   //                         H3_VERSION_PATCH);
   //  loader.SetDescription(description);
-  // loader.SetDescription("Lua embedded scripting language, " LUA_RELEASE);
   // TODO: Set extension version
 
   auto functionsAndFunctionSets = h3duckdb::H3Functions::GetFunctions();

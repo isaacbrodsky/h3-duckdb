@@ -247,8 +247,8 @@ void GridDiskDistancesGenericFunction(duckdb_function_info info,
                 actualCount++;
               }
             }
-            resultData[row + dist].offset = resultOffset;
-            resultData[row + dist].length = actualCount;
+            resultData[entriesOffset + dist].offset = resultOffset;
+            resultData[entriesOffset + dist].length = actualCount;
 
             resultOffset += actualCount;
           }
@@ -531,6 +531,7 @@ duckdb_scalar_function H3Functions::GetMaxGridDiskSizeFunction() {
   duckdb_scalar_function_add_parameter(function, intType);
   duckdb_scalar_function_set_return_type(function, bigintType);
   duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&intType);
   duckdb_scalar_function_set_function(function, MaxGridDiskSizeFunction);
   return function;
 }

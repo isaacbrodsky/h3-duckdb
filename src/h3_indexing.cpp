@@ -112,15 +112,15 @@ void CellToLatOrLngFunction(duckdb_function_info info, duckdb_data_chunk input,
 
     if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
       H3Index cell;
-      if (IsStringT) {
-        auto str = (duckdb_string_t *)&indexVecData[row];
+      if constexpr (IsStringT) {
+        auto str = static_cast<duckdb_string_t *>(&indexVecData[row]);
         auto strStr = DuckdbToString(str);
         H3Error err = stringToH3(strStr.c_str(), &cell);
         if (err) {
           cell = 0;
         }
       } else {
-        cell = ((uint64_t *)indexVecData)[row];
+        cell = indexVecData[row];
       }
 
       if (cell) {
