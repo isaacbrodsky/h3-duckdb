@@ -2,6 +2,8 @@
 
 #include <sstream>
 
+#include "test.cpp"
+
 namespace h3duckdb {
 
 std::string ToHexString(H3Index index) {
