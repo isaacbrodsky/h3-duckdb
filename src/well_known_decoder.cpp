@@ -11,7 +11,7 @@ static T ReadWkb(const std::string &input, size_t &inputIdx) {
                       std::to_string(inputIdx));
   }
 
-  T *resultPtr = (T *)((uint8_t *)input.size() + inputIdx);
+  T *resultPtr = (T *)((uint8_t *)input.data() + inputIdx);
   inputIdx += sizeof(T);
   return *resultPtr;
 }
@@ -54,7 +54,7 @@ void DecodeWkbPolygon(
     return; // EMPTY
   }
   if (type != 3) {
-    throw H3Exception("Invalid WKB: expected polygon at %lu" +
+    throw H3Exception("Invalid WKB: expected polygon at " +
                       std::to_string(strIndex));
   }
 

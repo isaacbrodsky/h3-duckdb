@@ -16,6 +16,7 @@
 DUCKDB_EXTENSION_EXTERN
 
 #include <string>
+#include <stdexcept>
 
 namespace h3duckdb {
 

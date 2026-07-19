@@ -262,9 +262,15 @@ void PolygonWktOrWkbToCellsExperimentalFunction(duckdb_function_info info,
     }
 
     uint32_t flags = StringToFlags(flagsStr);
+    if (flags == UINT32_MAX) {
+      duckdb_scalar_function_set_error(
+          info, "Invalid mode, should be one of: 'center', 'full', 'overlap', "
+                "'overlap_bbox'");
+      return;
+    }
 
     // Invalid flags input
-    if (polygon.geoloop.numVerts > 0 && flags != UINT32_MAX) {
+    if (polygon.geoloop.numVerts > 0) {
       int64_t numCells = 0;
 
       H3Error err =
