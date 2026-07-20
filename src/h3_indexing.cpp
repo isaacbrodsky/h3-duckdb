@@ -111,17 +111,7 @@ void CellToLatOrLngFunction(duckdb_function_info info, duckdb_data_chunk input,
     bool wasValid = false;
 
     if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
-      H3Index cell;
-      if constexpr (IsStringT) {
-        auto str = static_cast<duckdb_string_t *>(&indexVecData[row]);
-        auto strStr = DuckdbToString(str);
-        H3Error err = stringToH3(strStr.c_str(), &cell);
-        if (err) {
-          cell = 0;
-        }
-      } else {
-        cell = indexVecData[row];
-      }
+      H3Index cell = IndexFromVector(indexVecData, row);
 
       if (cell) {
         LatLng latLng;
