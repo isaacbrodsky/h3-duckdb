@@ -382,7 +382,7 @@ void GreatCircleDistanceFunction(duckdb_function_info info,
   uint64_t *lat1VecValidity = duckdb_vector_get_validity(lat1Vec);
   duckdb_vector lng1Vec = duckdb_data_chunk_get_vector(input, 3);
   double *lng1VecData = (double *)duckdb_vector_get_data(lng1Vec);
-  uint64_t *lng1VecValidity = duckdb_vector_get_validity(lat1Vec);
+  uint64_t *lng1VecValidity = duckdb_vector_get_validity(lng1Vec);
   duckdb_vector unitVec = duckdb_data_chunk_get_vector(input, 4);
   duckdb_string_t *unitVecData =
       (duckdb_string_t *)duckdb_vector_get_data(unitVec);

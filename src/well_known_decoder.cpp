@@ -85,7 +85,7 @@ static const std::string POLYGON = "POLYGON";
 static const std::string EMPTY = "EMPTY";
 
 static size_t WktWhitespace(const std::string &str, size_t offset) {
-  while (str[offset] == ' ') {
+  while (offset < str.size() && str[offset] == ' ') {
     offset++;
   }
   return offset;
@@ -94,6 +94,11 @@ static size_t WktWhitespace(const std::string &str, size_t offset) {
 static size_t ReadWktNumber(const std::string &str, size_t offset,
                             double &num) {
   size_t start = offset;
+  if (offset >= str.size()) {
+    throw H3Exception(
+        std::string("Invalid WKT: failed to read number around ") +
+        std::to_string(offset));
+  }
   while (str[offset] != ' ' && str[offset] != ')' && str[offset] != ',') {
     offset++;
   }
@@ -102,7 +107,7 @@ static size_t ReadWktNumber(const std::string &str, size_t offset,
   try {
     num = std::stod(part);
     return offset;
-  } catch (std::invalid_argument const &ex) {
+  } catch (std::exception const &ex) {
     throw H3Exception("Invalid number around " + std::to_string(start) + ", " +
                       std::to_string(offset));
   }
@@ -111,6 +116,11 @@ static size_t ReadWktNumber(const std::string &str, size_t offset,
 static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
                              std::shared_ptr<std::vector<LatLng>> &verts,
                              GeoLoop &loop) {
+  if (offset >= str.size()) {
+    throw H3Exception(
+        std::string("Invalid WKT: failed to read geoloop around ") +
+        std::to_string(offset));
+  }
   if (str[offset] != '(') {
     throw H3Exception("Expected ( at pos " + std::to_string(offset));
   }
@@ -118,6 +128,11 @@ static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
   offset++;
   offset = WktWhitespace(str, offset);
 
+  if (offset >= str.size()) {
+    throw H3Exception(
+        std::string("Invalid WKT: failed to read geoloop around ") +
+        std::to_string(offset));
+  }
   while (str[offset] != ')') {
     double x, y;
     offset = ReadWktNumber(str, offset, x);
@@ -126,6 +141,11 @@ static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
     offset = WktWhitespace(str, offset);
     verts->push_back({.lat = degsToRads(y), .lng = degsToRads(x)});
 
+    if (offset >= str.size()) {
+      throw H3Exception(
+          std::string("Invalid WKT: failed to read geoloop around ") +
+          std::to_string(offset));
+    }
     if (str[offset] == ',') {
       offset++;
       offset = WktWhitespace(str, offset);
