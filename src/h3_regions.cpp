@@ -47,6 +47,7 @@ void CellsToMultiPolygonFunction(duckdb_function_info info,
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   duckdb_list_entry *indexVecData =
       (duckdb_list_entry *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector indexChildVec = duckdb_list_vector_get_child(indexVec);
   T *indexChildVecData = (T *)duckdb_vector_get_data(indexChildVec);
   uint64_t *indexChildValidity = duckdb_vector_get_validity(indexChildVec);
@@ -57,10 +58,14 @@ void CellsToMultiPolygonFunction(duckdb_function_info info,
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool hasNullInput = false;
+    bool wasNullOriginally =
+        !duckdb_validity_row_is_valid(indexVecValidity, row);
+    bool hasNullInput = wasNullOriginally;
 
-    std::vector<H3Index> inputSet(indexVecData[row].length);
-    for (idx_t j = 0; j < indexVecData[row].length; ++j) {
+    std::vector<H3Index> inputSet(wasNullOriginally ? 0
+                                                    : indexVecData[row].length);
+    for (idx_t j = 0; j < wasNullOriginally ? 0 : indexVecData[row].length;
+         ++j) {
       auto childRow = indexVecData[row].offset + j;
       if (duckdb_validity_row_is_valid(indexChildValidity, childRow)) {
         auto cell = IndexFromVector(indexChildVecData, childRow);
@@ -140,51 +145,56 @@ void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
   duckdb_vector wellKnownVec = duckdb_data_chunk_get_vector(input, 0);
   duckdb_string_t *wellKnownVecData =
       (duckdb_string_t *)duckdb_vector_get_data(wellKnownVec);
+  uint64_t *wellKnownVecValidity = duckdb_vector_get_validity(wellKnownVec);
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *resData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   std::vector<std::pair<bool, std::vector<H3Index>>> results;
   idx_t outputReserveSize = 0;
   for (idx_t row = 0; row < inputSize; ++row) {
     bool hasData = false;
-    auto inputStr = DuckdbToString(&wellKnownVecData[row]);
-    GeoPolygon polygon = {0};
-    int32_t flags = 0;
-    int32_t res = resData[row];
-
-    auto outerVerts = std::make_shared<std::vector<LatLng>>();
-    std::vector<GeoLoop> holes;
-    std::vector<std::shared_ptr<std::vector<LatLng>>> holesVerts;
     std::vector<H3Index> resultsTmp;
-    try {
-      if (IsWkb) {
-        DecodeWkbPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
-      } else {
-        DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
-      }
-    } catch (const H3Exception &ex) {
-      duckdb_scalar_function_set_error(info, ex.what());
-      return;
-    }
+    if (duckdb_validity_row_is_valid(wellKnownVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row)) {
+      auto inputStr = DuckdbToString(&wellKnownVecData[row]);
+      GeoPolygon polygon = {0};
+      int32_t flags = 0;
+      int32_t res = resData[row];
 
-    if (polygon.geoloop.numVerts > 0) {
-      int64_t numCells = 0;
-
-      H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
-      if (!err) {
-        std::vector<H3Index> out(numCells);
-        H3Error err2 = polygonToCells(&polygon, res, flags, out.data());
-        if (!err2) {
-          for (H3Index outCell : out) {
-            if (outCell != H3_NULL) {
-              resultsTmp.push_back(outCell);
-            }
-          }
-          hasData = true;
+      auto outerVerts = std::make_shared<std::vector<LatLng>>();
+      std::vector<GeoLoop> holes;
+      std::vector<std::shared_ptr<std::vector<LatLng>>> holesVerts;
+      try {
+        if (IsWkb) {
+          DecodeWkbPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
+        } else {
+          DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
         }
+      } catch (const H3Exception &ex) {
+        duckdb_scalar_function_set_error(info, ex.what());
+        return;
       }
-    } else {
-      hasData = true;
+
+      if (polygon.geoloop.numVerts > 0) {
+        int64_t numCells = 0;
+
+        H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
+        if (!err) {
+          std::vector<H3Index> out(numCells);
+          H3Error err2 = polygonToCells(&polygon, res, flags, out.data());
+          if (!err2) {
+            for (H3Index outCell : out) {
+              if (outCell != H3_NULL) {
+                resultsTmp.push_back(outCell);
+              }
+            }
+            hasData = true;
+          }
+        }
+      } else {
+        hasData = true;
+      }
     }
 
     results.push_back(std::make_pair(hasData, resultsTmp));
@@ -230,67 +240,75 @@ void PolygonWktOrWkbToCellsExperimentalFunction(duckdb_function_info info,
   duckdb_vector wellKnownVec = duckdb_data_chunk_get_vector(input, 0);
   duckdb_string_t *wellKnownVecData =
       (duckdb_string_t *)duckdb_vector_get_data(wellKnownVec);
+  uint64_t *wellKnownVecValidity = duckdb_vector_get_validity(wellKnownVec);
   duckdb_vector resVec =
       duckdb_data_chunk_get_vector(input, SwapFlagsRes ? 2 : 1);
   int32_t *resData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
   duckdb_vector flagsVec =
       duckdb_data_chunk_get_vector(input, SwapFlagsRes ? 1 : 2);
   duckdb_string_t *flagsData =
       (duckdb_string_t *)duckdb_vector_get_data(flagsVec);
+  uint64_t *flagsVecValidity = duckdb_vector_get_validity(flagsVec);
 
   std::vector<std::pair<bool, std::vector<H3Index>>> results;
   idx_t outputReserveSize = 0;
   for (idx_t row = 0; row < inputSize; ++row) {
     bool hasData = false;
-    auto inputStr = DuckdbToString(&wellKnownVecData[row]);
-    GeoPolygon polygon = {0};
-    auto flagsStr = DuckdbToString(&flagsData[row]);
-    int32_t res = resData[row];
-
-    auto outerVerts = std::make_shared<std::vector<LatLng>>();
-    std::vector<GeoLoop> holes;
-    std::vector<std::shared_ptr<std::vector<LatLng>>> holesVerts;
     std::vector<H3Index> resultsTmp;
-    try {
-      if (IsWkb) {
-        DecodeWkbPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
-      } else {
-        DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
-      }
-    } catch (const H3Exception &ex) {
-      duckdb_scalar_function_set_error(info, ex.what());
-      return;
-    }
+    if (duckdb_validity_row_is_valid(wellKnownVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row) &&
+        duckdb_validity_row_is_valid(flagsVecValidity, row)) {
+      auto inputStr = DuckdbToString(&wellKnownVecData[row]);
+      GeoPolygon polygon = {0};
+      auto flagsStr = DuckdbToString(&flagsData[row]);
+      int32_t res = resData[row];
 
-    uint32_t flags = StringToFlags(flagsStr);
-    if (flags == UINT32_MAX) {
-      duckdb_scalar_function_set_error(
-          info, "Invalid mode, should be one of: 'center', 'full', 'overlap', "
-                "'overlap_bbox'");
-      return;
-    }
-
-    // Invalid flags input
-    if (polygon.geoloop.numVerts > 0) {
-      int64_t numCells = 0;
-
-      H3Error err =
-          maxPolygonToCellsSizeExperimental(&polygon, res, flags, &numCells);
-      if (!err) {
-        std::vector<H3Index> out(numCells);
-        H3Error err2 = polygonToCellsExperimental(&polygon, res, flags,
-                                                  numCells, out.data());
-        if (!err2) {
-          for (H3Index outCell : out) {
-            if (outCell != H3_NULL) {
-              resultsTmp.push_back(outCell);
-            }
-          }
-          hasData = true;
+      auto outerVerts = std::make_shared<std::vector<LatLng>>();
+      std::vector<GeoLoop> holes;
+      std::vector<std::shared_ptr<std::vector<LatLng>>> holesVerts;
+      try {
+        if (IsWkb) {
+          DecodeWkbPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
+        } else {
+          DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
         }
+      } catch (const H3Exception &ex) {
+        duckdb_scalar_function_set_error(info, ex.what());
+        return;
       }
-    } else {
-      hasData = true;
+
+      uint32_t flags = StringToFlags(flagsStr);
+      if (flags == UINT32_MAX) {
+        duckdb_scalar_function_set_error(
+            info,
+            "Invalid mode, should be one of: 'center', 'full', 'overlap', "
+            "'overlap_bbox'");
+        return;
+      }
+
+      // Invalid flags input
+      if (polygon.geoloop.numVerts > 0) {
+        int64_t numCells = 0;
+
+        H3Error err =
+            maxPolygonToCellsSizeExperimental(&polygon, res, flags, &numCells);
+        if (!err) {
+          std::vector<H3Index> out(numCells);
+          H3Error err2 = polygonToCellsExperimental(&polygon, res, flags,
+                                                    numCells, out.data());
+          if (!err2) {
+            for (H3Index outCell : out) {
+              if (outCell != H3_NULL) {
+                resultsTmp.push_back(outCell);
+              }
+            }
+            hasData = true;
+          }
+        }
+      } else {
+        hasData = true;
+      }
     }
 
     results.push_back(std::make_pair(hasData, resultsTmp));

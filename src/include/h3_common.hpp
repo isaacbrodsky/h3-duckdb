@@ -69,13 +69,20 @@ void InspectGenericFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
+  duckdb_vector_ensure_validity_writable(output);
   U *resultData = (U *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    auto cell = IndexFromVector(indexVecData, row);
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      auto cell = IndexFromVector(indexVecData, row);
 
-    resultData[row] = Operator::operate(cell);
+      resultData[row] = Operator::operate(cell);
+    } else {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
   }
 }
 

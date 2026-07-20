@@ -18,22 +18,31 @@ void GetIndexDigitFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector digitVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *digitVecData = (int32_t *)duckdb_vector_get_data(digitVec);
+  uint64_t *digitVecValidity = duckdb_vector_get_validity(digitVec);
 
   duckdb_vector_ensure_validity_writable(output);
   uint64_t *resultData = (uint64_t *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    auto index = IndexFromVector(indexVecData, row);
-    auto digit = digitVecData[row];
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(digitVecValidity, row)) {
+      auto index = IndexFromVector(indexVecData, row);
+      auto digit = digitVecData[row];
 
-    int out;
-    H3Error err = getIndexDigit(index, digit, &out);
-    if (!err) {
-      resultData[row] = out;
-    } else {
+      int out;
+      H3Error err = getIndexDigit(index, digit, &out);
+      if (!err) {
+        resultData[row] = out;
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -46,20 +55,27 @@ void StringToH3Function(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   duckdb_string_t *indexVecData =
       (duckdb_string_t *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   duckdb_vector_ensure_validity_writable(output);
   uint64_t *resultData = (uint64_t *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    auto index = &indexVecData[row];
-    H3Index cell;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      auto index = &indexVecData[row];
+      H3Index cell;
 
-    auto cellStr = DuckdbToString(index);
-    H3Error err = stringToH3(cellStr.c_str(), &cell);
-    if (!err) {
-      resultData[row] = cell;
-    } else {
+      auto cellStr = DuckdbToString(index);
+      H3Error err = stringToH3(cellStr.c_str(), &cell);
+      if (!err) {
+        resultData[row] = cell;
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -72,14 +88,19 @@ void H3ToStringFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   duckdb_vector_ensure_validity_writable(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    auto str = ToHexString(indexVecData[row]);
-    duckdb_vector_assign_string_element_len(output, row, str.c_str(),
-                                            str.size());
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      auto str = ToHexString(indexVecData[row]);
+      duckdb_vector_assign_string_element_len(output, row, str.c_str(),
+                                              str.size());
+    } else {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
   }
 }
 
@@ -107,6 +128,7 @@ void GetIcosahedronFacesFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   // Worst case scenario: all pentagons
   duckdb_list_vector_reserve(output, inputSize * 5);
@@ -120,27 +142,29 @@ void GetIcosahedronFacesFunction(duckdb_function_info info,
 
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
-    H3Index cell = IndexFromVector(indexVecData, row);
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
 
-    if (cell) {
-      int faceCount;
+      if (cell) {
+        int faceCount;
 
-      H3Error err = maxFaceCount(cell, &faceCount);
-      if (!err) {
-        std::vector<int> out(faceCount);
-        H3Error err2 = getIcosahedronFaces(cell, out.data());
-        if (!err2) {
-          idx_t actualCount = 0;
-          for (idx_t face = 0; face < faceCount; ++face) {
-            if (out[face] != -1) {
-              resultData[resultOffset + actualCount] = out[face];
-              actualCount++;
+        H3Error err = maxFaceCount(cell, &faceCount);
+        if (!err) {
+          std::vector<int> out(faceCount);
+          H3Error err2 = getIcosahedronFaces(cell, out.data());
+          if (!err2) {
+            idx_t actualCount = 0;
+            for (idx_t face = 0; face < faceCount; ++face) {
+              if (out[face] != -1) {
+                resultData[resultOffset + actualCount] = out[face];
+                actualCount++;
+              }
             }
+            entries[row].offset = resultOffset;
+            entries[row].length = actualCount;
+            resultOffset += actualCount;
+            wasValid = true;
           }
-          entries[row].offset = resultOffset;
-          entries[row].length = actualCount;
-          resultOffset += actualCount;
-          wasValid = true;
         }
       }
     }
@@ -163,17 +187,21 @@ void ConstructCellFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector baseCellVec = duckdb_data_chunk_get_vector(input, 0);
   int32_t *baseCellVecData = (int32_t *)duckdb_vector_get_data(baseCellVec);
+  uint64_t *baseCellVecValidity = duckdb_vector_get_validity(baseCellVec);
   duckdb_vector digitsVec = duckdb_data_chunk_get_vector(input, 1);
   duckdb_list_entry *digitsVecData =
       (duckdb_list_entry *)duckdb_vector_get_data(digitsVec);
+  uint64_t *digitsVecValidity = duckdb_vector_get_validity(digitsVec);
   duckdb_vector digitsChildVec = duckdb_list_vector_get_child(digitsVec);
   int32_t *digitsChildData = (int32_t *)duckdb_vector_get_data(digitsChildVec);
   uint64_t *digitsChildValidity = duckdb_vector_get_validity(digitsChildVec);
 
   int32_t *resData = nullptr;
+  uint64_t *resValidity = nullptr;
   if (hasRes) {
     duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 2);
     resData = (int32_t *)duckdb_vector_get_data(resVec);
+    resValidity = duckdb_vector_get_validity(resVec);
   }
 
   duckdb_vector_ensure_validity_writable(output);
@@ -183,29 +211,33 @@ void ConstructCellFunction(duckdb_function_info info, duckdb_data_chunk input,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    auto baseCell = baseCellVecData[row];
-    auto digitsEntry = digitsVecData[row];
+    if (duckdb_validity_row_is_valid(baseCellVecValidity, row) &&
+        duckdb_validity_row_is_valid(digitsVecValidity, row) &&
+        duckdb_validity_row_is_valid(resValidity, row)) {
+      auto baseCell = baseCellVecData[row];
+      auto digitsEntry = digitsVecData[row];
 
-    std::vector<int> digits(digitsEntry.length);
-    bool digitsContainsNull = false;
-    for (idx_t j = 0; j < digitsEntry.length; j++) {
-      if (!duckdb_validity_row_is_valid(digitsChildValidity,
-                                        digitsEntry.offset + j)) {
-        digitsContainsNull = true;
-        break;
+      std::vector<int> digits(digitsEntry.length);
+      bool digitsContainsNull = false;
+      for (idx_t j = 0; j < digitsEntry.length; j++) {
+        if (!duckdb_validity_row_is_valid(digitsChildValidity,
+                                          digitsEntry.offset + j)) {
+          digitsContainsNull = true;
+          break;
+        }
+        digits[j] = digitsChildData[digitsEntry.offset + j];
       }
-      digits[j] = digitsChildData[digitsEntry.offset + j];
-    }
 
-    auto res = hasRes ? resData[row] : static_cast<int32_t>(digits.size());
+      auto res = hasRes ? resData[row] : static_cast<int32_t>(digits.size());
 
-    if (digits.size() == res && !digitsContainsNull) {
-      H3Index out;
-      H3Error err = constructCell(res, baseCell, digits.data(), &out);
-      if (!err) {
-        AssignHexString(output, resultData, row, out);
+      if (digits.size() == res && !digitsContainsNull) {
+        H3Index out;
+        H3Error err = constructCell(res, baseCell, digits.data(), &out);
+        if (!err) {
+          AssignHexString(output, resultData, row, out);
 
-        wasValid = true;
+          wasValid = true;
+        }
       }
     }
 

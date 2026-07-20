@@ -10,22 +10,31 @@ void CellToVertexFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector vertexVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *vertexVecData = (int32_t *)duckdb_vector_get_data(vertexVec);
+  uint64_t *vertexVecValidity = duckdb_vector_get_validity(vertexVec);
 
   duckdb_vector_ensure_validity_writable(output);
   T *resultData = (T *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(indexVecData, row);
-    auto vertex = vertexVecData[row];
-    H3Index out;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(vertexVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      auto vertex = vertexVecData[row];
+      H3Index out;
 
-    H3Error err = cellToVertex(index, vertex, &out);
-    if (!err) {
-      AssignHexString(output, resultData, row, out);
-    } else {
+      H3Error err = cellToVertex(index, vertex, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -38,6 +47,7 @@ void CellToVertexesFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
   // Worst case: all hexagons, so all 6 verts
   duckdb_list_vector_reserve(output, inputSize * 6);
@@ -51,26 +61,28 @@ void CellToVertexesFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
 
-    H3Index cell = IndexFromVector(indexVecData, row);
+      H3Index cell = IndexFromVector(indexVecData, row);
 
-    if (cell) {
-      std::vector<H3Index> out(6);
-      H3Error err = cellToVertexes(cell, out.data());
-      if (!err) {
-        idx_t actualCount = 0;
-        for (idx_t j = 0; j < out.size(); ++j) {
-          if (out[j]) {
-            AssignHexString(outputChildVec, resultData,
-                            resultOffset + actualCount, out[j]);
-            actualCount++;
+      if (cell) {
+        std::vector<H3Index> out(6);
+        H3Error err = cellToVertexes(cell, out.data());
+        if (!err) {
+          idx_t actualCount = 0;
+          for (idx_t j = 0; j < out.size(); ++j) {
+            if (out[j]) {
+              AssignHexString(outputChildVec, resultData,
+                              resultOffset + actualCount, out[j]);
+              actualCount++;
+            }
           }
-        }
 
-        entries[row].offset = resultOffset;
-        entries[row].length = actualCount;
-        resultOffset += actualCount;
-        wasValid = true;
+          entries[row].offset = resultOffset;
+          entries[row].length = actualCount;
+          resultOffset += actualCount;
+          wasValid = true;
+        }
       }
     }
 
@@ -89,19 +101,26 @@ void VertexToLatOrLngFunction(duckdb_function_info info,
 
   duckdb_vector vertexVec = duckdb_data_chunk_get_vector(input, 0);
   T *vertexVecData = (T *)duckdb_vector_get_data(vertexVec);
+  uint64_t *vertexVecValidity = duckdb_vector_get_validity(vertexVec);
 
   duckdb_vector_ensure_validity_writable(output);
   double *resultData = (double *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(vertexVecData, row);
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(vertexVecValidity, row)) {
+      H3Index index = IndexFromVector(vertexVecData, row);
 
-    LatLng out = {0};
-    H3Error err = vertexToLatLng(index, &out);
-    if (!err) {
-      resultData[row] = radsToDegs(IsLng ? out.lng : out.lat);
-    } else {
+      LatLng out = {0};
+      H3Error err = vertexToLatLng(index, &out);
+      if (!err) {
+        resultData[row] = radsToDegs(IsLng ? out.lng : out.lat);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }

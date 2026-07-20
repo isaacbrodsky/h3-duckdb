@@ -19,6 +19,12 @@ SELECT h3_get_resolution('822d57fffffffff');
 2
 
 query I
+SELECT h3_get_resolution(v) FROM (VALUES ('822d57fffffffff'), (NULL)) AS t(v);
+----
+2
+NULL
+
+query I
 SELECT h3_get_index_digit('822d57fffffffff', 1);
 ----
 5

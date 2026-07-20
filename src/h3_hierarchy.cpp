@@ -10,22 +10,31 @@ void CellToParentFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   duckdb_vector_ensure_validity_writable(output);
   T *resultData = (T *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(indexVecData, row);
-    auto res = resVecData[row];
-    H3Index out;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      auto res = resVecData[row];
+      H3Index out;
 
-    H3Error err = cellToParent(index, res, &out);
-    if (!err) {
-      AssignHexString(output, resultData, row, out);
-    } else {
+      H3Error err = cellToParent(index, res, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -38,15 +47,18 @@ void CellToChildrenFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   idx_t totalSize = 0;
   for (idx_t row = 0; row < inputSize; ++row) {
     H3Index parent = IndexFromVector(indexVecData, row);
     auto res = resVecData[row];
 
-    if (parent) {
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row) && parent) {
       int64_t currentOut = 0;
       H3Error err = cellToChildrenSize(parent, res, &currentOut);
 
@@ -68,29 +80,32 @@ void CellToChildrenFunction(duckdb_function_info info, duckdb_data_chunk input,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index parent = IndexFromVector(indexVecData, row);
-    auto res = resVecData[row];
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row)) {
+      H3Index parent = IndexFromVector(indexVecData, row);
+      auto res = resVecData[row];
 
-    if (parent) {
-      int64_t sz;
-      H3Error err1 = cellToChildrenSize(parent, res, &sz);
-      if (!err1) {
-        std::vector<H3Index> out(sz);
-        H3Error err2 = cellToChildren(parent, res, out.data());
-        if (!err2) {
-          idx_t actualCount = 0;
-          for (idx_t j = 0; j < out.size(); ++j) {
-            if (out[j]) {
-              AssignHexString(outputChildVec, resultData,
-                              resultOffset + actualCount, out[j]);
-              actualCount++;
+      if (parent) {
+        int64_t sz;
+        H3Error err1 = cellToChildrenSize(parent, res, &sz);
+        if (!err1) {
+          std::vector<H3Index> out(sz);
+          H3Error err2 = cellToChildren(parent, res, out.data());
+          if (!err2) {
+            idx_t actualCount = 0;
+            for (idx_t j = 0; j < out.size(); ++j) {
+              if (out[j]) {
+                AssignHexString(outputChildVec, resultData,
+                                resultOffset + actualCount, out[j]);
+                actualCount++;
+              }
             }
-          }
 
-          entries[row].offset = resultOffset;
-          entries[row].length = actualCount;
-          resultOffset += actualCount;
-          wasValid = true;
+            entries[row].offset = resultOffset;
+            entries[row].length = actualCount;
+            resultOffset += actualCount;
+            wasValid = true;
+          }
         }
       }
     }
@@ -110,22 +125,31 @@ void CellToChildrenSizeFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   duckdb_vector_ensure_validity_writable(output);
   int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(indexVecData, row);
-    auto res = resVecData[row];
-    int64_t out;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      auto res = resVecData[row];
+      int64_t out;
 
-    H3Error err = cellToChildrenSize(index, res, &out);
-    if (!err) {
-      resultData[row] = out;
-    } else {
+      H3Error err = cellToChildrenSize(index, res, &out);
+      if (!err) {
+        resultData[row] = out;
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -138,22 +162,31 @@ void CellToCenterChildFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   duckdb_vector_ensure_validity_writable(output);
   T *resultData = (T *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(indexVecData, row);
-    auto res = resVecData[row];
-    H3Index out;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      auto res = resVecData[row];
+      H3Index out;
 
-    H3Error err = cellToCenterChild(index, res, &out);
-    if (!err) {
-      AssignHexString(output, resultData, row, out);
-    } else {
+      H3Error err = cellToCenterChild(index, res, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -166,22 +199,31 @@ void CellToChildPosFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   duckdb_vector_ensure_validity_writable(output);
   int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index = IndexFromVector(indexVecData, row);
-    auto res = resVecData[row];
-    int64_t out;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      auto res = resVecData[row];
+      int64_t out;
 
-    H3Error err = cellToChildPos(index, res, &out);
-    if (!err) {
-      resultData[row] = out;
-    } else {
+      H3Error err = cellToChildPos(index, res, &out);
+      if (!err) {
+        resultData[row] = out;
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -194,25 +236,36 @@ void ChildPosToCellFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector posVec = duckdb_data_chunk_get_vector(input, 0);
   int64_t *posVecData = (int64_t *)duckdb_vector_get_data(posVec);
+  uint64_t *posVecValidity = duckdb_vector_get_validity(posVec);
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 1);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 2);
   int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   duckdb_vector_ensure_validity_writable(output);
   T *resultData = (T *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    auto pos = posVecData[row];
-    H3Index index = IndexFromVector(indexVecData, row);
-    auto res = resVecData[row];
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(posVecValidity, row) &&
+        duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row)) {
+      auto pos = posVecData[row];
+      H3Index index = IndexFromVector(indexVecData, row);
+      auto res = resVecData[row];
 
-    H3Index out;
-    H3Error err = childPosToCell(pos, index, res, &out);
-    if (!err) {
-      AssignHexString(output, resultData, row, out);
-    } else {
+      H3Index out;
+      H3Error err = childPosToCell(pos, index, res, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
@@ -226,6 +279,7 @@ void CompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   duckdb_list_entry *indexVecData =
       (duckdb_list_entry *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector indexChildVec = duckdb_list_vector_get_child(indexVec);
   T *indexChildVecData = (T *)duckdb_vector_get_data(indexChildVec);
   uint64_t *indexChildValidity = duckdb_vector_get_validity(indexChildVec);
@@ -234,10 +288,14 @@ void CompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
   std::vector<std::pair<bool, std::vector<H3Index>>> completeResults;
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool hasNullInput = false;
+    bool wasNullOriginally =
+        !duckdb_validity_row_is_valid(indexVecValidity, row);
+    bool hasNullInput = wasNullOriginally;
 
-    std::vector<H3Index> inputSet(indexVecData[row].length);
-    for (idx_t j = 0; j < indexVecData[row].length; j++) {
+    std::vector<H3Index> inputSet(wasNullOriginally ? 0
+                                                    : indexVecData[row].length);
+    for (idx_t j = 0; j < wasNullOriginally ? 0 : indexVecData[row].length;
+         j++) {
       auto childRow = indexVecData[row].offset + j;
       if (duckdb_validity_row_is_valid(indexChildValidity, childRow)) {
         auto index = IndexFromVector(indexChildVecData, childRow);
@@ -313,21 +371,27 @@ void UncompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   duckdb_list_entry *indexVecData =
       (duckdb_list_entry *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector indexChildVec = duckdb_list_vector_get_child(indexVec);
   T *indexChildVecData = (T *)duckdb_vector_get_data(indexChildVec);
   uint64_t *indexChildValidity = duckdb_vector_get_validity(indexChildVec);
   duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *resData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
 
   idx_t outputReserveSize = 0;
   std::vector<std::pair<bool, std::vector<H3Index>>> completeResults;
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
+    bool wasNullOriginally =
+        !duckdb_validity_row_is_valid(indexVecValidity, row) ||
+        !duckdb_validity_row_is_valid(resVecValidity, row);
     bool hasNullInput = false;
 
-    std::vector<H3Index> inputSet(indexVecData[row].length);
-    for (idx_t j = 0; j < indexVecData[row].length; j++) {
+    std::vector<H3Index> inputSet(wasNullOriginally ? 0
+                                                    : indexVecData[row].length);
+    for (idx_t j = 0; j < wasNullOriginally ? 0 : indexVecData[row].length;
+         j++) {
       auto childRow = indexVecData[row].offset + j;
       if (duckdb_validity_row_is_valid(indexChildValidity, childRow)) {
         auto index = IndexFromVector(indexChildVecData, childRow);

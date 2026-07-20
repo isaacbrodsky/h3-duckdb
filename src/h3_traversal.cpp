@@ -43,20 +43,25 @@ void GridDiskGenericFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector kVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *kVecData = (int32_t *)duckdb_vector_get_data(kVec);
+  uint64_t *kVecValidity = duckdb_vector_get_validity(kVec);
 
   idx_t totalSize = 0;
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index parent = IndexFromVector(indexVecData, row);
-    auto k = kVecData[row];
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(kVecValidity, row)) {
+      H3Index parent = IndexFromVector(indexVecData, row);
+      auto k = kVecData[row];
 
-    if (parent) {
-      int64_t currentOut = 0;
-      H3Error err = maxGridDiskSize(k, &currentOut);
+      if (parent) {
+        int64_t currentOut = 0;
+        H3Error err = maxGridDiskSize(k, &currentOut);
 
-      if (!err) {
-        totalSize += currentOut;
+        if (!err) {
+          totalSize += currentOut;
+        }
       }
     }
   }
@@ -73,29 +78,32 @@ void GridDiskGenericFunction(duckdb_function_info info, duckdb_data_chunk input,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index parent = IndexFromVector(indexVecData, row);
-    auto k = kVecData[row];
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(kVecValidity, row)) {
+      H3Index parent = IndexFromVector(indexVecData, row);
+      auto k = kVecData[row];
 
-    if (parent) {
-      int64_t sz;
-      H3Error err1 = maxGridDiskSize(k, &sz);
-      if (!err1) {
-        std::vector<H3Index> out(sz);
-        H3Error err2 = Operator::fn(parent, k, out.data());
-        if (!err2) {
-          idx_t actualCount = 0;
-          for (idx_t j = 0; j < out.size(); ++j) {
-            if (out[j]) {
-              AssignHexString(outputChildVec, resultData,
-                              resultOffset + actualCount, out[j]);
-              actualCount++;
+      if (parent) {
+        int64_t sz;
+        H3Error err1 = maxGridDiskSize(k, &sz);
+        if (!err1) {
+          std::vector<H3Index> out(sz);
+          H3Error err2 = Operator::fn(parent, k, out.data());
+          if (!err2) {
+            idx_t actualCount = 0;
+            for (idx_t j = 0; j < out.size(); ++j) {
+              if (out[j]) {
+                AssignHexString(outputChildVec, resultData,
+                                resultOffset + actualCount, out[j]);
+                actualCount++;
+              }
             }
-          }
 
-          entries[row].offset = resultOffset;
-          entries[row].length = actualCount;
-          resultOffset += actualCount;
-          wasValid = true;
+            entries[row].offset = resultOffset;
+            entries[row].length = actualCount;
+            resultOffset += actualCount;
+            wasValid = true;
+          }
         }
       }
     }
@@ -115,20 +123,25 @@ void GridRingFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector kVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *kVecData = (int32_t *)duckdb_vector_get_data(kVec);
+  uint64_t *kVecValidity = duckdb_vector_get_validity(kVec);
 
   idx_t totalSize = 0;
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index parent = IndexFromVector(indexVecData, row);
-    auto k = kVecData[row];
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(kVecValidity, row)) {
+      H3Index parent = IndexFromVector(indexVecData, row);
+      auto k = kVecData[row];
 
-    if (parent) {
-      int64_t currentOut = 0;
-      H3Error err = maxGridRingSize(k, &currentOut);
+      if (parent) {
+        int64_t currentOut = 0;
+        H3Error err = maxGridRingSize(k, &currentOut);
 
-      if (!err) {
-        totalSize += currentOut;
+        if (!err) {
+          totalSize += currentOut;
+        }
       }
     }
   }
@@ -145,30 +158,33 @@ void GridRingFunction(duckdb_function_info info, duckdb_data_chunk input,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index parent = IndexFromVector(indexVecData, row);
-    auto k = kVecData[row];
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(kVecValidity, row)) {
+      H3Index parent = IndexFromVector(indexVecData, row);
+      auto k = kVecData[row];
 
-    if (parent) {
-      int64_t sz;
-      H3Error err1 = maxGridRingSize(k, &sz);
-      if (!err1) {
-        std::vector<H3Index> out(sz);
-        H3Error err2 = Unsafe ? gridRingUnsafe(parent, k, out.data())
-                              : gridRing(parent, k, out.data());
-        if (!err2) {
-          idx_t actualCount = 0;
-          for (idx_t j = 0; j < out.size(); ++j) {
-            if (out[j]) {
-              AssignHexString(outputChildVec, resultData,
-                              resultOffset + actualCount, out[j]);
-              actualCount++;
+      if (parent) {
+        int64_t sz;
+        H3Error err1 = maxGridRingSize(k, &sz);
+        if (!err1) {
+          std::vector<H3Index> out(sz);
+          H3Error err2 = Unsafe ? gridRingUnsafe(parent, k, out.data())
+                                : gridRing(parent, k, out.data());
+          if (!err2) {
+            idx_t actualCount = 0;
+            for (idx_t j = 0; j < out.size(); ++j) {
+              if (out[j]) {
+                AssignHexString(outputChildVec, resultData,
+                                resultOffset + actualCount, out[j]);
+                actualCount++;
+              }
             }
-          }
 
-          entries[row].offset = resultOffset;
-          entries[row].length = actualCount;
-          resultOffset += actualCount;
-          wasValid = true;
+            entries[row].offset = resultOffset;
+            entries[row].length = actualCount;
+            resultOffset += actualCount;
+            wasValid = true;
+          }
         }
       }
     }
@@ -189,22 +205,27 @@ void GridDiskDistancesGenericFunction(duckdb_function_info info,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector kVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *kVecData = (int32_t *)duckdb_vector_get_data(kVec);
+  uint64_t *kVecValidity = duckdb_vector_get_validity(kVec);
 
   idx_t totalSize = 0;
   idx_t kSize = inputSize;
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index parent = IndexFromVector(indexVecData, row);
-    auto k = kVecData[row];
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(kVecValidity, row)) {
+      H3Index parent = IndexFromVector(indexVecData, row);
+      auto k = kVecData[row];
 
-    if (parent) {
-      int64_t currentOut = 0;
-      H3Error err = maxGridDiskSize(k, &currentOut);
+      if (parent) {
+        int64_t currentOut = 0;
+        H3Error err = maxGridDiskSize(k, &currentOut);
 
-      if (!err) {
-        totalSize += currentOut;
-        kSize += k;
+        if (!err) {
+          totalSize += currentOut;
+          kSize += k;
+        }
       }
     }
   }
@@ -226,37 +247,40 @@ void GridDiskDistancesGenericFunction(duckdb_function_info info,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index parent = IndexFromVector(indexVecData, row);
-    auto k = kVecData[row];
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(kVecValidity, row)) {
+      H3Index parent = IndexFromVector(indexVecData, row);
+      auto k = kVecData[row];
 
-    if (parent) {
-      int64_t sz;
-      H3Error err1 = maxGridDiskSize(k, &sz);
-      if (!err1) {
-        std::vector<H3Index> out(sz);
-        std::vector<int32_t> distances(sz);
-        H3Error err2 = Operator::fn(parent, k, out.data(), distances.data());
-        if (!err2) {
-          for (idx_t dist = 0; dist <= k; ++dist) {
-            idx_t actualCount = 0;
+      if (parent) {
+        int64_t sz;
+        H3Error err1 = maxGridDiskSize(k, &sz);
+        if (!err1) {
+          std::vector<H3Index> out(sz);
+          std::vector<int32_t> distances(sz);
+          H3Error err2 = Operator::fn(parent, k, out.data(), distances.data());
+          if (!err2) {
+            for (idx_t dist = 0; dist <= k; ++dist) {
+              idx_t actualCount = 0;
 
-            for (idx_t j = 0; j < out.size(); ++j) {
-              if (out[j] && distances[j] == dist) {
-                AssignHexString(outputChild2Vec, result2Data,
-                                resultOffset + actualCount, out[j]);
-                actualCount++;
+              for (idx_t j = 0; j < out.size(); ++j) {
+                if (out[j] && distances[j] == dist) {
+                  AssignHexString(outputChild2Vec, result2Data,
+                                  resultOffset + actualCount, out[j]);
+                  actualCount++;
+                }
               }
+              resultData[entriesOffset + dist].offset = resultOffset;
+              resultData[entriesOffset + dist].length = actualCount;
+
+              resultOffset += actualCount;
             }
-            resultData[entriesOffset + dist].offset = resultOffset;
-            resultData[entriesOffset + dist].length = actualCount;
 
-            resultOffset += actualCount;
+            entries[row].offset = entriesOffset;
+            entries[row].length = k + 1;
+            wasValid = true;
+            entriesOffset += k + 1;
           }
-
-          entries[row].offset = entriesOffset;
-          entries[row].length = k + 1;
-          wasValid = true;
-          entriesOffset += k + 1;
         }
       }
     }
@@ -277,20 +301,25 @@ void GridPathCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector index2Vec = duckdb_data_chunk_get_vector(input, 1);
   T *index2VecData = (T *)duckdb_vector_get_data(index2Vec);
+  uint64_t *index2VecValidity = duckdb_vector_get_validity(index2Vec);
 
   idx_t totalSize = 0;
   for (idx_t row = 0; row < inputSize; ++row) {
-    H3Index index0 = IndexFromVector(indexVecData, row);
-    H3Index index1 = IndexFromVector(index2VecData, row);
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(index2VecValidity, row)) {
+      H3Index index0 = IndexFromVector(indexVecData, row);
+      H3Index index1 = IndexFromVector(index2VecData, row);
 
-    if (index0 && index1) {
-      int64_t currentOut = 0;
-      H3Error err = gridPathCellsSize(index0, index1, &currentOut);
+      if (index0 && index1) {
+        int64_t currentOut = 0;
+        H3Error err = gridPathCellsSize(index0, index1, &currentOut);
 
-      if (!err) {
-        totalSize += currentOut;
+        if (!err) {
+          totalSize += currentOut;
+        }
       }
     }
   }
@@ -307,29 +336,32 @@ void GridPathCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index index0 = IndexFromVector(indexVecData, row);
-    H3Index index1 = IndexFromVector(index2VecData, row);
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(index2VecValidity, row)) {
+      H3Index index0 = IndexFromVector(indexVecData, row);
+      H3Index index1 = IndexFromVector(index2VecData, row);
 
-    if (index0 && index1) {
-      int64_t sz;
-      H3Error err1 = gridPathCellsSize(index0, index1, &sz);
-      if (!err1) {
-        std::vector<H3Index> out(sz);
-        H3Error err2 = gridPathCells(index0, index1, out.data());
-        if (!err2) {
-          idx_t actualCount = 0;
-          for (idx_t j = 0; j < out.size(); ++j) {
-            if (out[j]) {
-              AssignHexString(outputChildVec, resultData,
-                              resultOffset + actualCount, out[j]);
-              actualCount++;
+      if (index0 && index1) {
+        int64_t sz;
+        H3Error err1 = gridPathCellsSize(index0, index1, &sz);
+        if (!err1) {
+          std::vector<H3Index> out(sz);
+          H3Error err2 = gridPathCells(index0, index1, out.data());
+          if (!err2) {
+            idx_t actualCount = 0;
+            for (idx_t j = 0; j < out.size(); ++j) {
+              if (out[j]) {
+                AssignHexString(outputChildVec, resultData,
+                                resultOffset + actualCount, out[j]);
+                actualCount++;
+              }
             }
-          }
 
-          entries[row].offset = resultOffset;
-          entries[row].length = actualCount;
-          resultOffset += actualCount;
-          wasValid = true;
+            entries[row].offset = resultOffset;
+            entries[row].length = actualCount;
+            resultOffset += actualCount;
+            wasValid = true;
+          }
         }
       }
     }
@@ -349,8 +381,10 @@ void GridDistanceFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector index2Vec = duckdb_data_chunk_get_vector(input, 1);
   T *index2VecData = (T *)duckdb_vector_get_data(index2Vec);
+  uint64_t *index2VecValidity = duckdb_vector_get_validity(index2Vec);
 
   duckdb_vector_ensure_validity_writable(output);
   int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
@@ -359,15 +393,18 @@ void GridDistanceFunction(duckdb_function_info info, duckdb_data_chunk input,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index index0 = IndexFromVector(indexVecData, row);
-    H3Index index1 = IndexFromVector(index2VecData, row);
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(index2VecValidity, row)) {
+      H3Index index0 = IndexFromVector(indexVecData, row);
+      H3Index index1 = IndexFromVector(index2VecData, row);
 
-    if (index0 && index1) {
-      int64_t sz;
-      H3Error err1 = gridDistance(index0, index1, &sz);
-      if (!err1) {
-        resultData[row] = sz;
-        wasValid = true;
+      if (index0 && index1) {
+        int64_t sz;
+        H3Error err1 = gridDistance(index0, index1, &sz);
+        if (!err1) {
+          resultData[row] = sz;
+          wasValid = true;
+        }
       }
     }
 
@@ -384,8 +421,10 @@ void CellToLocalIjFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector index2Vec = duckdb_data_chunk_get_vector(input, 1);
   T *index2VecData = (T *)duckdb_vector_get_data(index2Vec);
+  uint64_t *index2VecValidity = duckdb_vector_get_validity(index2Vec);
 
   duckdb_list_vector_reserve(output, inputSize * 2);
   duckdb_vector_ensure_validity_writable(output);
@@ -399,21 +438,24 @@ void CellToLocalIjFunction(duckdb_function_info info, duckdb_data_chunk input,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index index0 = IndexFromVector(indexVecData, row);
-    H3Index index1 = IndexFromVector(index2VecData, row);
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(index2VecValidity, row)) {
+      H3Index index0 = IndexFromVector(indexVecData, row);
+      H3Index index1 = IndexFromVector(index2VecData, row);
 
-    if (index0 && index1) {
-      CoordIJ ij;
-      int32_t mode = 0;
-      H3Error err = cellToLocalIj(index0, index1, mode, &ij);
-      if (!err) {
-        resultData[resultOffset] = ij.i;
-        resultData[resultOffset + 1] = ij.j;
+      if (index0 && index1) {
+        CoordIJ ij;
+        int32_t mode = 0;
+        H3Error err = cellToLocalIj(index0, index1, mode, &ij);
+        if (!err) {
+          resultData[resultOffset] = ij.i;
+          resultData[resultOffset + 1] = ij.j;
 
-        entries[row].offset = resultOffset;
-        entries[row].length = 2;
-        resultOffset += 2;
-        wasValid = true;
+          entries[row].offset = resultOffset;
+          entries[row].length = 2;
+          resultOffset += 2;
+          wasValid = true;
+        }
       }
     }
 
@@ -432,10 +474,13 @@ void LocalIjToCellFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
   T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
   duckdb_vector iVec = duckdb_data_chunk_get_vector(input, 1);
   int32_t *iVecData = (int32_t *)duckdb_vector_get_data(iVec);
+  uint64_t *iVecValidity = duckdb_vector_get_validity(iVec);
   duckdb_vector jVec = duckdb_data_chunk_get_vector(input, 2);
   int32_t *jVecData = (int32_t *)duckdb_vector_get_data(jVec);
+  uint64_t *jVecValidity = duckdb_vector_get_validity(jVec);
 
   duckdb_vector_ensure_validity_writable(output);
   T *resultData = (T *)duckdb_vector_get_data(output);
@@ -444,18 +489,22 @@ void LocalIjToCellFunction(duckdb_function_info info, duckdb_data_chunk input,
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
 
-    H3Index index = IndexFromVector(indexVecData, row);
-    auto i = iVecData[row];
-    auto j = jVecData[row];
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(iVecValidity, row) &&
+        duckdb_validity_row_is_valid(jVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      auto i = iVecData[row];
+      auto j = jVecData[row];
 
-    if (index) {
-      int32_t mode = 0;
-      CoordIJ ij = {.i = i, .j = j};
-      H3Index result;
-      H3Error err = localIjToCell(index, &ij, mode, &result);
-      if (!err) {
-        AssignHexString(output, resultData, row, result);
-        wasValid = true;
+      if (index) {
+        int32_t mode = 0;
+        CoordIJ ij = {.i = i, .j = j};
+        H3Index result;
+        H3Error err = localIjToCell(index, &ij, mode, &result);
+        if (!err) {
+          AssignHexString(output, resultData, row, result);
+          wasValid = true;
+        }
       }
     }
 
@@ -471,19 +520,26 @@ void MaxGridDiskSizeFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   duckdb_vector kVec = duckdb_data_chunk_get_vector(input, 0);
   int32_t *kVecData = (int32_t *)duckdb_vector_get_data(kVec);
+  uint64_t *kVecValidity = duckdb_vector_get_validity(kVec);
 
   duckdb_vector_ensure_validity_writable(output);
   int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
   uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
   for (idx_t row = 0; row < inputSize; ++row) {
-    auto k = kVecData[row];
-    int64_t out = 0;
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(kVecValidity, row)) {
+      auto k = kVecData[row];
+      int64_t out = 0;
 
-    H3Error err = maxGridDiskSize(k, &out);
-    if (!err) {
-      resultData[row] = out;
-    } else {
+      H3Error err = maxGridDiskSize(k, &out);
+      if (!err) {
+        resultData[row] = out;
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
       duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
