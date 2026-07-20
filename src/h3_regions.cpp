@@ -62,10 +62,9 @@ void CellsToMultiPolygonFunction(duckdb_function_info info,
         !duckdb_validity_row_is_valid(indexVecValidity, row);
     bool hasNullInput = wasNullOriginally;
 
-    std::vector<H3Index> inputSet(wasNullOriginally ? 0
-                                                    : indexVecData[row].length);
-    for (idx_t j = 0; j < wasNullOriginally ? 0 : indexVecData[row].length;
-         ++j) {
+    auto inputToEvaluate = wasNullOriginally ? 0 : indexVecData[row].length;
+    std::vector<H3Index> inputSet(inputToEvaluate);
+    for (idx_t j = 0; j < inputToEvaluate; ++j) {
       auto childRow = indexVecData[row].offset + j;
       if (duckdb_validity_row_is_valid(indexChildValidity, childRow)) {
         auto cell = IndexFromVector(indexChildVecData, childRow);
