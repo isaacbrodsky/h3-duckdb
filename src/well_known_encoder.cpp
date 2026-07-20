@@ -2,6 +2,7 @@
 #include "well_known_encoder.hpp"
 #include "h3api.h"
 #include <cassert>
+#include <charconv>
 
 namespace h3duckdb {
 
@@ -67,13 +68,20 @@ std::string WkbEncoder::Finish() { return buffer; }
 
 void WktEncoder::StartLineString() { buffer = "LINESTRING ("; }
 
+static void AppendDouble(std::string &str, double val) {
+  char buf[100];
+  // TODO: Check res.ec
+  auto res =
+      std::to_chars(buf, buf + sizeof(buf), val, std::chars_format::fixed, 6);
+  str.append(buf, res.ptr);
+}
+
 void WktEncoder::Point(double lng, double lat) {
-  auto sep = firstPoint ? "" : ", ";
-  char buf[100] = {0};
-  // TODO: Switch away from fixed format to minimize generated WKT
-  auto n = snprintf(buf, sizeof(buf), "%s%.6f %.6f", sep, lng, lat);
+  buffer += firstPoint ? "" : ", ";
+  AppendDouble(buffer, lng);
+  buffer += " ";
+  AppendDouble(buffer, lat);
   firstPoint = false;
-  buffer += std::string(buf, n);
 }
 
 void WktEncoder::EndLineString() { buffer += ")"; }
