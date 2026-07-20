@@ -94,13 +94,14 @@ static size_t WktWhitespace(const std::string &str, size_t offset) {
 static size_t ReadWktNumber(const std::string &str, size_t offset,
                             double &num) {
   size_t start = offset;
+  while (offset < str.size() && str[offset] != ' ' && str[offset] != ')' &&
+         str[offset] != ',') {
+    offset++;
+  }
   if (offset >= str.size()) {
     throw H3Exception(
         std::string("Invalid WKT: failed to read number around ") +
         std::to_string(offset));
-  }
-  while (str[offset] != ' ' && str[offset] != ')' && str[offset] != ',') {
-    offset++;
   }
   std::string part = str.substr(start, offset - start);
 
@@ -128,12 +129,7 @@ static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
   offset++;
   offset = WktWhitespace(str, offset);
 
-  if (offset >= str.size()) {
-    throw H3Exception(
-        std::string("Invalid WKT: failed to read geoloop around ") +
-        std::to_string(offset));
-  }
-  while (str[offset] != ')') {
+  while (offset < str.size() && str[offset] != ')') {
     double x, y;
     offset = ReadWktNumber(str, offset, x);
     offset = WktWhitespace(str, offset);
@@ -143,13 +139,18 @@ static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
 
     if (offset >= str.size()) {
       throw H3Exception(
-          std::string("Invalid WKT: failed to read geoloop around ") +
+          std::string("Invalid WKT: failed to read geoloop (2) around ") +
           std::to_string(offset));
     }
     if (str[offset] == ',') {
       offset++;
       offset = WktWhitespace(str, offset);
     }
+  }
+  if (offset >= str.size()) {
+    throw H3Exception(
+        std::string("Invalid WKT: failed to read geoloop (3) around ") +
+        std::to_string(offset));
   }
   // Consume the )
   offset++;
