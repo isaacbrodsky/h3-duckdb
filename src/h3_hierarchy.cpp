@@ -385,7 +385,7 @@ void UncompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
     bool wasNullOriginally =
         !duckdb_validity_row_is_valid(indexVecValidity, row) ||
         !duckdb_validity_row_is_valid(resVecValidity, row);
-    bool hasNullInput = false;
+    bool hasNullInput = wasNullOriginally;
 
     auto inputToEvaluate = wasNullOriginally ? 0 : indexVecData[row].length;
     std::vector<H3Index> inputSet(inputToEvaluate);
