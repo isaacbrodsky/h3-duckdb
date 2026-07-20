@@ -1,4 +1,4 @@
-.PHONY: clean clean_all format-check format format-fix
+.PHONY: clean clean_all format-check format
 
 PROJ_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -35,7 +35,4 @@ format-check:
 	python3 duckdb/scripts/format.py --all --check --directories src test
 
 format:
-	python3 duckdb/scripts/format.py --all --fix --noconfirm --directories src test
-
-format-fix:
 	python3 duckdb/scripts/format.py --all --fix --noconfirm --directories src test
