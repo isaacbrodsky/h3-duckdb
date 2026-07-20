@@ -187,3 +187,8 @@ query I
 SELECT h3_great_circle_distance(5, 5, -15, -15, NULL)
 ----
 NULL
+
+query I
+select h3_version()
+----
+4.5.0

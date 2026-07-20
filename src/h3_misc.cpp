@@ -428,6 +428,20 @@ void GreatCircleDistanceFunction(duckdb_function_info info,
   }
 }
 
+void H3VersionFunction(duckdb_function_info info, duckdb_data_chunk input,
+                       duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  std::string version = std::to_string(H3_VERSION_MAJOR) + "." +
+                        std::to_string(H3_VERSION_MINOR) + "." +
+                        std::to_string(H3_VERSION_PATCH);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    duckdb_vector_assign_string_element_len(output, row, version.c_str(),
+                                            version.size());
+  }
+}
+
 duckdb_scalar_function
 GetGetHexagonGenericAvgFunction(const char *name, duckdb_scalar_function_t fn) {
   duckdb_scalar_function function = duckdb_create_scalar_function();
@@ -593,6 +607,17 @@ duckdb_scalar_function H3Functions::GetGreatCircleDistanceFunction() {
   duckdb_destroy_logical_type(&doubleType);
   duckdb_destroy_logical_type(&varcharType);
   duckdb_scalar_function_set_function(function, GreatCircleDistanceFunction);
+  return function;
+}
+
+duckdb_scalar_function H3Functions::GetH3VersionFunction() {
+  duckdb_scalar_function function = duckdb_create_scalar_function();
+  duckdb_scalar_function_set_name(function, "h3_version");
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_scalar_function_set_return_type(function, varcharType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_scalar_function_set_function(function, H3VersionFunction);
   return function;
 }
 

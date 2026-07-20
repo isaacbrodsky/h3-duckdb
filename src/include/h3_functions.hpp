@@ -99,6 +99,7 @@ public:
     functions.push_back(GetGetPentagonsFunction());
     functions.push_back(GetGetPentagonsVarcharFunction());
     functions.push_back(GetGreatCircleDistanceFunction());
+    functions.push_back(GetH3VersionFunction());
 
     // Regions
     functionSets.push_back(GetCellsToMultiPolygonWktFunction());
@@ -194,6 +195,7 @@ private:
   static duckdb_scalar_function GetGetPentagonsFunction();
   static duckdb_scalar_function GetGetPentagonsVarcharFunction();
   static duckdb_scalar_function GetGreatCircleDistanceFunction();
+  static duckdb_scalar_function GetH3VersionFunction();
 
   // Regions
   static duckdb_scalar_function_set GetCellsToMultiPolygonWktFunction();
