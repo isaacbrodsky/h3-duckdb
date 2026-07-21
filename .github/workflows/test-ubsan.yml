@@ -1,0 +1,25 @@
+name: test-ubsan
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref || '' }}-${{ github.base_ref || '' }}-${{ github.ref != 'refs/heads/main' || github.sha }}-ubsan
+  cancel-in-progress: true
+
+jobs:
+  ubsan:
+    name: ubsan
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: UBSan
+        run: make UBSan
