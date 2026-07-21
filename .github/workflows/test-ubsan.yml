@@ -21,5 +21,8 @@ jobs:
         with:
           submodules: true
 
+      - name: Configure
+        run: make configure
+
       - name: UBSan
         run: make ubsan
