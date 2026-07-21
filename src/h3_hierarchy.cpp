@@ -433,6 +433,8 @@ void UncompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
         outputReserveSize += actual;
         completeResults.push_back(std::make_pair(true, result));
       } else {
+        // Practically, if uncompactCellsSize succeeds, uncompactCells will also
+        // succeed, so this is unreachable.
         completeResults.push_back(std::make_pair(false, result));
       }
     } else {

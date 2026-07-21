@@ -249,6 +249,10 @@ void GetRes0CellsFunction(duckdb_function_info info, duckdb_data_chunk input,
 
   std::vector<H3Index> out(sz);
   H3Error err = getRes0Cells(out.data());
+  if (err) {
+    // TODO: This should be unreachable
+    duckdb_scalar_function_set_error(info, "Failed to retrieve res 0 cells");
+  }
 
   for (idx_t row = 0; row < inputSize; ++row) {
     bool wasValid = false;
@@ -314,7 +318,6 @@ void GetPentagonsFunction(duckdb_function_info info, duckdb_data_chunk input,
     }
 
     if (!wasValid) {
-      // TODO: This should be unreachable
       entries[row].offset = resultOffset;
       entries[row].length = 0;
       duckdb_validity_set_row_invalid(resultValidity, row);
