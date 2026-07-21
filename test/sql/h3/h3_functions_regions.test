@@ -522,6 +522,17 @@ select h3_polygon_wkt_to_cells('POLYGON ((1 1', 5)
 Invalid Input Error: Invalid WKT: failed to read number around 13
 
 statement error
+select h3_polygon_wkt_to_cells('POLYGON (', 5)
+----
+Invalid Input Error: Invalid WKT: failed to read geoloop around 9
+
+# TODO: Make this an error
+query I
+select h3_polygon_wkt_to_cells('POLYGO', 5)
+----
+[]
+
+statement error
 select h3_polygon_wkt_to_cells('POLYGON ((1 1 ', 5)
 ----
 Invalid Input Error: Invalid WKT: failed to read geoloop (2) around 14
