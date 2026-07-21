@@ -316,56 +316,6 @@ void GetPentagonsFunction(duckdb_function_info info, duckdb_data_chunk input,
   duckdb_list_vector_set_size(output, resultOffset);
 }
 
-void GetPentagonsVarcharFunction(duckdb_function_info info,
-                                 duckdb_data_chunk input,
-                                 duckdb_vector output) {
-  idx_t inputSize = duckdb_data_chunk_get_size(input);
-
-  int sz = pentagonCount();
-
-  duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 0);
-  int32_t *resVecData = (int32_t *)duckdb_vector_get_data(resVec);
-  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
-
-  duckdb_list_vector_reserve(output, inputSize * sz);
-  duckdb_vector_ensure_validity_writable(output);
-  duckdb_list_entry *entries =
-      (duckdb_list_entry *)duckdb_vector_get_data(output);
-  duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
-  uint64_t *resultValidity = duckdb_vector_get_validity(output);
-  idx_t resultOffset = 0;
-
-  for (idx_t row = 0; row < inputSize; ++row) {
-    bool wasValid = false;
-    if (duckdb_validity_row_is_valid(resVecValidity, row)) {
-      auto res = resVecData[row];
-
-      std::vector<H3Index> out(sz);
-      H3Error err = getPentagons(res, out.data());
-
-      if (!err) {
-        for (idx_t i = 0; i < sz; ++i) {
-          std::string resultStr = ToHexString(out[i]);
-          duckdb_vector_assign_string_element_len(
-              outputChildVec, resultOffset + i, resultStr.c_str(),
-              resultStr.size());
-        }
-        entries[row].offset = resultOffset;
-        entries[row].length = sz;
-        resultOffset += sz;
-        wasValid = true;
-      }
-    }
-
-    if (!wasValid) {
-      // TODO: This should be unreachable
-      entries[row].offset = resultOffset;
-      entries[row].length = 0;
-      duckdb_validity_set_row_invalid(resultValidity, row);
-    }
-  }
-}
-
 void GreatCircleDistanceFunction(duckdb_function_info info,
                                  duckdb_data_chunk input,
                                  duckdb_vector output) {

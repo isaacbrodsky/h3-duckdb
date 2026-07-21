@@ -19,6 +19,36 @@ SELECT h3_get_resolution('822d57fffffffff');
 2
 
 query I
+select h3_get_base_cell_number('822d57fffffffff');
+----
+22
+
+query I
+select h3_is_pentagon('822d57fffffffff');
+----
+false
+
+query I
+select h3_is_res_class_iii('822d57fffffffff');
+----
+false
+
+query I
+select h3_get_base_cell_number('81083ffffffffff');
+----
+4
+
+query I
+select h3_is_pentagon('81083ffffffffff');
+----
+true
+
+query I
+select h3_is_res_class_iii('81083ffffffffff');
+----
+true
+
+query I
 SELECT h3_get_resolution(v) FROM (VALUES ('822d57fffffffff'), (NULL)) AS t(v);
 ----
 2
@@ -203,6 +233,11 @@ query I
 select h3_construct_cell(5, [1], 1)
 ----
 581149069884260351
+
+query I
+select h3_construct_cell(5, [NULL], 1)
+----
+NULL
 
 query I
 select h3_construct_cell(4, [1], 1)

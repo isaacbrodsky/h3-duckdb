@@ -1,4 +1,4 @@
-.PHONY: clean clean_all format-check format ubsan
+.PHONY: clean clean_all format-check format ubsan coverage
 
 PROJ_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -40,3 +40,9 @@ format:
 ubsan: export EXTRA_CMAKE_FLAGS=-DENABLE_UBSAN=1
 ubsan: export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
 ubsan: debug test_debug
+
+coverage:
+	export EXTRA_CMAKE_FLAGS=-DENABLE_COVERAGE=1
+	cmake --build cmake_build/debug --config Debug --target clean-coverage
+	make debug test_debug
+	cmake --build cmake_build/debug --config Debug --target coverage

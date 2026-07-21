@@ -1,0 +1,28 @@
+name: coverage
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref || '' }}-${{ github.base_ref || '' }}-${{ github.ref != 'refs/heads/main' || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Configure
+        run: make configure
+
+      - name: Coverage
+        run: make coverage

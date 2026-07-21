@@ -192,3 +192,18 @@ query I
 select h3_version()
 ----
 4.5.0
+
+query I
+select h3_get_hexagon_edge_length_avg(0, 'km')
+----
+1281.256011
+
+query I
+select h3_get_hexagon_edge_length_avg(5, 'm')
+----
+9854.09099
+
+query I
+select h3_get_hexagon_edge_length_avg(10, 'AAA')
+----
+NULL
