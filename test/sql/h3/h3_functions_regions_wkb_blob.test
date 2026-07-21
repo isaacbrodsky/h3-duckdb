@@ -3,9 +3,6 @@
 
 require h3
 
-statement ok
-load spatial
-
 statement error
 select h3_polygon_wkb_to_cells(from_hex('00'), 5)
 ----
