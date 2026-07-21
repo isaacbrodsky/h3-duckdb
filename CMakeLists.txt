@@ -114,6 +114,14 @@ target_include_directories(${EXTENSION_TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOU
 
 target_link_libraries(${EXTENSION_TARGET_NAME} h3)
 
+if(DUCKDB_WASM_EXTENSION)
+    # The H3 library won't be brought into the WASM bundle unless we take additional steps to bundle it in:
+    add_custom_command(TARGET ${EXTENSION_TARGET_NAME} POST_BUILD
+            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bundle_h3.sh" "${CMAKE_AR}" "${CMAKE_RANLIB}" "$<TARGET_FILE:${EXTENSION_TARGET_NAME}>" "$<TARGET_FILE:h3>"
+        VERBATIM
+        COMMENT "Bundle h3 into the WASM extension archive")
+endif()
+
 option(ENABLE_UBSAN "Build with UBSan" OFF)
 if (ENABLE_UBSAN)
     message("UBSan enabled")

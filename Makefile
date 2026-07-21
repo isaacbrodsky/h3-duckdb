@@ -1,4 +1,4 @@
-.PHONY: clean clean_all format-check format ubsan coverage
+.PHONY: clean clean_all format-check format ubsan coverage wasm_check
 
 PROJ_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -46,3 +46,9 @@ coverage:
 	cmake --build cmake_build/debug --config Debug --target clean-coverage
 	make test_debug
 	cmake --build cmake_build/debug --config Debug --target coverage
+
+wasm_check:
+	cmake -B cmake_build/wasm_check . ${CMAKE_VERSION_PARAMS} -DDUCKDB_WASM_EXTENSION=1
+	cmake --build cmake_build/wasm_check -j8
+	# Look for the H3 symbol but do not permit undefined
+	nm -U cmake_build/wasm_check/libh3.a | grep latLngToCell
