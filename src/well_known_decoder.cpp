@@ -11,9 +11,10 @@ static T ReadWkb(const std::string &input, size_t &inputIdx) {
                       std::to_string(inputIdx));
   }
 
-  T *resultPtr = (T *)((uint8_t *)input.data() + inputIdx);
+  T result;
+  memcpy(&result, input.data() + inputIdx, sizeof(T));
   inputIdx += sizeof(T);
-  return *resultPtr;
+  return result;
 }
 
 void DecodeWkbGeoLoop(const std::string &input, size_t &inputIdx,
