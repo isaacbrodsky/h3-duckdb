@@ -13,6 +13,16 @@ select length(h3_polygon_wkt_to_cells_experimental('POLYGON', 'center', 9));
 ----
 0
 
+query I
+select length(h3_polygon_wkb_to_cells_experimental(from_hex('0100000000'), 'center', 9));
+----
+0
+
+query I
+select length(h3_polygon_wkb_to_cells_experimental_string(from_hex('0100000000'), 'center', 9));
+----
+0
+
 statement error
 select h3_polygon_wkt_to_cells_experimental('POLYGON ((-122.53401215374411 37.81666158907579, -122.53401215374411 37.70454536656959, -122.3479361380842 37.70454536656959, -122.3479361380842 37.81666158907579, -122.53401215374411 37.81666158907579))', 'AAA', 9);
 ----

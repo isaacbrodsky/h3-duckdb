@@ -25,21 +25,20 @@ std::string ToHexString(H3Index index);
 std::string DuckdbToString(duckdb_string_t *str);
 
 template <typename T> inline H3Index IndexFromVector(T *data, idx_t idx) {
-  static_assert(std::is_same<T, duckdb_string_t>::value ||
-                    std::is_same<T, uint64_t>::value ||
+  static_assert(std::is_same<T, uint64_t>::value ||
                     std::is_same<T, int64_t>::value,
                 "T must be duckdb_string_t, uint64_t, or int64_t");
-  constexpr auto IsStringT = std::is_same<T, duckdb_string_t>::value;
-  H3Index cell;
-  if constexpr (IsStringT) {
-    auto str = static_cast<duckdb_string_t *>(&data[idx]);
-    auto str2 = DuckdbToString(str);
-    H3Error err = stringToH3(str2.c_str(), &cell);
-    if (err) {
-      cell = 0;
-    }
-  } else {
-    cell = data[idx];
+  H3Index cell = data[idx];
+  return cell;
+}
+
+template <> inline H3Index IndexFromVector(duckdb_string_t *data, idx_t idx) {
+  auto str = static_cast<duckdb_string_t *>(&data[idx]);
+  auto str2 = DuckdbToString(str);
+  H3Index cell = 0;
+  H3Error err = stringToH3(str2.c_str(), &cell);
+  if (err) {
+    cell = 0;
   }
   return cell;
 }
@@ -51,15 +50,15 @@ inline void AssignHexString(duckdb_vector &output, T *resultData, idx_t row,
                     std::is_same<T, uint64_t>::value ||
                     std::is_same<T, int64_t>::value,
                 "T must be duckdb_string_t, uint64_t, or int64_t");
-  constexpr auto IsStringT = std::is_same<T, duckdb_string_t>::value;
+  resultData[row] = out;
+}
 
-  if constexpr (IsStringT) {
-    auto str = ToHexString(out);
-    duckdb_vector_assign_string_element_len(output, row, str.c_str(),
-                                            str.size());
-  } else {
-    resultData[row] = out;
-  }
+template <>
+inline void AssignHexString<duckdb_string_t>(duckdb_vector &output,
+                                             duckdb_string_t *resultData,
+                                             idx_t row, H3Index out) {
+  auto str = ToHexString(out);
+  duckdb_vector_assign_string_element_len(output, row, str.c_str(), str.size());
 }
 
 template <typename T, typename U, typename Operator>
