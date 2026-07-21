@@ -31,3 +31,9 @@ jobs:
 
       - name: Coverage
         run: make coverage
+
+      - uses: codecov/codecov-action@v7
+        with:
+          fail_ci_if_error: true
+          files: cmake_build/debug/coverage.cleaned.info
+          token: ${{ secrets.CODECOV_TOKEN }}
