@@ -1,5 +1,5 @@
-
 #include "well_known_decoder.hpp"
+#include <cstring>
 
 namespace h3duckdb {
 
