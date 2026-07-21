@@ -165,7 +165,7 @@ void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
       std::vector<GeoLoop> holes;
       std::vector<std::shared_ptr<std::vector<LatLng>>> holesVerts;
       try {
-        if (IsWkb) {
+        if constexpr (IsWkb) {
           DecodeWkbPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
         } else {
           DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
@@ -267,7 +267,7 @@ void PolygonWktOrWkbToCellsExperimentalFunction(duckdb_function_info info,
       std::vector<GeoLoop> holes;
       std::vector<std::shared_ptr<std::vector<LatLng>>> holesVerts;
       try {
-        if (IsWkb) {
+        if constexpr (IsWkb) {
           DecodeWkbPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
         } else {
           DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
