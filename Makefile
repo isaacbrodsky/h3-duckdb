@@ -42,7 +42,7 @@ ubsan: export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
 ubsan: debug test_debug
 
 coverage:
-	export EXTRA_CMAKE_FLAGS=-DENABLE_COVERAGE=1
+	EXTRA_CMAKE_FLAGS=-DENABLE_COVERAGE=1 make debug
 	cmake --build cmake_build/debug --config Debug --target clean-coverage
-	make debug test_debug
+	make test_debug
 	cmake --build cmake_build/debug --config Debug --target coverage
