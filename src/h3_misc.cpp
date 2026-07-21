@@ -36,6 +36,8 @@ void GetHexagonAreaAvgFunction(duckdb_function_info info,
         err = getHexagonAreaAvgKm2(res, &out);
       } else if (unitStr == "m^2") {
         err = getHexagonAreaAvgM2(res, &out);
+      } else {
+        duckdb_scalar_function_set_error(info, "Invalid unit");
       }
 
       if (!err) {
@@ -83,6 +85,8 @@ template <typename T> struct CellAreaOperator {
           err = cellAreaKm2(cell, &out);
         } else if (unitStr == "m^2") {
           err = cellAreaM2(cell, &out);
+        } else {
+          duckdb_scalar_function_set_error(info, "Invalid unit");
         }
 
         if (!err) {
@@ -129,6 +133,8 @@ void GetHexagonEdgeLengthAvgFunction(duckdb_function_info info,
         err = getHexagonEdgeLengthAvgKm(res, &out);
       } else if (unitStr == "m") {
         err = getHexagonEdgeLengthAvgM(res, &out);
+      } else {
+        duckdb_scalar_function_set_error(info, "Invalid unit");
       }
 
       if (!err) {
@@ -176,6 +182,8 @@ template <typename T> struct EdgeLengthOperator {
           err = edgeLengthKm(edge, &out);
         } else if (unitStr == "m") {
           err = edgeLengthM(edge, &out);
+        } else {
+          duckdb_scalar_function_set_error(info, "Invalid unit");
         }
 
         if (!err) {
@@ -369,6 +377,8 @@ void GreatCircleDistanceFunction(duckdb_function_info info,
       } else if (unitStr == "m") {
         resultData[row] = greatCircleDistanceM(&latLng0, &latLng1);
         wasValid = true;
+      } else {
+        duckdb_scalar_function_set_error(info, "Invalid unit");
       }
     }
 

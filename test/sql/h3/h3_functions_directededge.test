@@ -34,6 +34,12 @@ SELECT h3_origin_to_directed_edges(599686042433355775::bigint)
 [1248204388774707199, 1320261982812635135, 1392319576850563071, 1464377170888491007, 1536434764926418943, 1608492358964346879]
 
 query I
+SELECT h3_origin_to_directed_edges(v) from (values (0), (null)) as t(v)
+----
+NULL
+NULL
+
+query I
 SELECT h3_directed_edge_to_cells(1608492358964346879::ubigint)
 ----
 [599686042433355775, 599686030622195711]
@@ -73,10 +79,25 @@ SELECT h3_get_directed_edge_destination(1608492358964346879::bigint)
 ----
 599686030622195711
 
+query II
+SELECT h3_get_directed_edge_origin(v), h3_get_directed_edge_destination(v) from (VALUES (0), (NULL)) as t(v);
+----
+NULL
+NULL
+NULL
+NULL
+
 query I
 SELECT h3_cells_to_directed_edge(599686042433355775::ubigint, 599686030622195711::ubigint)
 ----
 1608492358964346879
+
+query I
+SELECT h3_cells_to_directed_edge(599686042433355775::ubigint, v) FROM (values (599686030622195711::ubigint), (0::ubigint), (NULL)) as t(v);
+----
+1608492358964346879
+NULL
+NULL
 
 query I
 SELECT h3_cells_to_directed_edge(599686042433355775::bigint, 599686030622195711::bigint)
@@ -94,6 +115,12 @@ SELECT h3_are_neighbor_cells(599686042433355775::bigint, 599686030622195711::big
 true
 
 query I
+SELECT h3_are_neighbor_cells(599686042433355775::ubigint, v) from (values (0::ubigint), (null)) as t(v);
+----
+NULL
+NULL
+
+query I
 SELECT h3_are_neighbor_cells(599686042433355775::ubigint, 599686029548453887::ubigint)
 ----
 false
@@ -102,6 +129,12 @@ query I
 SELECT h3_are_neighbor_cells(599686042433355775::bigint, 599686029548453887::bigint)
 ----
 false
+
+query I
+SELECT h3_are_neighbor_cells(599686042433355775::ubigint, v) from (values (0::ubigint), (null)) as t(v);
+----
+NULL
+NULL
 
 query I
 SELECT h3_directed_edge_to_boundary_wkt(0::ubigint)
@@ -187,4 +220,10 @@ query I
 SELECT h3_reverse_directed_edge(1608492358964346879::bigint)
 ----
 1248204376963547135
+
+query I
+SELECT h3_reverse_directed_edge(v) FROM (values (0), (null)) as t(v);
+----
+NULL
+NULL
 
