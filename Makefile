@@ -1,4 +1,4 @@
-.PHONY: clean clean_all format-check format
+.PHONY: clean clean_all format-check format ubsan
 
 PROJ_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -36,3 +36,7 @@ format-check:
 
 format:
 	python3 duckdb/scripts/format.py --all --fix --noconfirm --directories src test
+
+ubsan: export EXTRA_CMAKE_FLAGS=-DENABLE_UBSAN=1
+ubsan: export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
+ubsan: debug test_debug

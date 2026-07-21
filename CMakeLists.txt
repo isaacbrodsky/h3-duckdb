@@ -113,3 +113,9 @@ target_include_directories(${EXTENSION_TARGET_NAME} PRIVATE duckdb_capi)
 target_include_directories(${EXTENSION_TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/h3/src/h3lib/include")
 
 target_link_libraries(${EXTENSION_TARGET_NAME} h3)
+
+option(ENABLE_UBSAN "Build with UBSan" OFF)
+if (ENABLE_UBSAN)
+    target_compile_options(${EXTENSION_TARGET_NAME} PRIVATE -fsanitize=undefined -fno-sanitize-recover=all -fno-omit-frame-pointer)
+    target_link_options(${EXTENSION_TARGET_NAME} PRIVATE -fsanitize=undefined)
+endif()
