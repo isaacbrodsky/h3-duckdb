@@ -23,6 +23,11 @@ jobs:
         with:
           submodules: true
 
+      - name: Install lcov
+        run: |
+          sudo apt update
+          sudo apt-get install lcov
+
       - name: Configure
         run: make configure
 
