@@ -16,8 +16,8 @@ jobs:
     name: Build extension binaries (stable)
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5-variegata
     with:
-      duckdb_version: v1.5.4
-      ci_tools_version: v1.5-variegata
+      duckdb_version: v1.5.5
+      ci_tools_version: v1.5.5
       extension_name: h3
       extra_toolchains: python3
 
@@ -27,8 +27,8 @@ jobs:
 #    uses: ./.github/workflows/_extension_deploy.yml
 #    secrets: inherit
 #    with:
-#      duckdb_version: v1.5.4
-#      ci_tools_version: v1.5-variegata
+#      duckdb_version: v1.5.5
+#      ci_tools_version: v1.5.5
 #      extension_name: h3
 #      deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
 #      deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
@@ -37,8 +37,8 @@ jobs:
     name: Code Quality Check
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@v1.5-variegata
     with:
-      duckdb_version: v1.5.4
-      ci_tools_version: v1.5-variegata
+      duckdb_version: v1.5.5
+      ci_tools_version: v1.5.5
       extension_name: h3
       format_checks: 'format'
 
