@@ -46,10 +46,10 @@ jobs:
     needs: duckdb-stable-build
     runs-on: ubuntu-latest
     steps:
+      - run: sudo apt-get install -y wabt
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v8
         with:
           pattern: '*wasm*'
           path: wasm_artifacts
-      - run: sudo apt-get install -y wabt
-      - uses: actions/checkout@v6
       - run: ./scripts/verify_wasm.sh wasm_artifacts
