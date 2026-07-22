@@ -41,3 +41,15 @@ jobs:
       ci_tools_version: v1.5-variegata
       extension_name: h3
       format_checks: 'format'
+
+  verify-wasm:
+    needs: duckdb-stable-build
+    runs-on: ubuntu-latest
+    steps:
+      - users: actions/download-artifact@v4
+        with:
+          pattern: '*wasm*'
+          path: wasm_artifacts
+      - run: sudo apt-get install -y wabt
+      - uses: actions/checkout@v6
+      - run: ./scripts/verify_wasm.sh wasm_artifacts
