@@ -1,0 +1,24 @@
+# name: test/sql/h3/h3_functions_regions_wkb_blob.test
+# group: [h3]
+
+require h3
+
+statement error
+select h3_polygon_wkb_to_cells(from_hex('00'), 5)
+----
+Invalid WKB: expected little endian at 1
+
+statement error
+select h3_polygon_wkb_to_cells(from_hex('01000000'), 5)
+----
+Invalid WKB: failed to read 4 bytes at 1
+
+query I
+select h3_polygon_wkb_to_cells(from_hex('0100000000'), 5)
+----
+[]
+
+query I
+select h3_polygon_wkb_to_cells(from_hex('010300000000000000'), 5)
+----
+[]

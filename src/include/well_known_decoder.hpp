@@ -1,21 +1,22 @@
 
 #pragma once
 
-#include <h3api.h>
-#include "duckdb/common/string_util.hpp"
+#include "h3_common.hpp"
+#include <vector>
+#include <memory>
 
-namespace duckdb {
+namespace h3duckdb {
 
 void DecodeWkbPolygon(
-    string_t input, GeoPolygon &polygon,
-    duckdb::shared_ptr<std::vector<LatLng>> &outerVerts,
+    const std::string &input, GeoPolygon &polygon,
+    std::shared_ptr<std::vector<LatLng>> &outerVerts,
     std::vector<GeoLoop> &holes,
-    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> &holesVerts);
+    std::vector<std::shared_ptr<std::vector<LatLng>>> &holesVerts);
 
 void DecodeWktPolygon(
-    string_t input, GeoPolygon &polygon,
-    duckdb::shared_ptr<std::vector<LatLng>> &outerVerts,
+    const std::string &input, GeoPolygon &polygon,
+    std::shared_ptr<std::vector<LatLng>> &outerVerts,
     std::vector<GeoLoop> &holes,
-    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> &holesVerts);
+    std::vector<std::shared_ptr<std::vector<LatLng>>> &holesVerts);
 
-} // namespace duckdb
+} // namespace h3duckdb

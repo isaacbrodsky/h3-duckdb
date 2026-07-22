@@ -1,10 +1,11 @@
 
 #include "well_known_encoder.hpp"
 #include "h3api.h"
-#include "duckdb/common/string_util.hpp"
 #include <cassert>
+#include <iomanip>
+#include <sstream>
 
-namespace duckdb {
+namespace h3duckdb {
 
 void WkbEncoder::StartLineString() {
   // little endian + linestring
@@ -12,7 +13,7 @@ void WkbEncoder::StartLineString() {
 }
 
 void WkbEncoder::Point(double lng, double lat) {
-  points.push_back(make_pair(lng, lat));
+  points.push_back(std::make_pair(lng, lat));
 }
 
 void WkbEncoder::EndLineString() {
@@ -68,9 +69,19 @@ std::string WkbEncoder::Finish() { return buffer; }
 
 void WktEncoder::StartLineString() { buffer = "LINESTRING ("; }
 
+static void AppendDouble(std::string &str, double val) {
+  // TODO: Optimize this
+  std::ostringstream ss;
+  ss.imbue(std::locale::classic());
+  ss << std::fixed << std::setprecision(6) << val;
+  str += ss.str();
+}
+
 void WktEncoder::Point(double lng, double lat) {
-  auto sep = firstPoint ? "" : ", ";
-  buffer += StringUtil::Format("%s%f %f", sep, lng, lat);
+  buffer += firstPoint ? "" : ", ";
+  AppendDouble(buffer, lng);
+  buffer += " ";
+  AppendDouble(buffer, lat);
   firstPoint = false;
 }
 
@@ -120,4 +131,4 @@ void WktEncoder::EndMultiPolygon() { buffer += ")"; }
 
 std::string WktEncoder::Finish() { return buffer; }
 
-} // namespace duckdb
+} // namespace h3duckdb

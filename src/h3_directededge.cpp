@@ -2,591 +2,554 @@
 #include "h3_functions.hpp"
 #include "well_known_encoder.hpp"
 
-namespace duckdb {
+namespace h3duckdb {
 
-static void DirectedEdgeToCellsFunction(DataChunk &args, ExpressionState &state,
-                                        Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-  for (idx_t i = 0; i < args.size(); i++) {
-    result_data[i].offset = ListVector::GetListSize(result);
+template <typename T>
+void DirectedEdgeToCellsFunction(duckdb_function_info info,
+                                 duckdb_data_chunk input,
+                                 duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
 
-    uint64_t edge = args.GetValue(0, i)
-                        .DefaultCastAs(LogicalType::UBIGINT)
-                        .GetValue<uint64_t>();
-    std::vector<H3Index> out(2);
-    H3Error err = directedEdgeToCells(edge, out.data());
-    if (err) {
-      result.SetValue(i, Value(LogicalType::SQLNULL));
-    } else {
-      ListVector::PushBack(result, Value::UBIGINT(out[0]));
-      ListVector::PushBack(result, Value::UBIGINT(out[1]));
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
-      result_data[i].length = 2;
-    }
-  }
-  if (args.AllConstant()) {
-    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  }
-  result.Verify(args.size());
-}
+  duckdb_list_vector_reserve(output, inputSize * 2);
+  duckdb_vector_ensure_validity_writable(output);
+  duckdb_list_entry *entries =
+      (duckdb_list_entry *)duckdb_vector_get_data(output);
+  duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
+  T *resultData = (T *)duckdb_vector_get_data(outputChildVec);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+  idx_t resultOffset = 0;
 
-static void DirectedEdgeToCellsVarcharFunction(DataChunk &args,
-                                               ExpressionState &state,
-                                               Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-  for (idx_t i = 0; i < args.size(); i++) {
-    result_data[i].offset = ListVector::GetListSize(result);
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
 
-    string edgeInput = args.GetValue(0, i)
-                           .DefaultCastAs(LogicalType::VARCHAR)
-                           .GetValue<string>();
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
 
-    H3Index edge;
-    H3Error err0 = stringToH3(edgeInput.c_str(), &edge);
-    if (err0) {
-      result.SetValue(i, Value(LogicalType::SQLNULL));
-    } else {
-      std::vector<H3Index> out(2);
-      H3Error err1 = directedEdgeToCells(edge, out.data());
-      if (err1) {
-        result.SetValue(i, Value(LogicalType::SQLNULL));
-      } else {
-        auto str0 = StringUtil::Format("%llx", out[0]);
-        ListVector::PushBack(result, str0);
-        auto str1 = StringUtil::Format("%llx", out[1]);
-        ListVector::PushBack(result, str1);
+      if (cell) {
+        std::vector<H3Index> out(2);
+        H3Error err = directedEdgeToCells(cell, out.data());
+        if (!err) {
+          idx_t actualCount = 0;
+          for (idx_t j = 0; j < out.size(); ++j) {
+            if (out[j]) {
+              AssignHexString(outputChildVec, resultData,
+                              resultOffset + actualCount, out[j]);
+              actualCount++;
+            }
+          }
 
-        result_data[i].length = 2;
+          entries[row].offset = resultOffset;
+          entries[row].length = actualCount;
+          resultOffset += actualCount;
+          wasValid = true;
+        }
       }
     }
-  }
-  if (args.AllConstant()) {
-    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  }
-  result.Verify(args.size());
-}
 
-static void OriginToDirectedEdgesFunction(DataChunk &args,
-                                          ExpressionState &state,
-                                          Vector &result) {
-  D_ASSERT(result.GetType().id() == LogicalTypeId::LIST);
-
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-  for (idx_t i = 0; i < args.size(); i++) {
-    result_data[i].offset = ListVector::GetListSize(result);
-
-    uint64_t origin = args.GetValue(0, i)
-                          .DefaultCastAs(LogicalType::UBIGINT)
-                          .GetValue<uint64_t>();
-    int64_t actual = 0;
-    std::vector<H3Index> out(6);
-    H3Error err = originToDirectedEdges(origin, out.data());
-    if (err) {
-      result.SetValue(i, Value(LogicalType::SQLNULL));
-    } else {
-      for (auto val : out) {
-        if (val != H3_NULL) {
-          ListVector::PushBack(result, Value::UBIGINT(val));
-          actual++;
-        }
-      }
-
-      result_data[i].length = actual;
-    }
-  }
-  if (args.AllConstant()) {
-    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  }
-  result.Verify(args.size());
-}
-
-static void OriginToDirectedEdgesVarcharFunction(DataChunk &args,
-                                                 ExpressionState &state,
-                                                 Vector &result) {
-  D_ASSERT(result.GetType().id() == LogicalTypeId::LIST);
-
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-  for (idx_t i = 0; i < args.size(); i++) {
-    result_data[i].offset = ListVector::GetListSize(result);
-
-    string originStr = args.GetValue(0, i)
-                           .DefaultCastAs(LogicalType::VARCHAR)
-                           .GetValue<string>();
-
-    H3Index origin;
-    H3Error err0 = stringToH3(originStr.c_str(), &origin);
-    if (err0) {
-      result.SetValue(i, Value(LogicalType::SQLNULL));
-    } else {
-      int64_t actual = 0;
-      std::vector<H3Index> out(6);
-      H3Error err1 = originToDirectedEdges(origin, out.data());
-      if (err1) {
-        result.SetValue(i, Value(LogicalType::SQLNULL));
-      } else {
-        for (auto val : out) {
-          if (val != H3_NULL) {
-            auto str = StringUtil::Format("%llx", val);
-            ListVector::PushBack(result, str);
-            actual++;
-          }
-        }
-
-        result_data[i].length = actual;
-      }
-    }
-  }
-  if (args.AllConstant()) {
-    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  }
-  result.Verify(args.size());
-}
-
-template <typename T>
-static void GetDirectedEdgeOriginFunction(DataChunk &args,
-                                          ExpressionState &state,
-                                          Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, T>(
-      inputs, result, args.size(), [&](T input, ValidityMask &mask, idx_t idx) {
-        H3Index out;
-        H3Error err = getDirectedEdgeOrigin(input, &out);
-        if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
-        } else {
-          return out;
-        }
-      });
-}
-
-static void GetDirectedEdgeOriginVarcharFunction(DataChunk &args,
-                                                 ExpressionState &state,
-                                                 Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t inputStr, ValidityMask &mask, idx_t idx) {
-        H3Index input;
-        H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
-        if (err0) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
-        } else {
-          H3Index out;
-          H3Error err1 = getDirectedEdgeOrigin(input, &out);
-          if (err1) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
-          } else {
-            auto str = StringUtil::Format("%llx", out);
-            return StringVector::AddString(result, str);
-          }
-        }
-      });
-}
-
-template <typename T>
-static void GetDirectedEdgeDestinationFunction(DataChunk &args,
-                                               ExpressionState &state,
-                                               Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, T>(
-      inputs, result, args.size(), [&](T input, ValidityMask &mask, idx_t idx) {
-        H3Index out;
-        H3Error err = getDirectedEdgeDestination(input, &out);
-        if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
-        } else {
-          return out;
-        }
-      });
-}
-
-static void GetDirectedEdgeDestinationVarcharFunction(DataChunk &args,
-                                                      ExpressionState &state,
-                                                      Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t inputStr, ValidityMask &mask, idx_t idx) {
-        H3Index input;
-        H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
-        if (err0) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
-        } else {
-          H3Index out;
-          H3Error err1 = getDirectedEdgeDestination(input, &out);
-          if (err1) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
-          } else {
-            auto str = StringUtil::Format("%llx", out);
-            return StringVector::AddString(result, str);
-          }
-        }
-      });
-}
-
-template <typename T>
-static void CellsToDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
-                                        Vector &result) {
-  auto &inputs = args.data[0];
-  auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<T, T, T>(
-      inputs, inputs2, result, args.size(),
-      [&](T input, T input2, ValidityMask &mask, idx_t idx) {
-        H3Index out;
-        H3Error err = cellsToDirectedEdge(input, input2, &out);
-        if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
-        } else {
-          return out;
-        }
-      });
-}
-
-static void CellsToDirectedEdgeVarcharFunction(DataChunk &args,
-                                               ExpressionState &state,
-                                               Vector &result) {
-  auto &inputs = args.data[0];
-  auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<string_t, string_t, string_t>(
-      inputs, inputs2, result, args.size(),
-      [&](string_t inputStr, string_t inputStr2, ValidityMask &mask,
-          idx_t idx) {
-        H3Index input, input2;
-        H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
-        H3Error err1 = stringToH3(inputStr2.GetString().c_str(), &input2);
-        if (err0 || err1) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
-        } else {
-          H3Index out;
-          H3Error err = cellsToDirectedEdge(input, input2, &out);
-          if (err) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
-          } else {
-            auto str = StringUtil::Format("%llx", out);
-            return StringVector::AddString(result, str);
-          }
-        }
-      });
-}
-
-template <typename T>
-static void ReverseDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
-                                        Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, T>(
-      inputs, result, args.size(), [&](T input, ValidityMask &mask, idx_t idx) {
-        H3Index out;
-        H3Error err = reverseDirectedEdge(input, &out);
-        if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
-        } else {
-          return out;
-        }
-      });
-}
-
-static void ReverseDirectedEdgeVarcharFunction(DataChunk &args,
-                                               ExpressionState &state,
-                                               Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      inputs, result, args.size(),
-      [&](string_t inputStr, ValidityMask &mask, idx_t idx) {
-        H3Index input;
-        H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
-        if (err0) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
-        } else {
-          H3Index out;
-          H3Error err = reverseDirectedEdge(input, &out);
-          if (err) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
-          } else {
-            auto str = StringUtil::Format("%llx", out);
-            return StringVector::AddString(result, str);
-          }
-        }
-      });
-}
-
-template <typename T>
-static void AreNeighborCellsFunction(DataChunk &args, ExpressionState &state,
-                                     Vector &result) {
-  auto &inputs = args.data[0];
-  auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<T, T, bool>(
-      inputs, inputs2, result, args.size(),
-      [&](T input, T input2, ValidityMask &mask, idx_t idx) {
-        int out;
-        H3Error err = areNeighborCells(input, input2, &out);
-        if (err) {
-          mask.SetInvalid(idx);
-          return bool(false);
-        } else {
-          return bool(out);
-        }
-      });
-}
-
-static void AreNeighborCellsVarcharFunction(DataChunk &args,
-                                            ExpressionState &state,
-                                            Vector &result) {
-  auto &inputs = args.data[0];
-  auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<string_t, string_t, bool>(
-      inputs, inputs2, result, args.size(),
-      [&](string_t inputStr, string_t inputStr2, ValidityMask &mask,
-          idx_t idx) {
-        H3Index input, input2;
-        H3Error err0 = stringToH3(inputStr.GetString().c_str(), &input);
-        H3Error err1 = stringToH3(inputStr2.GetString().c_str(), &input2);
-        if (err0 || err1) {
-          mask.SetInvalid(idx);
-          return bool(false);
-        } else {
-          int out;
-          H3Error err2 = areNeighborCells(input, input2, &out);
-          if (err2) {
-            mask.SetInvalid(idx);
-            return bool(false);
-          } else {
-            return bool(out);
-          }
-        }
-      });
-}
-
-static void IsValidDirectedEdgeVarcharFunction(DataChunk &args,
-                                               ExpressionState &state,
-                                               Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t input) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          return false;
-        }
-        return bool(isValidDirectedEdge(h));
-      });
-}
-
-template <typename T>
-static void IsValidDirectedEdgeFunction(DataChunk &args, ExpressionState &state,
-                                        Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
-    return bool(isValidDirectedEdge(input));
-  });
-}
-
-template <typename Encoder> struct DirectedEdgeToBoundaryOperator {
-  explicit DirectedEdgeToBoundaryOperator(Vector &_result) : result(_result) {}
-
-  string_t operator()(uint64_t input, ValidityMask &mask, idx_t idx) {
-    CellBoundary boundary;
-    H3Error err = directedEdgeToBoundary(input, &boundary);
-
-    if (err) {
-      mask.SetInvalid(idx);
-      return StringVector::EmptyString(result, 0);
-    } else {
-      auto enc = Encoder();
-      enc.StartLineString();
-      for (int i = 0; i <= boundary.numVerts; i++) {
-        int vertIndex = (i == boundary.numVerts) ? 0 : i;
-        enc.Point(radsToDegs(boundary.verts[vertIndex].lng),
-                  radsToDegs(boundary.verts[vertIndex].lat));
-      }
-      enc.EndLineString();
-      auto str = enc.Finish();
-
-      return StringVector::AddStringOrBlob(result, str);
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
 
-private:
-  Vector &result;
+  duckdb_list_vector_set_size(output, resultOffset);
+}
+
+template <typename T>
+void OriginToDirectedEdgesFunction(duckdb_function_info info,
+                                   duckdb_data_chunk input,
+                                   duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+
+  duckdb_list_vector_reserve(output, inputSize * 6);
+  duckdb_vector_ensure_validity_writable(output);
+  duckdb_list_entry *entries =
+      (duckdb_list_entry *)duckdb_vector_get_data(output);
+  duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
+  T *resultData = (T *)duckdb_vector_get_data(outputChildVec);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+  idx_t resultOffset = 0;
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
+
+      if (cell) {
+        std::vector<H3Index> out(6);
+        H3Error err = originToDirectedEdges(cell, out.data());
+        if (!err) {
+          idx_t actualCount = 0;
+          for (idx_t j = 0; j < out.size(); ++j) {
+            if (out[j]) {
+              AssignHexString(outputChildVec, resultData,
+                              resultOffset + actualCount, out[j]);
+              actualCount++;
+            }
+          }
+
+          entries[row].offset = resultOffset;
+          entries[row].length = actualCount;
+          resultOffset += actualCount;
+          wasValid = true;
+        }
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+
+  duckdb_list_vector_set_size(output, resultOffset);
+}
+
+template <typename T, bool IsDestination>
+void GetDirectedEdgeOriginOrDestinationFunction(duckdb_function_info info,
+                                                duckdb_data_chunk input,
+                                                duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  T *resultData = (T *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      H3Index out;
+
+      H3Error err = IsDestination ? getDirectedEdgeDestination(index, &out)
+                                  : getDirectedEdgeOrigin(index, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
+template <typename T>
+void CellsToDirectedEdgeFunction(duckdb_function_info info,
+                                 duckdb_data_chunk input,
+                                 duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+  duckdb_vector index2Vec = duckdb_data_chunk_get_vector(input, 1);
+  T *index2VecData = (T *)duckdb_vector_get_data(index2Vec);
+  uint64_t *indexVec2Validity = duckdb_vector_get_validity(index2Vec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  T *resultData = (T *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(indexVec2Validity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      H3Index index2 = IndexFromVector(index2VecData, row);
+      H3Index out;
+
+      H3Error err = cellsToDirectedEdge(index, index2, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
+template <typename T>
+void ReverseDirectedEdgeFunction(duckdb_function_info info,
+                                 duckdb_data_chunk input,
+                                 duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  T *resultData = (T *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      H3Index out;
+
+      H3Error err = reverseDirectedEdge(index, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
+template <typename T>
+void AreNeighborCellsFunction(duckdb_function_info info,
+                              duckdb_data_chunk input, duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+  duckdb_vector index2Vec = duckdb_data_chunk_get_vector(input, 1);
+  T *index2VecData = (T *)duckdb_vector_get_data(index2Vec);
+  uint64_t *indexVec2Validity = duckdb_vector_get_validity(index2Vec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  bool *resultData = (bool *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(indexVec2Validity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      H3Index index2 = IndexFromVector(index2VecData, row);
+
+      int out;
+      H3Error err = areNeighborCells(index, index2, &out);
+      if (!err) {
+        resultData[row] = out;
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
+struct IsValidDirectedEdgeOperator {
+  static bool operate(H3Index index) { return isValidDirectedEdge(index); }
 };
 
 template <typename T, typename Encoder>
-static void DirectedEdgeToBoundaryFunction(DataChunk &args,
-                                           ExpressionState &state,
-                                           Vector &result) {
-  UnaryExecutor::ExecuteWithNulls<T, string_t,
-                                  DirectedEdgeToBoundaryOperator<Encoder>>(
-      args.data[0], result, args.size(),
-      DirectedEdgeToBoundaryOperator<Encoder>{result});
-}
+void DirectedEdgeToBoundaryFunction(duckdb_function_info info,
+                                    duckdb_data_chunk input,
+                                    duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
 
-template <typename Encoder> struct DirectedEdgeToBoundaryVarcharOperator {
-  explicit DirectedEdgeToBoundaryVarcharOperator(Vector &_result)
-      : result(_result) {}
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
-  string_t operator()(string_t input, ValidityMask &mask, idx_t idx) {
-    H3Index h;
-    H3Error err = stringToH3(input.GetString().c_str(), &h);
-    if (err) {
-      mask.SetInvalid(idx);
-      return StringVector::EmptyString(result, 0);
-    } else {
-      return DirectedEdgeToBoundaryOperator<Encoder>(result)(h, mask, idx);
+  duckdb_vector_ensure_validity_writable(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
+
+      if (cell) {
+        CellBoundary boundary;
+        H3Error err = directedEdgeToBoundary(cell, &boundary);
+        if (!err) {
+          auto enc = Encoder();
+          enc.StartLineString();
+          for (int i = 0; i <= boundary.numVerts; i++) {
+            // Add an extra vertex onto the end to close the polygon
+            int vertIndex = (i == boundary.numVerts) ? 0 : i;
+            enc.Point(radsToDegs(boundary.verts[vertIndex].lng),
+                      radsToDegs(boundary.verts[vertIndex].lat));
+          }
+          enc.EndLineString();
+          auto str = enc.Finish();
+
+          duckdb_vector_assign_string_element_len(output, row, str.c_str(),
+                                                  str.size());
+          wasValid = true;
+        }
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
+}
 
-private:
-  Vector &result;
-};
+duckdb_scalar_function_set H3Functions::GetDirectedEdgeToCellsFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_directed_edge_to_cells");
+
+  auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_logical_type returnType = duckdb_create_list_type(logicalType);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_directed_edge_to_cells");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(
+        function, DirectedEdgeToCellsFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&returnType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetOriginToDirectedEdgesFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_origin_to_directed_edges");
+
+  auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_logical_type returnType = duckdb_create_list_type(logicalType);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_origin_to_directed_edges");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(
+        function, OriginToDirectedEdgesFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&returnType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetGetDirectedEdgeOriginFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_get_directed_edge_origin");
+
+  auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_get_directed_edge_origin");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, logicalType);
+    duckdb_scalar_function_set_function(
+        function,
+        GetDirectedEdgeOriginOrDestinationFunction<PhysicalType, false>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set
+H3Functions::GetGetDirectedEdgeDestinationFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_get_directed_edge_destination");
+
+  auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function,
+                                    "h3_get_directed_edge_destination");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, logicalType);
+    duckdb_scalar_function_set_function(
+        function,
+        GetDirectedEdgeOriginOrDestinationFunction<PhysicalType, true>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetCellsToDirectedEdgeFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_cells_to_directed_edge");
+
+  auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_cells_to_directed_edge");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, logicalType);
+    duckdb_scalar_function_set_function(
+        function, CellsToDirectedEdgeFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetAreNeighborCellsFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_are_neighbor_cells");
+
+  duckdb_logical_type boolType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BOOLEAN);
+
+  auto r = [&functionSet,
+            &boolType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_are_neighbor_cells");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, boolType);
+    duckdb_scalar_function_set_function(function,
+                                        AreNeighborCellsFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&boolType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetIsValidDirectedEdgeFunctions() {
+  return GetGenericInspectFunction<bool, IsValidDirectedEdgeOperator>(
+      "h3_is_valid_directed_edge", DUCKDB_TYPE_BOOLEAN);
+}
 
 template <typename Encoder>
-static void DirectedEdgeToBoundaryVarcharFunction(DataChunk &args,
-                                                  ExpressionState &state,
-                                                  Vector &result) {
-  UnaryExecutor::ExecuteWithNulls<string_t, string_t>(
-      args.data[0], result, args.size(),
-      DirectedEdgeToBoundaryVarcharOperator<Encoder>{result});
+duckdb_scalar_function_set
+GetDirectedEdgeToBoundaryGenericFunction(const char *name,
+                                         duckdb_type returnTypeId) {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set(name);
+
+  duckdb_logical_type returnType = duckdb_create_logical_type(returnTypeId);
+
+  auto r = [&functionSet, &name,
+            &returnType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, name);
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(
+        function, DirectedEdgeToBoundaryFunction<PhysicalType, Encoder>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.template operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.template operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.template operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&returnType);
+
+  return functionSet;
 }
 
-CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToCellsFunction() {
-  ScalarFunctionSet funcs("h3_directed_edge_to_cells");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-                                   LogicalType::LIST(LogicalType::UBIGINT),
-                                   DirectedEdgeToCellsFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-                                   LogicalType::LIST(LogicalType::UBIGINT),
-                                   DirectedEdgeToCellsFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-                                   LogicalType::LIST(LogicalType::VARCHAR),
-                                   DirectedEdgeToCellsVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
+duckdb_scalar_function_set H3Functions::GetDirectedEdgeToBoundaryWktFunction() {
+  return GetDirectedEdgeToBoundaryGenericFunction<WktEncoder>(
+      "h3_directed_edge_to_boundary_wkt", DUCKDB_TYPE_VARCHAR);
 }
 
-CreateScalarFunctionInfo H3Functions::GetOriginToDirectedEdgesFunction() {
-  ScalarFunctionSet funcs("h3_origin_to_directed_edges");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-                                   LogicalType::LIST(LogicalType::UBIGINT),
-                                   OriginToDirectedEdgesFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-                                   LogicalType::LIST(LogicalType::UBIGINT),
-                                   OriginToDirectedEdgesFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-                                   LogicalType::LIST(LogicalType::VARCHAR),
-                                   OriginToDirectedEdgesVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
+duckdb_scalar_function_set H3Functions::GetDirectedEdgeToBoundaryWkbFunction() {
+  return GetDirectedEdgeToBoundaryGenericFunction<WkbEncoder>(
+      "h3_directed_edge_to_boundary_wkb", DUCKDB_TYPE_BLOB);
 }
 
-CreateScalarFunctionInfo H3Functions::GetGetDirectedEdgeOriginFunction() {
-  ScalarFunctionSet funcs("h3_get_directed_edge_origin");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::UBIGINT,
-                                   GetDirectedEdgeOriginFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BIGINT,
-                                   GetDirectedEdgeOriginFunction<int64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
-                                   GetDirectedEdgeOriginVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
+duckdb_scalar_function_set H3Functions::GetReverseDirectedEdgeFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_reverse_directed_edge");
+
+  auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_reverse_directed_edge");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, logicalType);
+    duckdb_scalar_function_set_function(
+        function, ReverseDirectedEdgeFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  return functionSet;
 }
 
-CreateScalarFunctionInfo H3Functions::GetGetDirectedEdgeDestinationFunction() {
-  ScalarFunctionSet funcs("h3_get_directed_edge_destination");
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::UBIGINT}, LogicalType::UBIGINT,
-                     GetDirectedEdgeDestinationFunction<uint64_t>));
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::BIGINT}, LogicalType::BIGINT,
-                     GetDirectedEdgeDestinationFunction<int64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
-                                   GetDirectedEdgeDestinationVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
-}
-
-CreateScalarFunctionInfo H3Functions::GetCellsToDirectedEdgeFunction() {
-  ScalarFunctionSet funcs("h3_cells_to_directed_edge");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
-                                   LogicalType::UBIGINT,
-                                   CellsToDirectedEdgeFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
-                                   LogicalType::BIGINT,
-                                   CellsToDirectedEdgeFunction<int64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
-                                   LogicalType::VARCHAR,
-                                   CellsToDirectedEdgeVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
-}
-
-CreateScalarFunctionInfo H3Functions::GetAreNeighborCellsFunction() {
-  ScalarFunctionSet funcs("h3_are_neighbor_cells");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::UBIGINT},
-                                   LogicalType::BOOLEAN,
-                                   AreNeighborCellsFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT},
-                                   LogicalType::BOOLEAN,
-                                   AreNeighborCellsFunction<int64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::VARCHAR},
-                                   LogicalType::BOOLEAN,
-                                   AreNeighborCellsVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
-}
-
-CreateScalarFunctionInfo H3Functions::GetIsValidDirectedEdgeFunctions() {
-  ScalarFunctionSet funcs("h3_is_valid_directed_edge");
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
-                                   IsValidDirectedEdgeVarcharFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
-                                   IsValidDirectedEdgeFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
-                                   IsValidDirectedEdgeFunction<int64_t>));
-  return CreateScalarFunctionInfo(funcs);
-}
-
-CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToBoundaryWktFunction() {
-  ScalarFunctionSet funcs("h3_directed_edge_to_boundary_wkt");
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
-                     DirectedEdgeToBoundaryVarcharFunction<WktEncoder>));
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,
-                     DirectedEdgeToBoundaryFunction<uint64_t, WktEncoder>));
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR,
-                     DirectedEdgeToBoundaryFunction<int64_t, WktEncoder>));
-  return CreateScalarFunctionInfo(funcs);
-}
-
-CreateScalarFunctionInfo H3Functions::GetDirectedEdgeToBoundaryWkbFunction() {
-  ScalarFunctionSet funcs("h3_directed_edge_to_boundary_wkb");
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::VARCHAR}, LogicalType::BLOB,
-                     DirectedEdgeToBoundaryVarcharFunction<WkbEncoder>));
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::UBIGINT}, LogicalType::BLOB,
-                     DirectedEdgeToBoundaryFunction<uint64_t, WkbEncoder>));
-  funcs.AddFunction(
-      ScalarFunction({LogicalType::BIGINT}, LogicalType::BLOB,
-                     DirectedEdgeToBoundaryFunction<int64_t, WkbEncoder>));
-  return CreateScalarFunctionInfo(funcs);
-}
-
-CreateScalarFunctionInfo H3Functions::GetReverseDirectedEdgeFunction() {
-  ScalarFunctionSet funcs("h3_reverse_directed_edge");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::UBIGINT,
-                                   ReverseDirectedEdgeFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BIGINT,
-                                   ReverseDirectedEdgeFunction<int64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR,
-                                   ReverseDirectedEdgeVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
-}
-
-} // namespace duckdb
+} // namespace h3duckdb

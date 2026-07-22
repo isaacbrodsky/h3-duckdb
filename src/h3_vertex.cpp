@@ -1,376 +1,343 @@
 #include "h3_common.hpp"
 #include "h3_functions.hpp"
 
-namespace duckdb {
+namespace h3duckdb {
 
 template <typename T>
-static void CellToVertexFunction(DataChunk &args, ExpressionState &state,
-                                 Vector &result) {
-  auto &inputs = args.data[0];
-  auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<T, int32_t, T>(
-      inputs, inputs2, result, args.size(),
-      [&](T cell, int32_t vertexNum, ValidityMask &mask, idx_t idx) {
-        H3Index vertex;
-        H3Error err = cellToVertex(cell, vertexNum, &vertex);
-        if (err) {
-          mask.SetInvalid(idx);
-          return H3Index(H3_NULL);
-        } else {
-          return vertex;
-        }
-      });
-}
+void CellToVertexFunction(duckdb_function_info info, duckdb_data_chunk input,
+                          duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
 
-static void CellToVertexVarcharFunction(DataChunk &args, ExpressionState &state,
-                                        Vector &result) {
-  auto &inputs = args.data[0];
-  auto &inputs2 = args.data[1];
-  BinaryExecutor::ExecuteWithNulls<string_t, int32_t, string_t>(
-      inputs, inputs2, result, args.size(),
-      [&](string_t cellInput, int32_t vertexNum, ValidityMask &mask,
-          idx_t idx) {
-        H3Index cell;
-        H3Error err0 = stringToH3(cellInput.GetString().c_str(), &cell);
-        if (err0) {
-          mask.SetInvalid(idx);
-          return StringVector::EmptyString(result, 0);
-        } else {
-          H3Index vertex;
-          H3Error err1 = cellToVertex(cell, vertexNum, &vertex);
-          if (err1) {
-            mask.SetInvalid(idx);
-            return StringVector::EmptyString(result, 0);
-          } else {
-            auto str = StringUtil::Format("%llx", vertex);
-            return StringVector::AddString(result, str);
-          }
-        }
-      });
-}
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+  duckdb_vector vertexVec = duckdb_data_chunk_get_vector(input, 1);
+  int32_t *vertexVecData = (int32_t *)duckdb_vector_get_data(vertexVec);
+  uint64_t *vertexVecValidity = duckdb_vector_get_validity(vertexVec);
 
-static void CellToVertexesFunction(DataChunk &args, ExpressionState &state,
-                                   Vector &result) {
-  result.SetVectorType(VectorType::FLAT_VECTOR);
-  auto &result_validity = FlatVector::Validity(result);
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-  idx_t offset = 0;
-  for (idx_t i = 0; i < args.size(); i++) {
-    result_data[i].offset = offset;
+  duckdb_vector_ensure_validity_writable(output);
+  T *resultData = (T *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
-    uint64_t cell = args.GetValue(0, i)
-                        .DefaultCastAs(LogicalType::UBIGINT)
-                        .GetValue<uint64_t>();
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(vertexVecValidity, row)) {
+      H3Index index = IndexFromVector(indexVecData, row);
+      auto vertex = vertexVecData[row];
+      H3Index out;
 
-    int64_t actual = 0;
-    std::vector<H3Index> out(6);
-    H3Error err = cellToVertexes(cell, out.data());
-    if (err) {
-      result_validity.SetInvalid(i);
-      result_data[i].length = 0;
-    } else {
-      for (auto val : out) {
-        if (val != H3_NULL) {
-          auto result_val = Value::UBIGINT(val);
-          ListVector::PushBack(result, result_val);
-          actual++;
-        }
+      H3Error err = cellToVertex(index, vertex, &out);
+      if (!err) {
+        AssignHexString(output, resultData, row, out);
+        wasValid = true;
       }
-
-      result_data[i].length = actual;
     }
-    offset += actual;
-  }
 
-  if (args.AllConstant()) {
-    result.SetVectorType(VectorType::CONSTANT_VECTOR);
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
   }
-  result.Verify(args.size());
 }
 
-static void CellToVertexesVarcharFunction(DataChunk &args,
-                                          ExpressionState &state,
-                                          Vector &result) {
-  result.SetVectorType(VectorType::FLAT_VECTOR);
-  auto &result_validity = FlatVector::Validity(result);
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-  idx_t offset = 0;
-  for (idx_t i = 0; i < args.size(); i++) {
-    result_data[i].offset = offset;
+template <typename T>
+void CellToVertexesFunction(duckdb_function_info info, duckdb_data_chunk input,
+                            duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
 
-    string cellInput = args.GetValue(0, i)
-                           .DefaultCastAs(LogicalType::VARCHAR)
-                           .GetValue<string>();
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
 
-    H3Index cell;
-    H3Error err0 = stringToH3(cellInput.c_str(), &cell);
-    if (err0) {
-      result_validity.SetInvalid(i);
-      result_data[i].length = 0;
-    } else {
-      int64_t actual = 0;
-      std::vector<H3Index> out(6);
-      H3Error err = cellToVertexes(cell, out.data());
-      if (err) {
-        result_validity.SetInvalid(i);
-        result_data[i].length = 0;
-      } else {
-        for (auto val : out) {
-          if (val != H3_NULL) {
-            auto str = StringUtil::Format("%llx", val);
-            ListVector::PushBack(result, str);
-            actual++;
+  // Worst case: all hexagons, so all 6 verts
+  duckdb_list_vector_reserve(output, inputSize * 6);
+  duckdb_vector_ensure_validity_writable(output);
+  duckdb_list_entry *entries =
+      (duckdb_list_entry *)duckdb_vector_get_data(output);
+  duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
+  T *resultData = (T *)duckdb_vector_get_data(outputChildVec);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+  idx_t resultOffset = 0;
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+
+      H3Index cell = IndexFromVector(indexVecData, row);
+
+      if (cell) {
+        std::vector<H3Index> out(6);
+        H3Error err = cellToVertexes(cell, out.data());
+        if (!err) {
+          idx_t actualCount = 0;
+          for (idx_t j = 0; j < out.size(); ++j) {
+            if (out[j]) {
+              AssignHexString(outputChildVec, resultData,
+                              resultOffset + actualCount, out[j]);
+              actualCount++;
+            }
           }
-        }
 
-        result_data[i].length = actual;
+          entries[row].offset = resultOffset;
+          entries[row].length = actualCount;
+          resultOffset += actualCount;
+          wasValid = true;
+        }
       }
-      offset += actual;
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
     }
   }
 
-  if (args.AllConstant()) {
-    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  }
-  result.Verify(args.size());
+  duckdb_list_vector_set_size(output, resultOffset);
 }
 
-template <typename T>
-static void VertexToLatFunction(DataChunk &args, ExpressionState &state,
-                                Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, double>(
-      inputs, result, args.size(),
-      [&](T vertex, ValidityMask &mask, idx_t idx) {
-        LatLng latLng = {.lat = 0, .lng = 0};
-        H3Error err = vertexToLatLng(vertex, &latLng);
-        if (err) {
-          mask.SetInvalid(idx);
-          return .0;
-        } else {
-          return radsToDegs(latLng.lat);
-        }
-      });
-}
+template <typename T, bool IsLng>
+void VertexToLatOrLngFunction(duckdb_function_info info,
+                              duckdb_data_chunk input, duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
 
-static void VertexToLatVarcharFunction(DataChunk &args, ExpressionState &state,
-                                       Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, double>(
-      inputs, result, args.size(),
-      [&](string_t vertexInput, ValidityMask &mask, idx_t idx) {
-        H3Index vertex;
-        H3Error err0 = stringToH3(vertexInput.GetString().c_str(), &vertex);
-        if (err0) {
-          mask.SetInvalid(idx);
-          return .0;
-        } else {
-          LatLng latLng = {.lat = 0, .lng = 0};
-          H3Error err1 = vertexToLatLng(vertex, &latLng);
-          if (err1) {
-            mask.SetInvalid(idx);
-            return .0;
-          } else {
-            return radsToDegs(latLng.lat);
-          }
-        }
-      });
-}
+  duckdb_vector vertexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *vertexVecData = (T *)duckdb_vector_get_data(vertexVec);
+  uint64_t *vertexVecValidity = duckdb_vector_get_validity(vertexVec);
 
-template <typename T>
-static void VertexToLngFunction(DataChunk &args, ExpressionState &state,
-                                Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<T, double>(
-      inputs, result, args.size(),
-      [&](T vertex, ValidityMask &mask, idx_t idx) {
-        LatLng latLng = {.lat = 0, .lng = 0};
-        H3Error err = vertexToLatLng(vertex, &latLng);
-        if (err) {
-          mask.SetInvalid(idx);
-          return .0;
-        } else {
-          return radsToDegs(latLng.lng);
-        }
-      });
-}
+  duckdb_vector_ensure_validity_writable(output);
+  double *resultData = (double *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
 
-static void VertexToLngVarcharFunction(DataChunk &args, ExpressionState &state,
-                                       Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::ExecuteWithNulls<string_t, double>(
-      inputs, result, args.size(),
-      [&](string_t vertexInput, ValidityMask &mask, idx_t idx) {
-        H3Index vertex;
-        H3Error err0 = stringToH3(vertexInput.GetString().c_str(), &vertex);
-        if (err0) {
-          mask.SetInvalid(idx);
-          return .0;
-        } else {
-          LatLng latLng = {.lat = 0, .lng = 0};
-          H3Error err1 = vertexToLatLng(vertex, &latLng);
-          if (err1) {
-            mask.SetInvalid(idx);
-            return .0;
-          } else {
-            return radsToDegs(latLng.lng);
-          }
-        }
-      });
-}
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(vertexVecValidity, row)) {
+      H3Index index = IndexFromVector(vertexVecData, row);
 
-static void VertexToLatLngFunction(DataChunk &args, ExpressionState &state,
-                                   Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-  for (idx_t i = 0; i < args.size(); i++) {
-    result_data[i].offset = ListVector::GetListSize(result);
-
-    uint64_t vertex = args.GetValue(0, i)
-                          .DefaultCastAs(LogicalType::UBIGINT)
-                          .GetValue<uint64_t>();
-    LatLng latLng;
-    H3Error err = vertexToLatLng(vertex, &latLng);
-    ThrowH3Error(err);
-
-    ListVector::PushBack(result, radsToDegs(latLng.lat));
-    ListVector::PushBack(result, radsToDegs(latLng.lng));
-    result_data[i].length = 2;
-  }
-  if (args.AllConstant()) {
-    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  }
-  result.Verify(args.size());
-}
-
-static void VertexToLatLngVarcharFunction(DataChunk &args,
-                                          ExpressionState &state,
-                                          Vector &result) {
-  auto result_data = FlatVector::GetData<list_entry_t>(result);
-  for (idx_t i = 0; i < args.size(); i++) {
-    result_data[i].offset = ListVector::GetListSize(result);
-
-    string vertexInput = args.GetValue(0, i)
-                             .DefaultCastAs(LogicalType::VARCHAR)
-                             .GetValue<string>();
-    H3Index vertex;
-    H3Error err0 = stringToH3(vertexInput.c_str(), &vertex);
-    if (err0) {
-      result.SetValue(i, Value(LogicalType::SQLNULL));
-    } else {
-      LatLng latLng;
-      H3Error err1 = vertexToLatLng(vertex, &latLng);
-      if (err1) {
-        result.SetValue(i, Value(LogicalType::SQLNULL));
-      } else {
-        ListVector::PushBack(result, radsToDegs(latLng.lat));
-        ListVector::PushBack(result, radsToDegs(latLng.lng));
-        result_data[i].length = 2;
+      LatLng out = {0};
+      H3Error err = vertexToLatLng(index, &out);
+      if (!err) {
+        resultData[row] = radsToDegs(IsLng ? out.lng : out.lat);
+        wasValid = true;
       }
     }
-  }
-  if (args.AllConstant()) {
-    result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  }
-  result.Verify(args.size());
-}
 
-static void IsValidVertexVarcharFunction(DataChunk &args,
-                                         ExpressionState &state,
-                                         Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::Execute<string_t, bool>(
-      inputs, result, args.size(), [&](string_t input) {
-        H3Index h;
-        H3Error err = stringToH3(input.GetString().c_str(), &h);
-        if (err) {
-          return false;
-        }
-        return bool(isValidVertex(h));
-      });
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
 }
 
 template <typename T>
-static void IsValidVertexFunction(DataChunk &args, ExpressionState &state,
-                                  Vector &result) {
-  auto &inputs = args.data[0];
-  UnaryExecutor::Execute<T, bool>(inputs, result, args.size(), [&](T input) {
-    return bool(isValidVertex(input));
-  });
+void VertexToLatLngFunction(duckdb_function_info info, duckdb_data_chunk input,
+                            duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+
+  duckdb_list_vector_reserve(output, inputSize * 2);
+  duckdb_vector_ensure_validity_writable(output);
+  duckdb_list_entry *entries =
+      (duckdb_list_entry *)duckdb_vector_get_data(output);
+  duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
+  double *resultData = (double *)duckdb_vector_get_data(outputChildVec);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+  idx_t resultOffset = 0;
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
+
+      if (cell) {
+        LatLng latLng;
+        H3Error err = vertexToLatLng(cell, &latLng);
+        if (!err) {
+          resultData[resultOffset] = radsToDegs(latLng.lat);
+          resultData[resultOffset + 1] = radsToDegs(latLng.lng);
+          entries[row].offset = resultOffset;
+          entries[row].length = 2;
+          resultOffset += 2;
+          wasValid = true;
+        }
+      }
+    }
+
+    if (!wasValid) {
+      entries[row].offset = resultOffset;
+      entries[row].length = 0;
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+
+  duckdb_list_vector_set_size(output, resultOffset);
 }
 
-CreateScalarFunctionInfo H3Functions::GetCellToVertexFunction() {
-  ScalarFunctionSet funcs("h3_cell_to_vertex");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT, LogicalType::INTEGER},
-                                   LogicalType::UBIGINT,
-                                   CellToVertexFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT, LogicalType::INTEGER},
-                                   LogicalType::BIGINT,
-                                   CellToVertexFunction<int64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR, LogicalType::INTEGER},
-                                   LogicalType::VARCHAR,
-                                   CellToVertexVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
+struct IsValidVertexOperator {
+  static bool operate(H3Index index) { return isValidVertex(index); }
+};
+
+duckdb_scalar_function_set H3Functions::GetCellToVertexFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_cell_to_vertex");
+
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+
+  auto r = [&functionSet, &intType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_cell_to_vertex");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, logicalType);
+    duckdb_scalar_function_set_function(function,
+                                        CellToVertexFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&intType);
+
+  return functionSet;
 }
 
-CreateScalarFunctionInfo H3Functions::GetCellToVertexesFunction() {
-  ScalarFunctionSet funcs("h3_cell_to_vertexes");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-                                   LogicalType::LIST(LogicalType::UBIGINT),
-                                   CellToVertexesFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-                                   LogicalType::LIST(LogicalType::BIGINT),
-                                   CellToVertexesFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-                                   LogicalType::LIST(LogicalType::VARCHAR),
-                                   CellToVertexesVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
+duckdb_scalar_function_set H3Functions::GetCellToVertexesFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_cell_to_vertexes");
+
+  auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+    duckdb_logical_type returnType = duckdb_create_list_type(logicalType);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_cell_to_vertexes");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, returnType);
+    duckdb_scalar_function_set_function(function,
+                                        CellToVertexesFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&returnType);
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  return functionSet;
 }
 
-CreateScalarFunctionInfo H3Functions::GetVertexToLatFunction() {
-  ScalarFunctionSet funcs("h3_vertex_to_lat");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
-                                   VertexToLatFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
-                                   VertexToLatFunction<int64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::DOUBLE,
-                                   VertexToLatVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
+duckdb_scalar_function_set H3Functions::GetVertexToLatFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_vertex_to_lat");
+
+  duckdb_logical_type doubleType =
+      duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
+
+  auto r = [&functionSet,
+            &doubleType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_vertex_to_lat");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, doubleType);
+    duckdb_scalar_function_set_function(
+        function, VertexToLatOrLngFunction<PhysicalType, false>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&doubleType);
+
+  return functionSet;
 }
 
-CreateScalarFunctionInfo H3Functions::GetVertexToLngFunction() {
-  ScalarFunctionSet funcs("h3_vertex_to_lng");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::DOUBLE,
-                                   VertexToLngFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::DOUBLE,
-                                   VertexToLngFunction<int64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::DOUBLE,
-                                   VertexToLngVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
+duckdb_scalar_function_set H3Functions::GetVertexToLngFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_vertex_to_lng");
+
+  duckdb_logical_type doubleType =
+      duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
+
+  auto r = [&functionSet,
+            &doubleType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_vertex_to_lng");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, doubleType);
+    duckdb_scalar_function_set_function(
+        function, VertexToLatOrLngFunction<PhysicalType, true>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&doubleType);
+
+  return functionSet;
 }
 
-CreateScalarFunctionInfo H3Functions::GetVertexToLatLngFunction() {
-  ScalarFunctionSet funcs("h3_vertex_to_latlng");
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT},
-                                   LogicalType::LIST(LogicalType::DOUBLE),
-                                   VertexToLatLngFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT},
-                                   LogicalType::LIST(LogicalType::DOUBLE),
-                                   VertexToLatLngFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR},
-                                   LogicalType::LIST(LogicalType::DOUBLE),
-                                   VertexToLatLngVarcharFunction));
-  return CreateScalarFunctionInfo(funcs);
+duckdb_scalar_function_set H3Functions::GetVertexToLatLngFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_vertex_to_Latlng");
+
+  duckdb_logical_type doubleType =
+      duckdb_create_logical_type(DUCKDB_TYPE_DOUBLE);
+  duckdb_logical_type doubleListType = duckdb_create_list_type(doubleType);
+
+  auto r = [&functionSet,
+            &doubleListType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_vertex_to_latlng");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, doubleListType);
+    duckdb_scalar_function_set_function(function,
+                                        VertexToLatLngFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&doubleType);
+  duckdb_destroy_logical_type(&doubleListType);
+
+  return functionSet;
 }
 
-CreateScalarFunctionInfo H3Functions::GetIsValidVertexFunctions() {
-  ScalarFunctionSet funcs("h3_is_valid_vertex");
-  funcs.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BOOLEAN,
-                                   IsValidVertexVarcharFunction));
-  funcs.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::BOOLEAN,
-                                   IsValidVertexFunction<uint64_t>));
-  funcs.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::BOOLEAN,
-                                   IsValidVertexFunction<int64_t>));
-  return CreateScalarFunctionInfo(funcs);
+duckdb_scalar_function_set H3Functions::GetIsValidVertexFunctions() {
+  return GetGenericInspectFunction<bool, IsValidVertexOperator>(
+      "h3_is_valid_vertex", DUCKDB_TYPE_BOOLEAN);
 }
 
-} // namespace duckdb
+} // namespace h3duckdb

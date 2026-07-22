@@ -1,17 +1,38 @@
 cmake_minimum_required(VERSION 3.5...3.29)
-set(TARGET_NAME h3)
-set(EXTENSION_NAME ${TARGET_NAME}_extension)
-set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
+option(DUCKDB_WASM_EXTENSION "Whether compiling for Wasm target" OFF)
 
-project(${TARGET_NAME})
+###
+# Configuration
+###
+if(NOT DEFINED EXTENSION_NAME)
+    message(FATAL_ERROR "DuckDB extension name is required")
+endif()
+if (DEFINED TARGET_DUCKDB_VERSION_MAJOR)
+    add_definitions(-DDUCKDB_EXTENSION_API_VERSION_MAJOR=${TARGET_DUCKDB_VERSION_MAJOR})
+endif()
+if (DEFINED TARGET_DUCKDB_VERSION_MINOR)
+    add_definitions(-DDUCKDB_EXTENSION_API_VERSION_MINOR=${TARGET_DUCKDB_VERSION_MINOR})
+endif()
+if (DEFINED TARGET_DUCKDB_VERSION_PATCH)
+    add_definitions(-DDUCKDB_EXTENSION_API_VERSION_PATCH=${TARGET_DUCKDB_VERSION_PATCH})
+endif()
+
+add_definitions(-DDUCKDB_EXTENSION_NAME=${EXTENSION_NAME})
+
+if (DEFINED DUCKDB_EXTENSION_API_VERSION_UNSTABLE)
+    add_definitions(-DDUCKDB_EXTENSION_API_VERSION_UNSTABLE=${DUCKDB_EXTENSION_API_VERSION_UNSTABLE})
+endif()
+
+###
+# Build
+###
+project(${EXTENSION_NAME} LANGUAGES C CXX)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_STANDARD_REQUIRED 1)
 set(CMAKE_C_STANDARD 11)
-if(WIN32)
-  set(CMAKE_CXX_STANDARD_REQUIRED 1)
-  set(CMAKE_CXX_STANDARD 20)
-endif()
+set(CMAKE_CXX_STANDARD_REQUIRED 1)
+set(CMAKE_CXX_STANDARD 20)
 
 # Avoid building tooling we won't need for release
 set(BUILD_BENCHMARKS
@@ -42,47 +63,102 @@ set(ENABLE_FORMAT
     OFF
     CACHE BOOL "" FORCE)
 
+# Hide symbols
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 # Build the core library as static TODO: Is this needed? Consider restoring
 # correctly
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(h3)
+if(WIN32)
+    set_target_properties(h3 PROPERTIES ARCHIVE_OUTPUT_NAME h3_static)
+endif()
 
-# Build the rest (other than the core library dependency) as shared
-set(BUILD_SHARED_LIBS ON)
-
+# Create Extension library
 set(EXTENSION_SOURCES
-    src/h3_extension.cpp
-    src/h3_common.cpp
-    src/h3_indexing.cpp
-    src/h3_inspection.cpp
-    src/h3_hierarchy.cpp
-    src/h3_traversal.cpp
-    src/h3_vertex.cpp
-    src/h3_directededge.cpp
-    src/h3_misc.cpp
-    src/h3_regions.cpp
-    src/well_known_decoder.cpp
-    src/well_known_encoder.cpp)
+            src/h3_extension.cpp
+            src/h3_common.cpp
+            src/h3_indexing.cpp
+            src/h3_inspection.cpp
+            src/h3_hierarchy.cpp
+            src/h3_traversal.cpp
+            src/h3_vertex.cpp
+            src/h3_directededge.cpp
+            src/h3_misc.cpp
+            src/h3_regions.cpp
+            src/well_known_decoder.cpp
+            src/well_known_encoder.cpp)
 set(LIB_HEADER_FILES src/include/h3_common.hpp src/include/h3_functions.hpp
                      src/include/h3_extension.hpp
                      src/include/well_known_decoder.hpp
                      src/include/well_known_encoder.hpp)
 set(ALL_SOURCE_FILES ${EXTENSION_SOURCES} ${LIB_HEADER_FILES})
 
-add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})
+set(EXTENSION_TARGET_NAME "${EXTENSION_NAME}_ext")
+if (DUCKDB_WASM_EXTENSION)
+	add_library(${EXTENSION_TARGET_NAME} STATIC ${EXTENSION_SOURCES})
+else()
+	add_library(${EXTENSION_TARGET_NAME} SHARED ${EXTENSION_SOURCES})
+endif()
 
-# Note this must be the INSTALL target name. See
-# https://stackoverflow.com/a/71080574
-target_link_libraries(${EXTENSION_NAME} h3)
+set_target_properties(${EXTENSION_TARGET_NAME} PROPERTIES OUTPUT_NAME ${EXTENSION_NAME})
 
-include_directories(src/include)
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/h3/src/h3lib/include")
+# Include own headers
+target_include_directories(${EXTENSION_TARGET_NAME} PRIVATE src/include)
 
-build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
-target_link_libraries(${LOADABLE_EXTENSION_NAME} h3)
+# Include DuckDB C API headers
+target_include_directories(${EXTENSION_TARGET_NAME} PRIVATE duckdb_capi)
 
-install(
-  TARGETS ${EXTENSION_NAME} h3
-  EXPORT "${DUCKDB_EXPORT_SET}"
-  LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
+target_include_directories(${EXTENSION_TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/h3/src/h3lib/include")
+
+target_link_libraries(${EXTENSION_TARGET_NAME} h3)
+
+if(DUCKDB_WASM_EXTENSION)
+    # The H3 library won't be brought into the WASM bundle unless we take additional steps to bundle it in:
+    add_custom_command(TARGET ${EXTENSION_TARGET_NAME} POST_BUILD
+            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bundle_h3.sh" "${CMAKE_AR}" "${CMAKE_RANLIB}" "$<TARGET_FILE:${EXTENSION_TARGET_NAME}>" "$<TARGET_FILE:h3>"
+        VERBATIM
+        COMMENT "Bundle h3 into the WASM extension archive")
+endif()
+
+option(ENABLE_UBSAN "Build with UBSan" OFF)
+if (ENABLE_UBSAN)
+    message("UBSan enabled")
+    target_compile_options(${EXTENSION_TARGET_NAME} PRIVATE -fsanitize=undefined -fno-sanitize-recover=all -fno-omit-frame-pointer)
+    target_link_options(${EXTENSION_TARGET_NAME} PRIVATE -fsanitize=undefined)
+endif()
+
+option(ENABLE_COVERAGE "Build with coverage" OFF)
+if (ENABLE_COVERAGE)
+    message("Coverage enabled")
+    target_compile_options(${EXTENSION_TARGET_NAME} PRIVATE --coverage)
+    target_link_options(${EXTENSION_TARGET_NAME} PRIVATE --coverage)
+    file(
+            GENERATE
+            OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/scripts/coverage.sh"
+            INPUT "${CMAKE_CURRENT_SOURCE_DIR}/scripts/coverage.sh.in")
+    set_property(
+            DIRECTORY
+            APPEND
+            PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "coverage.info")
+    set_property(
+            DIRECTORY
+            APPEND
+            PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "coverage.cleaned.info")
+    set_property(
+            DIRECTORY
+            APPEND
+            PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "coverage")
+    add_custom_target(
+            coverage
+            COMMAND
+            bash "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/scripts/coverage.sh"
+            "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
+    add_custom_target(
+            clean-coverage
+            # Before running coverage, clear all counters
+            COMMAND lcov --directory
+            '${CMAKE_CURRENT_BINARY_DIR}' --zerocounters
+            COMMENT "Zeroing counters")
+endif()

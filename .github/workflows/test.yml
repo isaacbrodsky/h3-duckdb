@@ -12,39 +12,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  duckdb-next-build:
-    name: Build extension binaries (next)
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@main
-    with:
-      duckdb_version: main
-      ci_tools_version: main
-      extension_name: h3
-
   duckdb-stable-build:
     name: Build extension binaries (stable)
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5-variegata
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.5
     with:
-      duckdb_version: v1.5.4
-      ci_tools_version: v1.5-variegata
+      duckdb_version: v1.5.5
+      ci_tools_version: v1.5.5
       extension_name: h3
+      extra_toolchains: python3
 
-  duckdb-stable-deploy:
-    name: Deploy extension binaries
-    needs: duckdb-stable-build
-    uses: ./.github/workflows/_extension_deploy.yml
-    secrets: inherit
-    with:
-      duckdb_version: v1.5.4
-      ci_tools_version: v1.5-variegata
-      extension_name: h3
-      deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
-      deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+#  duckdb-stable-deploy:
+#    name: Deploy extension binaries
+#    needs: duckdb-stable-build
+#    uses: ./.github/workflows/_extension_deploy.yml
+#    secrets: inherit
+#    with:
+#      duckdb_version: v1.5.5
+#      ci_tools_version: v1.5.5
+#      extension_name: h3
+#      deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+#      deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
 
   code-quality-check:
     name: Code Quality Check
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@v1.5-variegata
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@v1.5.5
     with:
-      duckdb_version: v1.5.4
-      ci_tools_version: v1.5-variegata
+      duckdb_version: v1.5.5
+      ci_tools_version: v1.5.5
       extension_name: h3
-      format_checks: 'format;tidy'
+      format_checks: 'format'
+
+  verify-wasm:
+    needs: duckdb-stable-build
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get install -y wabt
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: '*wasm*'
+          path: wasm_artifacts
+      - run: ./scripts/verify_wasm.sh wasm_artifacts

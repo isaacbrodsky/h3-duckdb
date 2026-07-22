@@ -8,6 +8,11 @@ SELECT h3_get_hexagon_area_avg(0, 'km^2');
 ----
 4357449.416078383
 
+statement error
+SELECT h3_get_hexagon_area_avg(0, 'aaa');
+----
+Invalid unit
+
 query I
 SELECT h3_get_hexagon_area_avg(1, 'km^2');
 ----
@@ -34,6 +39,11 @@ SELECT h3_get_hexagon_area_avg(-1, 'm^2');
 NULL
 
 query I
+SELECT h3_cell_area('8928308280fffff', 'rads^2')
+----
+2.6952182710041767e-09
+
+query I
 SELECT h3_cell_area('8928308280fffff', 'km^2')
 ----
 0.1093981886464832
@@ -58,10 +68,15 @@ SELECT h3_cell_area('fffffffffffffff', 'km^2')
 ----
 NULL
 
-query I
+statement error
 SELECT h3_cell_area('8928308280fffff', 'km')
 ----
-NULL
+Invalid unit
+
+query I
+SELECT h3_edge_length('115283473fffffff', 'rads')
+----
+0.0016158726232538025
 
 query I
 SELECT h3_edge_length('115283473fffffff', 'km')
@@ -88,10 +103,10 @@ SELECT h3_edge_length('fffffffffffffff', 'km')
 ----
 NULL
 
-query I
+statement error
 SELECT h3_edge_length('115283473fffffff', 'km^2')
 ----
-NULL
+Invalid unit
 
 query I
 SELECT h3_get_num_cells(0)
@@ -178,12 +193,32 @@ SELECT h3_great_circle_distance(5, 5, -15, -15, 'm')
 ----
 3130865.2809374747
 
-query I
+statement error
 SELECT h3_great_circle_distance(5, 5, -15, -15, 'invalid')
 ----
-NULL
+Invalid unit
 
 query I
 SELECT h3_great_circle_distance(5, 5, -15, -15, NULL)
 ----
 NULL
+
+query I
+select h3_version()
+----
+4.5.0
+
+query I
+select h3_get_hexagon_edge_length_avg(0, 'km')
+----
+1281.256011
+
+query I
+select h3_get_hexagon_edge_length_avg(5, 'm')
+----
+9854.09099
+
+statement error
+select h3_get_hexagon_edge_length_avg(10, 'AAA')
+----
+Invalid unit
