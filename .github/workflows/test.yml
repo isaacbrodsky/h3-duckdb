@@ -46,7 +46,7 @@ jobs:
     needs: duckdb-stable-build
     runs-on: ubuntu-latest
     steps:
-      - users: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: '*wasm*'
           path: wasm_artifacts
