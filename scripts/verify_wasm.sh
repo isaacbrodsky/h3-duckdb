@@ -13,8 +13,9 @@ fi
 status=0
 for f in "${wasms[@]}"; do
   echo "check: $f"
-  if wasm-objdump -j Import -x "$f" | grep latLngToCell; then
-    echo "Failed: doesn't import latLngToCell"
+  imports="$(wasm-objdump -j Import -x "$f")"
+  if echo "$imports" | grep latLngToCell; then
+    echo "Failed: doesn't have latLngToCell"
     status=1
   else
     echo "ok"
