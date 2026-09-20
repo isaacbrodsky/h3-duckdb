@@ -13,7 +13,7 @@ if "$AR" t "$EXTENSION_LIB" | grep -qxF "latLngToCell"; then
 fi
 
 temp_dir="$(mktemp -d)"
-trap 'rm -rf "temp_dir"' EXIT
+trap 'rm -rf "$temp_dir"' EXIT
 
 pushd "$temp_dir"
 
