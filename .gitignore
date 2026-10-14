@@ -1,3 +1,4 @@
+.idea
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
@@ -18,3 +19,8 @@ data/
 !test/data/
 .env/
 env/
+
+cmake_build
+configure
+/test/bin
+venv

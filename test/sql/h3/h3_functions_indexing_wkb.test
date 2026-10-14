@@ -1,9 +1,6 @@
 # name: test/sql/h3/h3_functions_indexing_wkb.test
 # group: [h3]
 
-# libgeos/geos#1449
-require notwindows
-
 require h3
 
 statement ok

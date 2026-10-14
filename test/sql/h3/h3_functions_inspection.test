@@ -19,6 +19,72 @@ SELECT h3_get_resolution('822d57fffffffff');
 2
 
 query I
+select h3_get_base_cell_number('822d57fffffffff');
+----
+22
+
+query I
+select h3_is_pentagon('822d57fffffffff');
+----
+false
+
+query I
+select h3_is_res_class_iii('822d57fffffffff');
+----
+false
+
+query I
+select h3_get_base_cell_number(586265647244115967::bigint);
+----
+22
+
+query I
+select h3_is_pentagon(586265647244115967::bigint);
+----
+false
+
+query I
+select h3_is_res_class_iii(586265647244115967::bigint);
+----
+false
+
+query I
+select h3_get_base_cell_number(586265647244115967::ubigint);
+----
+22
+
+query I
+select h3_is_pentagon(586265647244115967::ubigint);
+----
+false
+
+query I
+select h3_is_res_class_iii(586265647244115967::ubigint);
+----
+false
+
+query I
+select h3_get_base_cell_number('81083ffffffffff');
+----
+4
+
+query I
+select h3_is_pentagon('81083ffffffffff');
+----
+true
+
+query I
+select h3_is_res_class_iii('81083ffffffffff');
+----
+true
+
+query I
+SELECT h3_get_resolution(v) FROM (VALUES ('822d57fffffffff'), (NULL)) AS t(v);
+----
+2
+NULL
+
+query I
 SELECT h3_get_index_digit('822d57fffffffff', 1);
 ----
 5
@@ -42,6 +108,26 @@ query I
 SELECT h3_get_index_digit('822d57fffffffff', 20);
 ----
 NULL
+
+query I
+SELECT h3_get_index_digit(586265647244115967::ubigint, 3);
+----
+7
+
+query I
+SELECT h3_get_index_digit(586265647244115967::ubigint, 1);
+----
+5
+
+query I
+SELECT h3_get_index_digit(586265647244115967::bigint, 3);
+----
+7
+
+query I
+SELECT h3_get_index_digit(586265647244115967::bigint, 1);
+----
+5
 
 query I
 SELECT h3_is_valid_index(cast(586265647244115967 as ubigint));
@@ -197,6 +283,11 @@ query I
 select h3_construct_cell(5, [1], 1)
 ----
 581149069884260351
+
+query I
+select h3_construct_cell(5, [NULL], 1)
+----
+NULL
 
 query I
 select h3_construct_cell(4, [1], 1)

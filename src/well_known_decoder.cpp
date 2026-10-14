@@ -1,22 +1,24 @@
-
 #include "well_known_decoder.hpp"
-#include "h3_functions.hpp"
+#include <cstring>
 
-namespace duckdb {
+namespace h3duckdb {
 
-template <typename T> static T ReadWkb(string_t input, size_t &inputIdx) {
-  if (inputIdx + sizeof(T) > input.GetSize()) {
-    throw InvalidInputException(StringUtil::Format(
-        "Invalid WKB: failed to read %lu bytes at %lu", sizeof(T), inputIdx));
+template <typename T>
+static T ReadWkb(const std::string &input, size_t &inputIdx) {
+  if (inputIdx + sizeof(T) > input.size()) {
+    throw H3Exception(std::string("Invalid WKB: failed to read ") +
+                      std::to_string(sizeof(T)) + " bytes at " +
+                      std::to_string(inputIdx));
   }
 
-  T *resultPtr = (T *)((uint8_t *)input.GetData() + inputIdx);
+  T result;
+  memcpy(&result, input.data() + inputIdx, sizeof(T));
   inputIdx += sizeof(T);
-  return *resultPtr;
+  return result;
 }
 
-void DecodeWkbGeoLoop(string_t input, size_t &inputIdx,
-                      duckdb::shared_ptr<std::vector<LatLng>> &verts,
+void DecodeWkbGeoLoop(const std::string &input, size_t &inputIdx,
+                      std::shared_ptr<std::vector<LatLng>> &verts,
                       GeoLoop &loop) {
   uint32_t numVerts = ReadWkb<uint32_t>(input, inputIdx);
 
@@ -34,17 +36,17 @@ void DecodeWkbGeoLoop(string_t input, size_t &inputIdx,
 }
 
 void DecodeWkbPolygon(
-    string_t input, GeoPolygon &polygon,
-    duckdb::shared_ptr<std::vector<LatLng>> &outerVerts,
+    const std::string &input, GeoPolygon &polygon,
+    std::shared_ptr<std::vector<LatLng>> &outerVerts,
     std::vector<GeoLoop> &holes,
-    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> &holesVerts) {
+    std::vector<std::shared_ptr<std::vector<LatLng>>> &holesVerts) {
   size_t strIndex = 0;
 
   uint8_t orderMark = ReadWkb<uint8_t>(input, strIndex);
 
   if (orderMark != 0x01) {
-    throw InvalidInputException(StringUtil::Format(
-        "Invalid WKB: expected little endian at %lu", strIndex));
+    throw H3Exception("Invalid WKB: expected little endian at " +
+                      std::to_string(strIndex));
   }
 
   uint32_t type = ReadWkb<uint32_t>(input, strIndex);
@@ -53,8 +55,8 @@ void DecodeWkbPolygon(
     return; // EMPTY
   }
   if (type != 3) {
-    throw InvalidInputException(
-        StringUtil::Format("Invalid WKB: expected polygon at %lu", strIndex));
+    throw H3Exception("Invalid WKB: expected polygon at " +
+                      std::to_string(strIndex));
   }
 
   uint32_t loopCount = ReadWkb<uint32_t>(input, strIndex);
@@ -67,7 +69,7 @@ void DecodeWkbPolygon(
   if (loopCount > 1) {
     for (uint32_t loopIdx = 1; loopIdx < loopCount; loopIdx++) {
       GeoLoop hole;
-      auto verts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+      auto verts = std::make_shared<std::vector<LatLng>>();
       DecodeWkbGeoLoop(input, strIndex, verts, hole);
       holes.push_back(hole);
       holesVerts.push_back(verts);
@@ -84,7 +86,7 @@ static const std::string POLYGON = "POLYGON";
 static const std::string EMPTY = "EMPTY";
 
 static size_t WktWhitespace(const std::string &str, size_t offset) {
-  while (str[offset] == ' ') {
+  while (offset < str.size() && str[offset] == ' ') {
     offset++;
   }
   return offset;
@@ -93,32 +95,42 @@ static size_t WktWhitespace(const std::string &str, size_t offset) {
 static size_t ReadWktNumber(const std::string &str, size_t offset,
                             double &num) {
   size_t start = offset;
-  while (str[offset] != ' ' && str[offset] != ')' && str[offset] != ',') {
+  while (offset < str.size() && str[offset] != ' ' && str[offset] != ')' &&
+         str[offset] != ',') {
     offset++;
+  }
+  if (offset >= str.size()) {
+    throw H3Exception(
+        std::string("Invalid WKT: failed to read number around ") +
+        std::to_string(offset));
   }
   std::string part = str.substr(start, offset - start);
 
   try {
     num = std::stod(part);
     return offset;
-  } catch (std::invalid_argument const &ex) {
-    throw InvalidInputException(
-        StringUtil::Format("Invalid number around %lu, %lu", start, offset));
+  } catch (std::exception const &ex) {
+    throw H3Exception("Invalid number around " + std::to_string(start) + ", " +
+                      std::to_string(offset));
   }
 }
 
 static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
-                             duckdb::shared_ptr<std::vector<LatLng>> verts,
+                             std::shared_ptr<std::vector<LatLng>> &verts,
                              GeoLoop &loop) {
+  if (offset >= str.size()) {
+    throw H3Exception(
+        std::string("Invalid WKT: failed to read geoloop around ") +
+        std::to_string(offset));
+  }
   if (str[offset] != '(') {
-    throw InvalidInputException(
-        StringUtil::Format("Expected ( at pos %lu", offset));
+    throw H3Exception("Expected ( at pos " + std::to_string(offset));
   }
 
   offset++;
   offset = WktWhitespace(str, offset);
 
-  while (str[offset] != ')') {
+  while (offset < str.size() && str[offset] != ')') {
     double x, y;
     offset = ReadWktNumber(str, offset, x);
     offset = WktWhitespace(str, offset);
@@ -126,10 +138,20 @@ static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
     offset = WktWhitespace(str, offset);
     verts->push_back({.lat = degsToRads(y), .lng = degsToRads(x)});
 
+    if (offset >= str.size()) {
+      throw H3Exception(
+          std::string("Invalid WKT: failed to read geoloop (2) around ") +
+          std::to_string(offset));
+    }
     if (str[offset] == ',') {
       offset++;
       offset = WktWhitespace(str, offset);
     }
+  }
+  if (offset >= str.size()) {
+    throw H3Exception(
+        std::string("Invalid WKT: failed to read geoloop (3) around ") +
+        std::to_string(offset));
   }
   // Consume the )
   offset++;
@@ -142,11 +164,10 @@ static size_t ReadWktGeoLoop(const std::string &str, size_t offset,
 }
 
 void DecodeWktPolygon(
-    string_t input, GeoPolygon &polygon,
-    duckdb::shared_ptr<std::vector<LatLng>> &outerVerts,
+    const std::string &str, GeoPolygon &polygon,
+    std::shared_ptr<std::vector<LatLng>> &outerVerts,
     std::vector<GeoLoop> &holes,
-    std::vector<duckdb::shared_ptr<std::vector<LatLng>>> &holesVerts) {
-  std::string str = input.GetString();
+    std::vector<std::shared_ptr<std::vector<LatLng>>> &holesVerts) {
   if (str.rfind(POLYGON, 0) != 0) {
     return;
   }
@@ -169,20 +190,20 @@ void DecodeWktPolygon(
       strIndex = WktWhitespace(str, strIndex);
       if (str[strIndex] == '(') {
         GeoLoop hole;
-        auto verts = duckdb::make_shared_ptr<std::vector<LatLng>>();
+        auto verts = std::make_shared<std::vector<LatLng>>();
         strIndex = ReadWktGeoLoop(str, strIndex, verts, hole);
         holes.push_back(hole);
         holesVerts.push_back(verts);
       } else {
-        throw InvalidInputException(StringUtil::Format(
-            "Invalid WKT: expected a hole loop '(' after ',' at pos %lu",
-            strIndex));
+        throw H3Exception(
+            "Invalid WKT: expected a hole loop '(' after ',' at pos " +
+            std::to_string(strIndex));
       }
     }
     if (str[strIndex] != ')') {
-      throw InvalidInputException(StringUtil::Format(
-          "Invalid WKT: expected a hole loop ',' or final ')' at pos %lu",
-          strIndex));
+      throw H3Exception(
+          "Invalid WKT: expected a hole loop ',' or final ')' at pos " +
+          std::to_string(strIndex));
     }
 
     polygon.numHoles = holes.size();
@@ -190,4 +211,4 @@ void DecodeWktPolygon(
   }
 }
 
-} // namespace duckdb
+} // namespace h3duckdb

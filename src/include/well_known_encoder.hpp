@@ -5,16 +5,15 @@
 #include <vector>
 #include <cstdint>
 
-namespace duckdb {
+namespace h3duckdb {
 
 class WkbEncoder {
 private:
   std::string buffer;
   std::vector<std::pair<double, double>> points;
-  std::vector<std::vector<std::pair<double, double>>> multipolygonPoints;
 
 public:
-  WkbEncoder() : buffer(), points(), multipolygonPoints() {}
+  WkbEncoder() : buffer(), points() {}
   void Point(double lng, double lat);
   void StartLineString();
   void EndLineString();
@@ -55,4 +54,4 @@ public:
   std::string Finish();
 };
 
-} // namespace duckdb
+} // namespace h3duckdb

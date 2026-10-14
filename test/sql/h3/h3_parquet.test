@@ -28,7 +28,7 @@ SELECT h3_h3_to_string(a) from read_parquet('test/data/simple.parquet');
 query I
 select h3_compact_cells([a]) from read_parquet('test/data/simple.parquet');
 ----
-[]
+NULL
 [1]
 [2]
 [3]
