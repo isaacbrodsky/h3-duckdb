@@ -21,8 +21,8 @@ jobs:
       extension_name: h3
       extra_toolchains: python3
 
-  duckdb-v2-stable-build:
-    name: Build extension binaries (v2 stable)
+  duckdb-stable-build:
+    name: Build extension binaries (stable)
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v2.0-cyanoptera
     with:
       duckdb_version: v2.0-cyanoptera
