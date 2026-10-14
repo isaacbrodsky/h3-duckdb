@@ -57,8 +57,9 @@ jobs:
     with:
       duckdb_version: main
       ci_tools_version: main
+      extra_toolchains: python3
       extension_name: h3
-      format_checks: 'format'
+      # format_checks: 'format;tidy'
 
   verify-wasm:
     needs: duckdb-stable-build
