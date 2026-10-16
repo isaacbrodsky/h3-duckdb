@@ -12,33 +12,52 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  duckdb-stable-build:
-    name: Build extension binaries (stable)
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.6
+  duckdb-next-build:
+    name: Build extension binaries (next)
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@main
     with:
-      duckdb_version: v1.5.6
-      ci_tools_version: v1.5.6
+      duckdb_version: main
+      ci_tools_version: main
       extension_name: h3
       extra_toolchains: python3
 
-#  duckdb-stable-deploy:
-#    name: Deploy extension binaries
-#    needs: duckdb-stable-build
-#    uses: ./.github/workflows/_extension_deploy.yml
-#    secrets: inherit
-#    with:
-#      duckdb_version: v1.5.5
-#      ci_tools_version: v1.5.5
-#      extension_name: h3
-#      deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
-#      deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+  duckdb-stable-build:
+    name: Build extension binaries (stable)
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v2.0-cyanoptera
+    with:
+      duckdb_version: v2.0-cyanoptera
+      ci_tools_version: v2.0-cyanoptera
+      extension_name: h3
+      extra_toolchains: python3
+
+  duckdb-v1-stable-build:
+    name: Build extension binaries (v1 stable)
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5-variegata
+    with:
+      duckdb_version: v1.5-variegata
+      ci_tools_version: v1.5-variegata
+      extension_name: h3
+      extra_toolchains: python3
+
+  # duckdb-stable-deploy:
+  #   name: Deploy extension binaries
+  #   needs: duckdb-stable-build
+  #   uses: ./.github/workflows/_extension_deploy.yml
+  #   secrets: inherit
+  #   with:
+  #     duckdb_version: v1.5.4
+  #     ci_tools_version: v1.5-variegata
+  #     extension_name: h3
+  #     deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+  #     deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
 
   code-quality-check:
     name: Code Quality Check
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@v1.5.6
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@main
     with:
-      duckdb_version: v1.5.6
-      ci_tools_version: v1.5.6
+      duckdb_version: main
+      ci_tools_version: main
+      extra_toolchains: python3
       extension_name: h3
       format_checks: 'format'
 

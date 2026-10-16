@@ -1,4 +1,4 @@
-.PHONY: clean clean_all format-check format ubsan coverage wasm_check
+.PHONY: clean clean_all format-check format format_deps ubsan coverage wasm_check
 
 PROJ_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -31,11 +31,14 @@ test_release: test_extension_release
 clean: clean_build clean_cmake
 clean_all: clean clean_configure
 
-format-check:
-	python3 duckdb/scripts/format.py --all --check --directories src test
+format_deps:
+	$(MAKE) -C duckdb format_venv
 
-format:
-	python3 duckdb/scripts/format.py --all --fix --noconfirm --directories src test
+format-check: format_deps
+	duckdb/.cache/prepare-venv/bin/python3 duckdb/scripts/format.py --all --check --directories src test
+
+format: format_deps
+	duckdb/.cache/prepare-venv/bin/python3 duckdb/scripts/format.py --all --fix --noconfirm --directories src test
 
 ubsan: export EXTRA_CMAKE_FLAGS=-DENABLE_UBSAN=1
 ubsan: export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
