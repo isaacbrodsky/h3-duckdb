@@ -126,24 +126,12 @@ duckdb -unsigned
 To build, type:
 ```sh
 git submodule update --init
+make configure
 GEN=ninja make release
 ```
 
 You will need Git, CMake, and a C compiler. The build instructions suggest using `ninja`
-because it enables parallelism by default. Using `make` instead is fine, but you will want
-to enable the following parallelism option, because building DuckDB can take a very long
-time (>=1 hour is not unusual). Run the below replacing `4` with the number of CPU cores
-on your machine.
-
-```sh
-CMAKE_BUILD_PARALLEL_LEVEL=4 make duckdb_release release
-```
-
-To run, run the bundled `duckdb` shell:
-
-```sh
-./build/release/duckdb -unsigned
-```
+because it enables parallelism by default. Using `make` instead is fine.
 
 Load the extension:
 
@@ -154,13 +142,7 @@ load 'build/release/extension/h3/h3.duckdb_extension';
 To run tests:
 
 ```sh
-make test
-```
-
-To update the submodules to latest upstream, run:
-
-```sh
-make update_deps
+make debug test
 ```
 
 # License
