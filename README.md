@@ -1,6 +1,6 @@
 [![Extension Test](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml/badge.svg)](https://github.com/isaacbrodsky/h3-duckdb/actions/workflows/test.yml)
 [![DuckDB Version](https://img.shields.io/static/v1?label=duckdb&message=v1.5.6&color=blue)](https://github.com/duckdb/duckdb/releases/tag/v1.5.6)
-[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.5.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.5.0)
+[![H3 Version](https://img.shields.io/static/v1?label=h3&message=v4.6.0&color=blue)](https://github.com/uber/h3/releases/tag/v4.6.0)
 [![codecov](https://codecov.io/gh/isaacbrodsky/h3-duckdb/graph/badge.svg?token=K4BGZ0U0LP)](https://codecov.io/gh/isaacbrodsky/h3-duckdb)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
@@ -82,6 +82,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_vertex_to_lng` | Convert a vertex ID to longitude |
 | `h3_vertex_to_latlng` | Convert a vertex ID to latitude/longitude coordinate |
 | `h3_is_valid_vertex` | True if passed a valid vertex ID |
+| `h3_edge_to_vertex` | Convert edge to two vertexes |
 | `h3_is_valid_directed_edge` | True if passed a valid directed edge ID |
 | `h3_origin_to_directed_edges` | Get all directed edge IDs for a cell ID |
 | `h3_directed_edge_to_cells` | Convert a directed edge ID to origin/destination cell IDs |

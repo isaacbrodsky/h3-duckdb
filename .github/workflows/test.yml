@@ -14,6 +14,15 @@ concurrency:
 jobs:
   duckdb-stable-build:
     name: Build extension binaries (stable)
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v2.0.0
+    with:
+      duckdb_version: v2.0.0
+      ci_tools_version: v2.0.0
+      extension_name: h3
+      extra_toolchains: python3
+
+  duckdb-oldstable-build:
+    name: Build extension binaries (stable)
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.6
     with:
       duckdb_version: v1.5.6

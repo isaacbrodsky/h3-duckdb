@@ -71,7 +71,7 @@ public:
     // Directed edge
     functionSets.push_back(GetAreNeighborCellsFunction());
     functionSets.push_back(GetCellsToDirectedEdgeFunction());
-    functionSets.push_back(GetIsValidDirectedEdgeFunctions());
+    functionSets.push_back(GetIsValidDirectedEdgeFunction());
     functionSets.push_back(GetGetDirectedEdgeOriginFunction());
     functionSets.push_back(GetGetDirectedEdgeDestinationFunction());
     functionSets.push_back(GetDirectedEdgeToCellsFunction());
@@ -86,7 +86,8 @@ public:
     functionSets.push_back(GetVertexToLatFunction());
     functionSets.push_back(GetVertexToLngFunction());
     functionSets.push_back(GetVertexToLatLngFunction());
-    functionSets.push_back(GetIsValidVertexFunctions());
+    functionSets.push_back(GetIsValidVertexFunction());
+    functionSets.push_back(GetEdgeToVertexesFunction());
 
     // Misc
     functions.push_back(GetGetHexagonAreaAvgFunction());
@@ -167,7 +168,7 @@ private:
   // Directed edge
   static duckdb_scalar_function_set GetAreNeighborCellsFunction();
   static duckdb_scalar_function_set GetCellsToDirectedEdgeFunction();
-  static duckdb_scalar_function_set GetIsValidDirectedEdgeFunctions();
+  static duckdb_scalar_function_set GetIsValidDirectedEdgeFunction();
   static duckdb_scalar_function_set GetGetDirectedEdgeOriginFunction();
   static duckdb_scalar_function_set GetGetDirectedEdgeDestinationFunction();
   static duckdb_scalar_function_set GetDirectedEdgeToCellsFunction();
@@ -182,7 +183,8 @@ private:
   static duckdb_scalar_function_set GetVertexToLatFunction();
   static duckdb_scalar_function_set GetVertexToLngFunction();
   static duckdb_scalar_function_set GetVertexToLatLngFunction();
-  static duckdb_scalar_function_set GetIsValidVertexFunctions();
+  static duckdb_scalar_function_set GetIsValidVertexFunction();
+  static duckdb_scalar_function_set GetEdgeToVertexesFunction();
 
   // Misc
   static duckdb_scalar_function GetGetHexagonAreaAvgFunction();
