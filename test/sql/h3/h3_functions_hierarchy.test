@@ -250,6 +250,16 @@ select h3_compact_cells([])
 []
 
 query I
+select h3_compact_cells([NULL])
+----
+NULL
+
+query I
+select h3_compact_cells(cast(null as ubigint[]))
+----
+NULL
+
+query I
 select h3_uncompact_cells(['812d7ffffffffff'], 2)
 ----
 [822d47fffffffff, 822d4ffffffffff, 822d57fffffffff, 822d5ffffffffff, 822d67fffffffff, 822d6ffffffffff, 822d77fffffffff]

@@ -214,6 +214,11 @@ SELECT h3_h3_to_string(cast(10000000000000000 as bigint)), h3_h3_to_string(cast(
 ----
 2386f26fc10000	1
 
+query I
+SELECT h3_h3_to_string(NULL)
+----
+NULL
+
 query II
 select h3_get_icosahedron_faces(599686042433355775::ubigint), h3_get_icosahedron_faces(576988517884755967::ubigint)
 ----
