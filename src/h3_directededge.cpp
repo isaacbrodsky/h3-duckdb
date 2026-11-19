@@ -477,7 +477,7 @@ duckdb_scalar_function_set H3Functions::GetAreNeighborCellsFunction() {
   return functionSet;
 }
 
-duckdb_scalar_function_set H3Functions::GetIsValidDirectedEdgeFunctions() {
+duckdb_scalar_function_set H3Functions::GetIsValidDirectedEdgeFunction() {
   return GetGenericInspectFunction<bool, IsValidDirectedEdgeOperator>(
       "h3_is_valid_directed_edge", DUCKDB_TYPE_BOOLEAN);
 }
