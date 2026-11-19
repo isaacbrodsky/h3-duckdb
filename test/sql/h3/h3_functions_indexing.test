@@ -74,7 +74,7 @@ SELECT list_transform(h3_cell_to_latlng(cast(h3_string_to_h3('85283473fffffff') 
 [37.345793375368, -121.976375972551]
 
 query I
-SELECT list_transform(h3_cell_to_latlng('85283473fffffff'), lambda: x round(x, 12));
+SELECT list_transform(h3_cell_to_latlng('85283473fffffff'), lambda x: x round(x, 12));
 ----
 [37.345793375368, -121.976375972551]
 
