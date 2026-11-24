@@ -14,10 +14,10 @@ concurrency:
 jobs:
   duckdb-stable-build:
     name: Build extension binaries (stable)
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v2.0.0
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v2.0-cyanoptera
     with:
       duckdb_version: v2.0.0
-      ci_tools_version: v2.0.0
+      ci_tools_version: v2.0-cyanoptera
       extension_name: h3
       extra_toolchains: python3
 
