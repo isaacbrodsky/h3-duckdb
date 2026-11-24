@@ -32,10 +32,15 @@ clean: clean_build clean_cmake
 clean_all: clean clean_configure
 
 format-check:
-	python3 duckdb/scripts/format.py --all --check --directories src test
+	$(MAKE) -C duckdb format-check T="--workdir $$PWD --directories src test"
 
-format:
-	python3 duckdb/scripts/format.py --all --fix --noconfirm --directories src test
+format: format-check
+
+format-fix:
+	$(MAKE) -C duckdb format-fix T="--workdir $$PWD --directories src test"
+
+format-main:
+	$(MAKE) -C duckdb format-main T="--workdir $$PWD --directories src test"
 
 ubsan: export EXTRA_CMAKE_FLAGS=-DENABLE_UBSAN=1
 ubsan: export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
