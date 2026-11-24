@@ -178,6 +178,53 @@ struct IsValidVertexOperator {
   static bool operate(H3Index index) { return isValidVertex(index); }
 };
 
+template <typename T>
+void EdgeToVertexesFunction(duckdb_function_info info, duckdb_data_chunk input,
+                            duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+
+  duckdb_list_vector_reserve(output, inputSize * 2);
+  duckdb_vector_ensure_validity_writable(output);
+  duckdb_list_entry *entries =
+      (duckdb_list_entry *)duckdb_vector_get_data(output);
+  duckdb_vector outputChildVec = duckdb_list_vector_get_child(output);
+  T *resultData = (T *)duckdb_vector_get_data(outputChildVec);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+  idx_t resultOffset = 0;
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+
+    if (duckdb_validity_row_is_valid(indexVecValidity, row)) {
+      H3Index cell = IndexFromVector(indexVecData, row);
+
+      if (cell) {
+        H3Index v1, v2;
+        H3Error err = edgeToVertexes(cell, &v1, &v2);
+        if (!err) {
+          AssignHexString(outputChildVec, resultData, resultOffset, v1);
+          AssignHexString(outputChildVec, resultData, resultOffset + 1, v2);
+
+          entries[row].offset = resultOffset;
+          entries[row].length = 2;
+          resultOffset += 2;
+          wasValid = true;
+        }
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+
+  duckdb_list_vector_set_size(output, resultOffset);
+}
+
 duckdb_scalar_function_set H3Functions::GetCellToVertexFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_cell_to_vertex");
@@ -335,9 +382,37 @@ duckdb_scalar_function_set H3Functions::GetVertexToLatLngFunction() {
   return functionSet;
 }
 
-duckdb_scalar_function_set H3Functions::GetIsValidVertexFunctions() {
+duckdb_scalar_function_set H3Functions::GetIsValidVertexFunction() {
   return GetGenericInspectFunction<bool, IsValidVertexOperator>(
       "h3_is_valid_vertex", DUCKDB_TYPE_BOOLEAN);
+}
+
+duckdb_scalar_function_set H3Functions::GetEdgeToVertexesFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_edge_to_vertexes");
+
+  auto r = [&functionSet]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+    duckdb_logical_type logicalListType = duckdb_create_list_type(logicalType);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_edge_to_vertexes");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, logicalListType);
+    duckdb_scalar_function_set_function(function,
+                                        EdgeToVertexesFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalListType);
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  return functionSet;
 }
 
 } // namespace h3duckdb
