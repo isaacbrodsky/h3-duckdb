@@ -22,7 +22,7 @@ jobs:
       extra_toolchains: python3
 
   duckdb-oldstable-build:
-    name: Build extension binaries (stable)
+    name: Build extension binaries (oldstable)
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.6
     with:
       duckdb_version: v1.5.6
@@ -44,10 +44,10 @@ jobs:
 
   code-quality-check:
     name: Code Quality Check
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@v1.5.6
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@v2.0-cyanoptera
     with:
-      duckdb_version: v1.5.6
-      ci_tools_version: v1.5.6
+      duckdb_version: v2.0-cyanoptera
+      ci_tools_version: v2.0-cyanoptera
       extension_name: h3
       format_checks: 'format'
 
