@@ -324,6 +324,7 @@ duckdb_scalar_function_set H3Functions::GetDirectedEdgeToCellsFunction() {
     duckdb_destroy_scalar_function(&function);
 
     duckdb_destroy_logical_type(&returnType);
+    duckdb_destroy_logical_type(&logicalType);
   };
 
   r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
@@ -352,6 +353,7 @@ duckdb_scalar_function_set H3Functions::GetOriginToDirectedEdgesFunction() {
     duckdb_destroy_scalar_function(&function);
 
     duckdb_destroy_logical_type(&returnType);
+    duckdb_destroy_logical_type(&logicalType);
   };
 
   r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);

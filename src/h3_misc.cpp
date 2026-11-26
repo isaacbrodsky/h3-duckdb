@@ -534,6 +534,7 @@ duckdb_scalar_function H3Functions::GetGetPentagonsFunction() {
   duckdb_scalar_function_set_return_type(function, ubigintListType);
   duckdb_destroy_logical_type(&ubigintListType);
   duckdb_destroy_logical_type(&ubigintType);
+  duckdb_destroy_logical_type(&intType);
   duckdb_scalar_function_set_function(function, GetPentagonsFunction<uint64_t>);
   return function;
 }
@@ -549,6 +550,7 @@ duckdb_scalar_function H3Functions::GetGetPentagonsVarcharFunction() {
   duckdb_scalar_function_set_return_type(function, varcharListType);
   duckdb_destroy_logical_type(&varcharListType);
   duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&intType);
   duckdb_scalar_function_set_function(function,
                                       GetPentagonsFunction<duckdb_string_t>);
   return function;
