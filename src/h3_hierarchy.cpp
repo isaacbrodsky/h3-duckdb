@@ -778,8 +778,8 @@ duckdb_scalar_function_set H3Functions::GetUncompactCellsSizeFunction() {
     duckdb_scalar_function_add_parameter(function, listType);
     duckdb_scalar_function_add_parameter(function, intType);
     duckdb_scalar_function_set_return_type(function, bigintType);
-    duckdb_scalar_function_set_function(function,
-                                        UncompactCellsSizeFunction<PhysicalType>);
+    duckdb_scalar_function_set_function(
+        function, UncompactCellsSizeFunction<PhysicalType>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
 
