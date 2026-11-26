@@ -295,8 +295,8 @@ void GridDiskDistancesGenericFunction(duckdb_function_info info,
 }
 
 template <typename T>
-void GridPathCellsSizeFunction(duckdb_function_info info, duckdb_data_chunk input,
-                          duckdb_vector output) {
+void GridPathCellsSizeFunction(duckdb_function_info info,
+                               duckdb_data_chunk input, duckdb_vector output) {
   idx_t inputSize = duckdb_data_chunk_get_size(input);
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
@@ -903,8 +903,8 @@ duckdb_scalar_function_set H3Functions::GetGridPathCellsSizeFunction() {
     duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_add_parameter(function, logicalType);
     duckdb_scalar_function_set_return_type(function, bigintType);
-    duckdb_scalar_function_set_function(function,
-                                        GridPathCellsSizeFunction<PhysicalType>);
+    duckdb_scalar_function_set_function(
+        function, GridPathCellsSizeFunction<PhysicalType>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
 
