@@ -63,8 +63,10 @@ public:
     functionSets.push_back(GetGridRingFunction());
     functionSets.push_back(GetGridRingUnsafeFunction());
     functionSets.push_back(GetGridPathCellsFunction());
+    functionSets.push_back(GetGridPathCellsSizeFunction());
     functionSets.push_back(GetGridDistanceFunction());
     functions.push_back(GetMaxGridDiskSizeFunction());
+    functions.push_back(GetMaxGridRingSizeFunction());
     functionSets.push_back(GetCellToLocalIjFunction());
     functionSets.push_back(GetLocalIjToCellFunction());
 
@@ -160,8 +162,10 @@ private:
   static duckdb_scalar_function_set GetGridRingFunction();
   static duckdb_scalar_function_set GetGridRingUnsafeFunction();
   static duckdb_scalar_function_set GetGridPathCellsFunction();
+  static duckdb_scalar_function_set GetGridPathCellsSizeFunction();
   static duckdb_scalar_function_set GetGridDistanceFunction();
   static duckdb_scalar_function GetMaxGridDiskSizeFunction();
+  static duckdb_scalar_function GetMaxGridRingSizeFunction();
   static duckdb_scalar_function_set GetCellToLocalIjFunction();
   static duckdb_scalar_function_set GetLocalIjToCellFunction();
 

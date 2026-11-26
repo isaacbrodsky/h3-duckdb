@@ -295,6 +295,46 @@ void GridDiskDistancesGenericFunction(duckdb_function_info info,
 }
 
 template <typename T>
+void GridPathCellsSizeFunction(duckdb_function_info info, duckdb_data_chunk input,
+                          duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  T *indexVecData = (T *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+  duckdb_vector index2Vec = duckdb_data_chunk_get_vector(input, 1);
+  T *index2VecData = (T *)duckdb_vector_get_data(index2Vec);
+  uint64_t *index2VecValidity = duckdb_vector_get_validity(index2Vec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+
+    if (duckdb_validity_row_is_valid(indexVecValidity, row) &&
+        duckdb_validity_row_is_valid(index2VecValidity, row)) {
+      H3Index index0 = IndexFromVector(indexVecData, row);
+      H3Index index1 = IndexFromVector(index2VecData, row);
+
+      if (index0 && index1) {
+        int64_t sz;
+        H3Error err1 = gridPathCellsSize(index0, index1, &sz);
+        if (!err1) {
+          resultData[row] = sz;
+          wasValid = true;
+        }
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
+template <typename T>
 void GridPathCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
                            duckdb_vector output) {
   idx_t inputSize = duckdb_data_chunk_get_size(input);
@@ -545,6 +585,37 @@ void MaxGridDiskSizeFunction(duckdb_function_info info, duckdb_data_chunk input,
   }
 }
 
+void MaxGridRingSizeFunction(duckdb_function_info info, duckdb_data_chunk input,
+                             duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector kVec = duckdb_data_chunk_get_vector(input, 0);
+  int32_t *kVecData = (int32_t *)duckdb_vector_get_data(kVec);
+  uint64_t *kVecValidity = duckdb_vector_get_validity(kVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasValid = false;
+    if (duckdb_validity_row_is_valid(kVecValidity, row)) {
+      auto k = kVecData[row];
+      int64_t out = 0;
+
+      H3Error err = maxGridRingSize(k, &out);
+      if (!err) {
+        resultData[row] = out;
+        wasValid = true;
+      }
+    }
+
+    if (!wasValid) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
 duckdb_scalar_function_set H3Functions::GetGridDiskFunction() {
   duckdb_scalar_function_set functionSet =
       duckdb_create_scalar_function_set("h3_grid_disk");
@@ -589,6 +660,20 @@ duckdb_scalar_function H3Functions::GetMaxGridDiskSizeFunction() {
   duckdb_destroy_logical_type(&bigintType);
   duckdb_destroy_logical_type(&intType);
   duckdb_scalar_function_set_function(function, MaxGridDiskSizeFunction);
+  return function;
+}
+
+duckdb_scalar_function H3Functions::GetMaxGridRingSizeFunction() {
+  duckdb_scalar_function function = duckdb_create_scalar_function();
+  duckdb_scalar_function_set_name(function, "h3_max_grid_ring_size");
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_scalar_function_add_parameter(function, intType);
+  duckdb_scalar_function_set_return_type(function, bigintType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&intType);
+  duckdb_scalar_function_set_function(function, MaxGridRingSizeFunction);
   return function;
 }
 
@@ -798,6 +883,39 @@ duckdb_scalar_function_set H3Functions::GetGridRingUnsafeFunction() {
   r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
 
   duckdb_destroy_logical_type(&intType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetGridPathCellsSizeFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_grid_path_cells_size");
+
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+
+  auto r = [&functionSet,
+            &bigintType]<typename PhysicalType>(duckdb_type typeId) {
+    auto logicalType = duckdb_create_logical_type(typeId);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_grid_path_cells_size");
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_add_parameter(function, logicalType);
+    duckdb_scalar_function_set_return_type(function, bigintType);
+    duckdb_scalar_function_set_function(function,
+                                        GridPathCellsSizeFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+  };
+
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&bigintType);
 
   return functionSet;
 }
