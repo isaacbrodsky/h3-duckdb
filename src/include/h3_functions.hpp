@@ -222,10 +222,8 @@ private:
   static duckdb_scalar_function_set GetPolygonWkbToCellsExperimentalFunction();
   static duckdb_scalar_function_set
   GetPolygonWkbToCellsExperimentalVarcharFunction();
-  static duckdb_scalar_function
-  GetMaxPolygonWktToCellsSizeFunction();
-  static duckdb_scalar_function
-  GetMaxPolygonWkbToCellsSizeFunction();
+  static duckdb_scalar_function GetMaxPolygonWktToCellsSizeFunction();
+  static duckdb_scalar_function GetMaxPolygonWkbToCellsSizeFunction();
   static duckdb_scalar_function_set
   GetMaxPolygonWktToCellsSizeExperimentalFunction();
   static duckdb_scalar_function_set

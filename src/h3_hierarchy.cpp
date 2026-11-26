@@ -363,8 +363,8 @@ void CompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
 }
 
 template <typename T>
-void UncompactCellsSizeFunction(duckdb_function_info info, duckdb_data_chunk input,
-                            duckdb_vector output) {
+void UncompactCellsSizeFunction(duckdb_function_info info,
+                                duckdb_data_chunk input, duckdb_vector output) {
   idx_t inputSize = duckdb_data_chunk_get_size(input);
 
   duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
@@ -771,7 +771,8 @@ duckdb_scalar_function_set H3Functions::GetUncompactCellsSizeFunction() {
   auto r = [&functionSet, &intType]<typename PhysicalType>(duckdb_type typeId) {
     duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
     duckdb_logical_type listType = duckdb_create_list_type(logicalType);
-    duckdb_logical_type bigintType = duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+    duckdb_logical_type bigintType =
+        duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
 
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(function, "h3_uncompact_cells_size");

@@ -137,8 +137,8 @@ void CellsToMultiPolygonFunction(duckdb_function_info info,
 
 template <typename T, bool IsWkb>
 void MaxPolygonWktOrWkbToCellsSizeFunction(duckdb_function_info info,
-                                    duckdb_data_chunk input,
-                                    duckdb_vector output) {
+                                           duckdb_data_chunk input,
+                                           duckdb_vector output) {
   idx_t inputSize = duckdb_data_chunk_get_size(input);
 
   duckdb_vector wellKnownVec = duckdb_data_chunk_get_vector(input, 0);
@@ -182,7 +182,7 @@ void MaxPolygonWktOrWkbToCellsSizeFunction(duckdb_function_info info,
         H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
         if (!err) {
           resultData[row] = numCells;
-            hasData = true;
+          hasData = true;
         }
       } else {
         resultData[row] = 0;
@@ -292,9 +292,8 @@ void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
 }
 
 template <typename T, bool IsWkb, bool SwapFlagsRes>
-void MaxPolygonWktOrWkbToCellsSizeExperimentalFunction(duckdb_function_info info,
-                                                duckdb_data_chunk input,
-                                                duckdb_vector output) {
+void MaxPolygonWktOrWkbToCellsSizeExperimentalFunction(
+    duckdb_function_info info, duckdb_data_chunk input, duckdb_vector output) {
   idx_t inputSize = duckdb_data_chunk_get_size(input);
 
   duckdb_vector wellKnownVec = duckdb_data_chunk_get_vector(input, 0);
@@ -599,7 +598,8 @@ duckdb_scalar_function H3Functions::GetMaxPolygonWktToCellsSizeFunction() {
   duckdb_logical_type varcharType =
       duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
   duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
-  duckdb_logical_type bigintType = duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
   duckdb_scalar_function_add_parameter(function, varcharType);
   duckdb_scalar_function_add_parameter(function, intType);
   duckdb_scalar_function_set_return_type(function, bigintType);
@@ -617,7 +617,8 @@ duckdb_scalar_function H3Functions::GetMaxPolygonWkbToCellsSizeFunction() {
   duckdb_scalar_function_set_name(function, "h3_max_polygon_wkb_to_cells_size");
   duckdb_logical_type blobType = duckdb_create_logical_type(DUCKDB_TYPE_BLOB);
   duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
-  duckdb_logical_type bigintType = duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
   duckdb_scalar_function_add_parameter(function, blobType);
   duckdb_scalar_function_add_parameter(function, intType);
   duckdb_scalar_function_set_return_type(function, bigintType);
@@ -763,7 +764,8 @@ H3Functions::GetMaxPolygonWktToCellsSizeExperimentalFunction() {
   duckdb_logical_type varcharType =
       duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
   duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
-  duckdb_logical_type bigintType = duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
 
   auto r = [&functionSet, &varcharType, &intType,
             &bigintType]<bool SwapFlagsRes>() {
@@ -778,8 +780,8 @@ H3Functions::GetMaxPolygonWktToCellsSizeExperimentalFunction() {
     duckdb_scalar_function_set_return_type(function, bigintType);
     duckdb_scalar_function_set_function(
         function,
-        MaxPolygonWktOrWkbToCellsSizeExperimentalFunction<duckdb_string_t, false,
-                                                   SwapFlagsRes>);
+        MaxPolygonWktOrWkbToCellsSizeExperimentalFunction<duckdb_string_t,
+                                                          false, SwapFlagsRes>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
   };
@@ -803,7 +805,8 @@ H3Functions::GetMaxPolygonWkbToCellsSizeExperimentalFunction() {
   duckdb_logical_type varcharType =
       duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
   duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
-  duckdb_logical_type bigintType = duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
 
   auto r = [&functionSet, &blobType, &varcharType, &intType,
             &bigintType]<bool SwapFlagsRes>() {
@@ -819,7 +822,7 @@ H3Functions::GetMaxPolygonWkbToCellsSizeExperimentalFunction() {
     duckdb_scalar_function_set_function(
         function,
         MaxPolygonWktOrWkbToCellsSizeExperimentalFunction<duckdb_string_t, true,
-                                                   SwapFlagsRes>);
+                                                          SwapFlagsRes>);
     duckdb_add_scalar_function_to_set(functionSet, function);
     duckdb_destroy_scalar_function(&function);
   };
