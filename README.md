@@ -64,6 +64,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_child_pos_to_cell` | Convert parent and sub-indexing number to a cell ID |
 | `h3_compact_cells` | Convert a set of single-resolution cells to the minimal mixed-resolution set |
 | `h3_uncompact_cells` | Convert a mixed-resolution set to a single-resolution set of cells |
+| `h3_uncompact_cells_size` | Size of the corresponding `h3_uncompact_cells` result |
 | `h3_grid_disk` | Find cells within a grid distance |
 | `h3_grid_disk_distances` | Find cells within a grid distance, sorted by distance |
 | `h3_grid_disk_unsafe` | Find cells within a grid distance, with no pentagon distortion |

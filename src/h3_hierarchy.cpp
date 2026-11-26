@@ -363,6 +363,67 @@ void CompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
 }
 
 template <typename T>
+void UncompactCellsSizeFunction(duckdb_function_info info, duckdb_data_chunk input,
+                            duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector indexVec = duckdb_data_chunk_get_vector(input, 0);
+  duckdb_list_entry *indexVecData =
+      (duckdb_list_entry *)duckdb_vector_get_data(indexVec);
+  uint64_t *indexVecValidity = duckdb_vector_get_validity(indexVec);
+  duckdb_vector indexChildVec = duckdb_list_vector_get_child(indexVec);
+  T *indexChildVecData = (T *)duckdb_vector_get_data(indexChildVec);
+  uint64_t *indexChildValidity = duckdb_vector_get_validity(indexChildVec);
+  duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
+  int32_t *resData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool wasNullOriginally =
+        !duckdb_validity_row_is_valid(indexVecValidity, row) ||
+        !duckdb_validity_row_is_valid(resVecValidity, row);
+    bool hasNullInput = wasNullOriginally;
+
+    auto inputToEvaluate = wasNullOriginally ? 0 : indexVecData[row].length;
+    std::vector<H3Index> inputSet(inputToEvaluate);
+    for (idx_t j = 0; j < inputToEvaluate; j++) {
+      auto childRow = indexVecData[row].offset + j;
+      if (duckdb_validity_row_is_valid(indexChildValidity, childRow)) {
+        auto index = IndexFromVector(indexChildVecData, childRow);
+
+        if (index) {
+          inputSet[j] = index;
+        } else {
+          hasNullInput = true;
+          break;
+        }
+      } else {
+        hasNullInput = true;
+        break;
+      }
+    }
+
+    auto res = resData[row];
+
+    int64_t uncompactSize;
+    std::vector<H3Index> result;
+
+    H3Error err =
+        hasNullInput || uncompactCellsSize(inputSet.data(), inputSet.size(),
+                                           res, &uncompactSize);
+    if (!err) {
+      resultData[row] = uncompactSize;
+    } else {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
+template <typename T>
 void UncompactCellsFunction(duckdb_function_info info, duckdb_data_chunk input,
                             duckdb_vector output) {
   idx_t inputSize = duckdb_data_chunk_get_size(input);
@@ -697,6 +758,41 @@ duckdb_scalar_function_set H3Functions::GetCompactCellsFunction() {
   r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
   r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
   r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set H3Functions::GetUncompactCellsSizeFunction() {
+  duckdb_scalar_function_set functionSet =
+      duckdb_create_scalar_function_set("h3_uncompact_cells_size");
+
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+
+  auto r = [&functionSet, &intType]<typename PhysicalType>(duckdb_type typeId) {
+    duckdb_logical_type logicalType = duckdb_create_logical_type(typeId);
+    duckdb_logical_type listType = duckdb_create_list_type(logicalType);
+    duckdb_logical_type bigintType = duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(function, "h3_uncompact_cells_size");
+    duckdb_scalar_function_add_parameter(function, listType);
+    duckdb_scalar_function_add_parameter(function, intType);
+    duckdb_scalar_function_set_return_type(function, bigintType);
+    duckdb_scalar_function_set_function(function,
+                                        UncompactCellsSizeFunction<PhysicalType>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+
+    duckdb_destroy_logical_type(&logicalType);
+    duckdb_destroy_logical_type(&listType);
+    duckdb_destroy_logical_type(&bigintType);
+  };
+
+  r.operator()<int64_t>(DUCKDB_TYPE_BIGINT);
+  r.operator()<uint64_t>(DUCKDB_TYPE_UBIGINT);
+  r.operator()<duckdb_string_t>(DUCKDB_TYPE_VARCHAR);
+
+  duckdb_destroy_logical_type(&intType);
 
   return functionSet;
 }

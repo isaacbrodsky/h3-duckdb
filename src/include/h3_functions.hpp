@@ -52,6 +52,7 @@ public:
     functionSets.push_back(GetCellToChildPosFunction());
     functionSets.push_back(GetChildPosToCellFunction());
     functionSets.push_back(GetCompactCellsFunction());
+    functionSets.push_back(GetUncompactCellsSizeFunction());
     functionSets.push_back(GetUncompactCellsFunction());
 
     // Traversal
@@ -151,6 +152,7 @@ private:
   static duckdb_scalar_function_set GetCellToChildPosFunction();
   static duckdb_scalar_function_set GetChildPosToCellFunction();
   static duckdb_scalar_function_set GetCompactCellsFunction();
+  static duckdb_scalar_function_set GetUncompactCellsSizeFunction();
   static duckdb_scalar_function_set GetUncompactCellsFunction();
 
   // Traversal
