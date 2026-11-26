@@ -116,10 +116,10 @@ public:
     functions.push_back(GetMaxPolygonWkbToCellsSizeFunction());
     functionSets.push_back(GetPolygonWktToCellsExperimentalFunction());
     functionSets.push_back(GetPolygonWktToCellsExperimentalVarcharFunction());
-    functionSets.push_back(GetMaxPolygonWktToCellsExperimentalSizeFunction());
+    functionSets.push_back(GetMaxPolygonWktToCellsSizeExperimentalFunction());
     functionSets.push_back(GetPolygonWkbToCellsExperimentalFunction());
     functionSets.push_back(GetPolygonWkbToCellsExperimentalVarcharFunction());
-    functionSets.push_back(GetMaxPolygonWkbToCellsExperimentalSizeFunction());
+    functionSets.push_back(GetMaxPolygonWkbToCellsSizeExperimentalFunction());
 
     return std::make_pair(functions, functionSets);
   }
@@ -227,9 +227,9 @@ private:
   static duckdb_scalar_function
   GetMaxPolygonWkbToCellsSizeFunction();
   static duckdb_scalar_function_set
-  GetMaxPolygonWktToCellsExperimentalSizeFunction();
+  GetMaxPolygonWktToCellsSizeExperimentalFunction();
   static duckdb_scalar_function_set
-  GetMaxPolygonWkbToCellsExperimentalSizeFunction();
+  GetMaxPolygonWkbToCellsSizeExperimentalFunction();
 };
 
 } // namespace h3duckdb

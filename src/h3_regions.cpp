@@ -756,9 +756,9 @@ H3Functions::GetPolygonWkbToCellsExperimentalFunction() {
 }
 
 duckdb_scalar_function_set
-H3Functions::GetMaxPolygonWktToCellsExperimentalSizeFunction() {
+H3Functions::GetMaxPolygonWktToCellsSizeExperimentalFunction() {
   duckdb_scalar_function_set functionSet = duckdb_create_scalar_function_set(
-      "h3_max_polygon_wkt_to_cells_experimental_size");
+      "h3_max_polygon_wkt_to_cells_size_experimental");
 
   duckdb_logical_type varcharType =
       duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
@@ -769,7 +769,7 @@ H3Functions::GetMaxPolygonWktToCellsExperimentalSizeFunction() {
             &bigintType]<bool SwapFlagsRes>() {
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(
-        function, "h3_max_polygon_wkt_to_cells_experimental_size");
+        function, "h3_max_polygon_wkt_to_cells_size_experimental");
     duckdb_scalar_function_add_parameter(function, varcharType);
     duckdb_scalar_function_add_parameter(function,
                                          SwapFlagsRes ? varcharType : intType);
@@ -795,9 +795,9 @@ H3Functions::GetMaxPolygonWktToCellsExperimentalSizeFunction() {
 }
 
 duckdb_scalar_function_set
-H3Functions::GetMaxPolygonWkbToCellsExperimentalSizeFunction() {
+H3Functions::GetMaxPolygonWkbToCellsSizeExperimentalFunction() {
   duckdb_scalar_function_set functionSet = duckdb_create_scalar_function_set(
-      "h3_max_polygon_wkb_to_cells_experimental_size");
+      "h3_max_polygon_wkb_to_cells_size_experimental");
 
   duckdb_logical_type blobType = duckdb_create_logical_type(DUCKDB_TYPE_BLOB);
   duckdb_logical_type varcharType =
@@ -809,7 +809,7 @@ H3Functions::GetMaxPolygonWkbToCellsExperimentalSizeFunction() {
             &bigintType]<bool SwapFlagsRes>() {
     duckdb_scalar_function function = duckdb_create_scalar_function();
     duckdb_scalar_function_set_name(
-        function, "h3_max_polygon_wkb_to_cells_experimental_size");
+        function, "h3_max_polygon_wkb_to_cells_size_experimental");
     duckdb_scalar_function_add_parameter(function, blobType);
     duckdb_scalar_function_add_parameter(function,
                                          SwapFlagsRes ? varcharType : intType);
