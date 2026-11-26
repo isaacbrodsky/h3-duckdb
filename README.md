@@ -72,7 +72,9 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_grid_ring` | Find cells exactly a grid distance away |
 | `h3_grid_ring_unsafe` | Find cells exactly a grid distance away, with no pentagon distortion |
 | `h3_max_grid_disk_size` | Maximum number of cells for a grid disk for size K |
+| `h3_max_grid_ring_size` | Maximum number of cells for a grid ring for size K |
 | `h3_grid_path_cells` | Find a grid path to connect two cells |
+| `h3_grid_path_cells_size` | Number of cells for the grid path to connect the two cells |
 | `h3_grid_distance` | Find the grid distance between two cells |
 | `h3_cell_to_local_ij` | Convert a cell ID to a local I,J coordinate space |
 | `h3_local_ij_to_cell` | Convert a local I,J coordinate to a cell ID |
