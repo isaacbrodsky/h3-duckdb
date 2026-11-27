@@ -534,7 +534,7 @@ duckdb_scalar_function H3Functions::GetGetPentagonsFunction() {
   duckdb_scalar_function_set_return_type(function, ubigintListType);
   duckdb_destroy_logical_type(&ubigintListType);
   duckdb_destroy_logical_type(&ubigintType);
-  duckdb_destroy_logical_type(&intType);
+  // duckdb_destroy_logical_type(&intType); // leak test
   duckdb_scalar_function_set_function(function, GetPentagonsFunction<uint64_t>);
   return function;
 }
