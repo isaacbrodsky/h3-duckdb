@@ -1,0 +1,33 @@
+name: test-valgrind
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref || '' }}-${{ github.base_ref || '' }}-${{ github.ref != 'refs/heads/main' || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  valgrind:
+    name: valgrind
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Install Valgrind
+        run: |
+          sudo apt update
+          sudo apt install valgrind
+
+      - name: Configure
+        run: make configure
+
+      - name: Valgrind
+        run: make valgrind
