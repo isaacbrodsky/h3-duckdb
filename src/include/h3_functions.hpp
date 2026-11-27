@@ -52,6 +52,7 @@ public:
     functionSets.push_back(GetCellToChildPosFunction());
     functionSets.push_back(GetChildPosToCellFunction());
     functionSets.push_back(GetCompactCellsFunction());
+    functionSets.push_back(GetUncompactCellsSizeFunction());
     functionSets.push_back(GetUncompactCellsFunction());
 
     // Traversal
@@ -63,8 +64,10 @@ public:
     functionSets.push_back(GetGridRingFunction());
     functionSets.push_back(GetGridRingUnsafeFunction());
     functionSets.push_back(GetGridPathCellsFunction());
+    functionSets.push_back(GetGridPathCellsSizeFunction());
     functionSets.push_back(GetGridDistanceFunction());
     functions.push_back(GetMaxGridDiskSizeFunction());
+    functions.push_back(GetMaxGridRingSizeFunction());
     functionSets.push_back(GetCellToLocalIjFunction());
     functionSets.push_back(GetLocalIjToCellFunction());
 
@@ -107,12 +110,16 @@ public:
     functionSets.push_back(GetCellsToMultiPolygonWkbFunction());
     functions.push_back(GetPolygonWktToCellsFunction());
     functions.push_back(GetPolygonWktToCellsVarcharFunction());
+    functions.push_back(GetMaxPolygonWktToCellsSizeFunction());
     functions.push_back(GetPolygonWkbToCellsFunction());
     functions.push_back(GetPolygonWkbToCellsVarcharFunction());
+    functions.push_back(GetMaxPolygonWkbToCellsSizeFunction());
     functionSets.push_back(GetPolygonWktToCellsExperimentalFunction());
     functionSets.push_back(GetPolygonWktToCellsExperimentalVarcharFunction());
+    functionSets.push_back(GetMaxPolygonWktToCellsSizeExperimentalFunction());
     functionSets.push_back(GetPolygonWkbToCellsExperimentalFunction());
     functionSets.push_back(GetPolygonWkbToCellsExperimentalVarcharFunction());
+    functionSets.push_back(GetMaxPolygonWkbToCellsSizeExperimentalFunction());
 
     return std::make_pair(functions, functionSets);
   }
@@ -149,6 +156,7 @@ private:
   static duckdb_scalar_function_set GetCellToChildPosFunction();
   static duckdb_scalar_function_set GetChildPosToCellFunction();
   static duckdb_scalar_function_set GetCompactCellsFunction();
+  static duckdb_scalar_function_set GetUncompactCellsSizeFunction();
   static duckdb_scalar_function_set GetUncompactCellsFunction();
 
   // Traversal
@@ -160,8 +168,10 @@ private:
   static duckdb_scalar_function_set GetGridRingFunction();
   static duckdb_scalar_function_set GetGridRingUnsafeFunction();
   static duckdb_scalar_function_set GetGridPathCellsFunction();
+  static duckdb_scalar_function_set GetGridPathCellsSizeFunction();
   static duckdb_scalar_function_set GetGridDistanceFunction();
   static duckdb_scalar_function GetMaxGridDiskSizeFunction();
+  static duckdb_scalar_function GetMaxGridRingSizeFunction();
   static duckdb_scalar_function_set GetCellToLocalIjFunction();
   static duckdb_scalar_function_set GetLocalIjToCellFunction();
 
@@ -212,6 +222,12 @@ private:
   static duckdb_scalar_function_set GetPolygonWkbToCellsExperimentalFunction();
   static duckdb_scalar_function_set
   GetPolygonWkbToCellsExperimentalVarcharFunction();
+  static duckdb_scalar_function GetMaxPolygonWktToCellsSizeFunction();
+  static duckdb_scalar_function GetMaxPolygonWkbToCellsSizeFunction();
+  static duckdb_scalar_function_set
+  GetMaxPolygonWktToCellsSizeExperimentalFunction();
+  static duckdb_scalar_function_set
+  GetMaxPolygonWkbToCellsSizeExperimentalFunction();
 };
 
 } // namespace h3duckdb

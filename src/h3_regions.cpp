@@ -136,6 +136,67 @@ void CellsToMultiPolygonFunction(duckdb_function_info info,
 }
 
 template <typename T, bool IsWkb>
+void MaxPolygonWktOrWkbToCellsSizeFunction(duckdb_function_info info,
+                                           duckdb_data_chunk input,
+                                           duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector wellKnownVec = duckdb_data_chunk_get_vector(input, 0);
+  duckdb_string_t *wellKnownVecData =
+      (duckdb_string_t *)duckdb_vector_get_data(wellKnownVec);
+  uint64_t *wellKnownVecValidity = duckdb_vector_get_validity(wellKnownVec);
+  duckdb_vector resVec = duckdb_data_chunk_get_vector(input, 1);
+  int32_t *resData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool hasData = false;
+    if (duckdb_validity_row_is_valid(wellKnownVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row)) {
+      auto inputStr = DuckdbToString(&wellKnownVecData[row]);
+      GeoPolygon polygon = {0};
+      int32_t flags = 0;
+      int32_t res = resData[row];
+
+      auto outerVerts = std::make_shared<std::vector<LatLng>>();
+      std::vector<GeoLoop> holes;
+      std::vector<std::shared_ptr<std::vector<LatLng>>> holesVerts;
+      try {
+        if constexpr (IsWkb) {
+          DecodeWkbPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
+        } else {
+          DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
+        }
+      } catch (const H3Exception &ex) {
+        duckdb_scalar_function_set_error(info, ex.what());
+        return;
+      }
+
+      if (polygon.geoloop.numVerts > 0) {
+        int64_t numCells = 0;
+
+        H3Error err = maxPolygonToCellsSize(&polygon, res, flags, &numCells);
+        if (!err) {
+          resultData[row] = numCells;
+          hasData = true;
+        }
+      } else {
+        resultData[row] = 0;
+        hasData = true;
+      }
+    }
+
+    if (!hasData) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
+}
+
+template <typename T, bool IsWkb>
 void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
                                     duckdb_data_chunk input,
                                     duckdb_vector output) {
@@ -228,6 +289,84 @@ void PolygonWktOrWkbToCellsFunction(duckdb_function_info info,
   }
 
   duckdb_list_vector_set_size(output, resultOffset);
+}
+
+template <typename T, bool IsWkb, bool SwapFlagsRes>
+void MaxPolygonWktOrWkbToCellsSizeExperimentalFunction(
+    duckdb_function_info info, duckdb_data_chunk input, duckdb_vector output) {
+  idx_t inputSize = duckdb_data_chunk_get_size(input);
+
+  duckdb_vector wellKnownVec = duckdb_data_chunk_get_vector(input, 0);
+  duckdb_string_t *wellKnownVecData =
+      (duckdb_string_t *)duckdb_vector_get_data(wellKnownVec);
+  uint64_t *wellKnownVecValidity = duckdb_vector_get_validity(wellKnownVec);
+  duckdb_vector resVec =
+      duckdb_data_chunk_get_vector(input, SwapFlagsRes ? 2 : 1);
+  int32_t *resData = (int32_t *)duckdb_vector_get_data(resVec);
+  uint64_t *resVecValidity = duckdb_vector_get_validity(resVec);
+  duckdb_vector flagsVec =
+      duckdb_data_chunk_get_vector(input, SwapFlagsRes ? 1 : 2);
+  duckdb_string_t *flagsData =
+      (duckdb_string_t *)duckdb_vector_get_data(flagsVec);
+  uint64_t *flagsVecValidity = duckdb_vector_get_validity(flagsVec);
+
+  duckdb_vector_ensure_validity_writable(output);
+  int64_t *resultData = (int64_t *)duckdb_vector_get_data(output);
+  uint64_t *resultValidity = duckdb_vector_get_validity(output);
+
+  for (idx_t row = 0; row < inputSize; ++row) {
+    bool hasData = false;
+    if (duckdb_validity_row_is_valid(wellKnownVecValidity, row) &&
+        duckdb_validity_row_is_valid(resVecValidity, row) &&
+        duckdb_validity_row_is_valid(flagsVecValidity, row)) {
+      auto inputStr = DuckdbToString(&wellKnownVecData[row]);
+      GeoPolygon polygon = {0};
+      auto flagsStr = DuckdbToString(&flagsData[row]);
+      int32_t res = resData[row];
+
+      auto outerVerts = std::make_shared<std::vector<LatLng>>();
+      std::vector<GeoLoop> holes;
+      std::vector<std::shared_ptr<std::vector<LatLng>>> holesVerts;
+      try {
+        if constexpr (IsWkb) {
+          DecodeWkbPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
+        } else {
+          DecodeWktPolygon(inputStr, polygon, outerVerts, holes, holesVerts);
+        }
+      } catch (const H3Exception &ex) {
+        duckdb_scalar_function_set_error(info, ex.what());
+        return;
+      }
+
+      uint32_t flags = StringToFlags(flagsStr);
+      if (flags == UINT32_MAX) {
+        duckdb_scalar_function_set_error(
+            info,
+            "Invalid mode, should be one of: 'center', 'full', 'overlap', "
+            "'overlap_bbox'");
+        return;
+      }
+
+      // Invalid flags input
+      if (polygon.geoloop.numVerts > 0) {
+        int64_t numCells = 0;
+
+        H3Error err =
+            maxPolygonToCellsSizeExperimental(&polygon, res, flags, &numCells);
+        if (!err) {
+          resultData[row] = numCells;
+          hasData = true;
+        }
+      } else {
+        resultData[row] = 0;
+        hasData = true;
+      }
+    }
+
+    if (!hasData) {
+      duckdb_validity_set_row_invalid(resultValidity, row);
+    }
+  }
 }
 
 template <typename T, bool IsWkb, bool SwapFlagsRes>
@@ -452,6 +591,45 @@ duckdb_scalar_function H3Functions::GetPolygonWktToCellsVarcharFunction() {
   return function;
 }
 
+duckdb_scalar_function H3Functions::GetMaxPolygonWktToCellsSizeFunction() {
+  // TODO: Expose flags
+  duckdb_scalar_function function = duckdb_create_scalar_function();
+  duckdb_scalar_function_set_name(function, "h3_max_polygon_wkt_to_cells_size");
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_scalar_function_add_parameter(function, varcharType);
+  duckdb_scalar_function_add_parameter(function, intType);
+  duckdb_scalar_function_set_return_type(function, bigintType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&intType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_scalar_function_set_function(
+      function, MaxPolygonWktOrWkbToCellsSizeFunction<duckdb_string_t, false>);
+  return function;
+}
+
+duckdb_scalar_function H3Functions::GetMaxPolygonWkbToCellsSizeFunction() {
+  // TODO: Expose flags
+  duckdb_scalar_function function = duckdb_create_scalar_function();
+  duckdb_scalar_function_set_name(function, "h3_max_polygon_wkb_to_cells_size");
+  duckdb_logical_type blobType = duckdb_create_logical_type(DUCKDB_TYPE_BLOB);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+  duckdb_scalar_function_add_parameter(function, blobType);
+  duckdb_scalar_function_add_parameter(function, intType);
+  duckdb_scalar_function_set_return_type(function, bigintType);
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&intType);
+  duckdb_destroy_logical_type(&blobType);
+  duckdb_scalar_function_set_function(
+      function, MaxPolygonWktOrWkbToCellsSizeFunction<duckdb_string_t, true>);
+  return function;
+}
+
 duckdb_scalar_function H3Functions::GetPolygonWkbToCellsFunction() {
   // TODO: Expose flags
   duckdb_scalar_function function = duckdb_create_scalar_function();
@@ -574,6 +752,88 @@ H3Functions::GetPolygonWkbToCellsExperimentalFunction() {
   duckdb_destroy_logical_type(&intType);
   duckdb_destroy_logical_type(&ubigintListType);
   duckdb_destroy_logical_type(&ubigintType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set
+H3Functions::GetMaxPolygonWktToCellsSizeExperimentalFunction() {
+  duckdb_scalar_function_set functionSet = duckdb_create_scalar_function_set(
+      "h3_max_polygon_wkt_to_cells_size_experimental");
+
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+
+  auto r = [&functionSet, &varcharType, &intType,
+            &bigintType]<bool SwapFlagsRes>() {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(
+        function, "h3_max_polygon_wkt_to_cells_size_experimental");
+    duckdb_scalar_function_add_parameter(function, varcharType);
+    duckdb_scalar_function_add_parameter(function,
+                                         SwapFlagsRes ? varcharType : intType);
+    duckdb_scalar_function_add_parameter(function,
+                                         SwapFlagsRes ? intType : varcharType);
+    duckdb_scalar_function_set_return_type(function, bigintType);
+    duckdb_scalar_function_set_function(
+        function,
+        MaxPolygonWktOrWkbToCellsSizeExperimentalFunction<duckdb_string_t,
+                                                          false, SwapFlagsRes>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  };
+
+  r.operator()<false>();
+  r.operator()<true>();
+
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&intType);
+
+  return functionSet;
+}
+
+duckdb_scalar_function_set
+H3Functions::GetMaxPolygonWkbToCellsSizeExperimentalFunction() {
+  duckdb_scalar_function_set functionSet = duckdb_create_scalar_function_set(
+      "h3_max_polygon_wkb_to_cells_size_experimental");
+
+  duckdb_logical_type blobType = duckdb_create_logical_type(DUCKDB_TYPE_BLOB);
+  duckdb_logical_type varcharType =
+      duckdb_create_logical_type(DUCKDB_TYPE_VARCHAR);
+  duckdb_logical_type intType = duckdb_create_logical_type(DUCKDB_TYPE_INTEGER);
+  duckdb_logical_type bigintType =
+      duckdb_create_logical_type(DUCKDB_TYPE_BIGINT);
+
+  auto r = [&functionSet, &blobType, &varcharType, &intType,
+            &bigintType]<bool SwapFlagsRes>() {
+    duckdb_scalar_function function = duckdb_create_scalar_function();
+    duckdb_scalar_function_set_name(
+        function, "h3_max_polygon_wkb_to_cells_size_experimental");
+    duckdb_scalar_function_add_parameter(function, blobType);
+    duckdb_scalar_function_add_parameter(function,
+                                         SwapFlagsRes ? varcharType : intType);
+    duckdb_scalar_function_add_parameter(function,
+                                         SwapFlagsRes ? intType : varcharType);
+    duckdb_scalar_function_set_return_type(function, bigintType);
+    duckdb_scalar_function_set_function(
+        function,
+        MaxPolygonWktOrWkbToCellsSizeExperimentalFunction<duckdb_string_t, true,
+                                                          SwapFlagsRes>);
+    duckdb_add_scalar_function_to_set(functionSet, function);
+    duckdb_destroy_scalar_function(&function);
+  };
+
+  r.operator()<false>();
+  r.operator()<true>();
+
+  duckdb_destroy_logical_type(&bigintType);
+  duckdb_destroy_logical_type(&blobType);
+  duckdb_destroy_logical_type(&varcharType);
+  duckdb_destroy_logical_type(&intType);
 
   return functionSet;
 }
