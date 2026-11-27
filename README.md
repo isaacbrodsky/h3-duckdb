@@ -64,6 +64,7 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_child_pos_to_cell` | Convert parent and sub-indexing number to a cell ID |
 | `h3_compact_cells` | Convert a set of single-resolution cells to the minimal mixed-resolution set |
 | `h3_uncompact_cells` | Convert a mixed-resolution set to a single-resolution set of cells |
+| `h3_uncompact_cells_size` | Size of the corresponding `h3_uncompact_cells` result |
 | `h3_grid_disk` | Find cells within a grid distance |
 | `h3_grid_disk_distances` | Find cells within a grid distance, sorted by distance |
 | `h3_grid_disk_unsafe` | Find cells within a grid distance, with no pentagon distortion |
@@ -72,7 +73,9 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_grid_ring` | Find cells exactly a grid distance away |
 | `h3_grid_ring_unsafe` | Find cells exactly a grid distance away, with no pentagon distortion |
 | `h3_max_grid_disk_size` | Maximum number of cells for a grid disk for size K |
+| `h3_max_grid_ring_size` | Maximum number of cells for a grid ring for size K |
 | `h3_grid_path_cells` | Find a grid path to connect two cells |
+| `h3_grid_path_cells_size` | Number of cells for the grid path to connect the two cells |
 | `h3_grid_distance` | Find the grid distance between two cells |
 | `h3_cell_to_local_ij` | Convert a cell ID to a local I,J coordinate space |
 | `h3_local_ij_to_cell` | Convert a local I,J coordinate to a cell ID |
@@ -108,11 +111,15 @@ one to use. The unsigned and signed APIs are identical. All functions also suppo
 | `h3_cells_to_multi_polygon_wkb` | Convert a set of cells to multipolygon WKB |
 | `h3_polygon_wkt_to_cells` | Convert polygon WKT to a set of cells |
 | `h3_polygon_wkt_to_cells_string` | Convert polygon WKT to a set of cells (returns VARCHAR) |
+| `h3_max_polygon_wkt_to_cells_size` | Maximum cells to cover the polygon WKT |
 | `h3_polygon_wkb_to_cells` | Convert polygon WKB to a set of cells |
+| `h3_max_polygon_wkb_to_cells_size` | Maximum cells to cover the polygon WKB |
 | `h3_polygon_wkb_to_cells_string` | Convert polygon WKB to a set of cells (returns VARCHAR) |
 | `h3_polygon_wkt_to_cells_experimental` | Convert polygon WKT to a set of cells, new algorithm |
+| `h3_max_polygon_wkt_to_cells_size_experimental` | Maximum cells to cover the polygon WKT, new algorithm |
 | `h3_polygon_wkt_to_cells_experimental_string` | Convert polygon WKT to a set of cells, new algorithm (returns VARCHAR) |
 | `h3_polygon_wkb_to_cells_experimental` | Convert polygon WKB to a set of cells, new algorithm |
+| `h3_max_polygon_wkb_to_cells_size_experimental` | Maximum cells to cover the polygon WKB, new algorithm |
 | `h3_polygon_wkb_to_cells_experimental_string` | Convert polygon WKB to a set of cells, new algorithm (returns VARCHAR) |
 
 # Alternative download / install

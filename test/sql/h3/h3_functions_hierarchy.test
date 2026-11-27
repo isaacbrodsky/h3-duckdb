@@ -230,6 +230,21 @@ select h3_uncompact_cells([581764796395814911::bigint], 2)
 
 
 query I
+select h3_uncompact_cells_size([581764796395814911::ubigint], 2)
+----
+7
+
+query I
+select h3_uncompact_cells_size([NULL], 2)
+----
+NULL
+
+query I
+select h3_uncompact_cells_size([581764796395814911::bigint], 2)
+----
+7
+
+query I
 select h3_compact_cells(['822d57fffffffff', '822d0ffffffffff', '822c27fffffffff', '822c2ffffffffff', '822d5ffffffffff', '822d47fffffffff', '822d77fffffffff'])
 ----
 [822d57fffffffff, 822d0ffffffffff, 822c27fffffffff, 822c2ffffffffff, 822d5ffffffffff, 822d47fffffffff, 822d77fffffffff]
@@ -273,6 +288,21 @@ query I
 select h3_uncompact_cells([], 2)
 ----
 []
+
+query I
+select h3_uncompact_cells_size(['812d7ffffffffff'], 2)
+----
+7
+
+query I
+select h3_uncompact_cells_size(['X'], 2)
+----
+NULL
+
+query I
+select h3_uncompact_cells_size([], 2)
+----
+0
 
 statement ok
 -- https://github.com/isaacbrodsky/h3-duckdb/issues/140
@@ -328,3 +358,14 @@ SELECT h3_child_id, h3_uncompact_cells(array_apply(polyfilled, lambda x: h3_h3_t
 603927296465698815	[87194ad20ffffff, 87194ad22ffffff, 87194ad24ffffff, 87194ad26ffffff, 87194ad21ffffff, 87194ad23ffffff, 87194ad25ffffff]
 603927296599916543	[87194ad28ffffff, 87194ad2affffff, 87194ad2cffffff, 87194ad2effffff, 87194ad29ffffff, 87194ad2bffffff, 87194ad2dffffff]
 603927296734134271	[87194ad33ffffff, 87194ad35ffffff, 87194ad30ffffff, 87194ad32ffffff, 87194ad34ffffff, 87194ad36ffffff, 87194ad31ffffff]
+
+query II
+SELECT h3_child_id, h3_uncompact_cells_size(array_apply(polyfilled, lambda x: h3_h3_to_string(x)), 7) FROM h3_child_cells_polyfilled;
+----
+603927295928827903	7
+603927296063045631	7
+603927296197263359	7
+603927296331481087	7
+603927296465698815	7
+603927296599916543	7
+603927296734134271	7

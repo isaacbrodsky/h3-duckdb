@@ -22,3 +22,23 @@ query I
 select h3_polygon_wkb_to_cells(from_hex('010300000000000000'), 5)
 ----
 []
+
+statement error
+select h3_max_polygon_wkb_to_cells_size(from_hex('00'), 5)
+----
+Invalid WKB: expected little endian at 1
+
+statement error
+select h3_max_polygon_wkb_to_cells_size(from_hex('01000000'), 5)
+----
+Invalid WKB: failed to read 4 bytes at 1
+
+query I
+select h3_max_polygon_wkb_to_cells_size(from_hex('0100000000'), 5)
+----
+0
+
+query I
+select h3_max_polygon_wkb_to_cells_size(from_hex('010300000000000000'), 5)
+----
+0
